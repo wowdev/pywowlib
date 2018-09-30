@@ -803,7 +803,7 @@ class M2Particle:
             self.scale_values = Array(float32, 4)
             self.head_cell_begin = Array(uint16, 2)
             self.head_cell_end = Array(uint16, 2)
-            self.tiles = Array(int16, 4)                        # Indices into the tiles on the texture ? Or tailCell maybe ?
+            self.tiles = Array(int16, 4)                        # Indices into the tiles on the texture? Or tailCell maybe?
 
         self.tail_length = 0.0                                  # TailCellTime?
         self.twinkle_speed = 0.0                                # has something to do with the spread
