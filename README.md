@@ -17,7 +17,7 @@ In the future, we may target other core expansion versions: 1.12, 2.4.3, 4.3.4, 
 | WDL    	| Lowres Terrain             	| TBI         	| TBI           	| TBI           	|                                                                                                                                                                       	|
 | MPQ    	| Storage                    	| Read-only   	| -             	| -             	| Writing can be implemented by extending StormLib Python wrapper that we are using.                                                                                    	|
 | CASC   	| Storage (multiple formats) 	| -           	| TBI           	| TBI           	| The plan is to support local reading (making a Python wrapper over Ladislav Zezula's CascLib), as well as some basic CASCHost integration instead of writing support. 	|
-
+| BLP     | Images                      | Reading       | Reading         | Reading         |                                       |
 # Contribution
 Feel free to contribute to the library development by either making a pull request or contacting Skarn directly to gain write access.
 
