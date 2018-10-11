@@ -1,8 +1,12 @@
 import os
+import struct
 
 from itertools import chain
+from .file_formats import m2_chunks
 from .file_formats.m2_format import *
+from .file_formats.m2_chunks import *
 from .file_formats.skin_format import M2SkinProfile, M2SkinSubmesh, M2SkinTextureUnit
+from .file_formats.wow_common_types import M2Versions
 
 __reload_order_index__ = 3
 
@@ -11,17 +15,76 @@ class M2File:
     def __init__(self, version, filepath=None):
         self.version = version
 
-        if filepath:
-            self.filepath = filepath
-            with open(filepath, 'rb') as f:
-                self.root = M2Header()
-                self.root.read(f)
-                self.skins = []
+        self.root = MD21() if self.version >= M2Versions.LEGION else MD20()
+        self.is_chunked = self.version >= M2Versions.LEGION
+        self.filepath = filepath
+        self.skins = [M2SkinProfile()]
 
-                if version >= M2Versions.WOTLK:
+        if self.version >= M2Versions.LEGION:
+            self.root = MD21()
+            self.pfid = PFID()
+            self.sfid = SFID()
+            self.afid = AFID()
+            self.bfid = BFID()
+            self.txac = TXAC()
+            self.skid = SKID()
+
+            if self.version >= M2Versions.BFA:
+                self.txid = TXID()
+                self.rpid = RPID()
+                self.gpid = GPID()
+
+            # TODO: unknown chunks
+
+        else:
+            self.root = MD20()
+
+        if filepath:
+            self.read()
+
+    def read(self):
+        self.skins = []
+        with open(self.filepath, 'rb') as f:
+
+            while True:
+                try:
+                    magic = f.read(4).decode('utf-8')
+
+                    if magic not in ('MD20', 'MD21'):
+                        size = uint32.read(f)
+
+                except EOFError:
+                    break
+
+                except struct.error:
+                    break
+
+                except UnicodeDecodeError:
+                    print('\nAttempted reading non-chunked data.')
+                    break
+
+                # getting the correct chunk parsing class
+                chunk = getattr(m2_chunks, magic, None)
+
+                # skipping unknown chunks
+                if chunk is None:
+                    print("\nEncountered unknown chunk \"{}\"".format(magic))
+                    f.seek(size, 1)
+                    continue
+
+                if magic not in ('MD20', 'MD21'):
+                    read_chunk = chunk(size=size)
+                    read_chunk.read(f)
+                    setattr(self, magic.lower(), read_chunk)
+                else:
+                    read_chunk = chunk()
+                    read_chunk.read(f)
+                    self.root = read_chunk
+
+                if self.version >= M2Versions.WOTLK:
                     # load skins
 
-                    raw_path = os.path.splitext(filepath)[0]
+                    raw_path = os.path.splitext(self.filepath)[0]
                     for i in range(self.root.num_skin_profiles):
                         with open("{}{}.skin".format(raw_path, str(i).zfill(2)), 'rb') as skin_file:
                             self.skins.append(M2SkinProfile().read(skin_file))
@@ -38,7 +101,7 @@ class M2File:
                             real_anim = self.root.sequences[real_anim.alias_next]
 
                         if not sequence.flags & 0x130:
-                            anim_path = "{}{}-{}.anim".format(os.path.splitext(filepath)[0],
+                            anim_path = "{}{}-{}.anim".format(os.path.splitext(self.filepath)[0],
                                                               str(real_anim.id).zfill(4),
                                                               str(sequence.variation_index).zfill(2))
 
@@ -61,11 +124,6 @@ class M2File:
                                     frame_values.read(anim_file, ignore_header=True)
                 else:
                     self.skins = self.root.skin_profiles
-
-        else:
-            self.filepath = None
-            self.root = M2Header()
-            self.skins = [M2SkinProfile()]
 
     def write(self, filepath):
         with open(filepath, 'wb') as f:

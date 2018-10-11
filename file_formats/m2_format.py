@@ -1271,7 +1271,6 @@ class M2Header:
             self._size += 8
 
     def read(self, f):
-        self.magic = f.read(4).decode('utf-8')
         self.version = uint32.read(f)
         self.name.read(f)
         self.global_flags = uint32.read(f)

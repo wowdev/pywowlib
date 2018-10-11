@@ -1,5 +1,6 @@
 from .wow_common_types import ChunkHeader, MVER
 from ..io_utils.types import *
+from .m2_format import M2Header
 
 #############################################################
 ######                 Legion Chunks                   ######
@@ -193,6 +194,7 @@ class GPID:
 
     def read(self, f):
         self.geometry_particle_models = []
+
         for i in range(self.header.size // 4):
             self.geometry_particle_models.append(uint32.read(f))
 
@@ -202,3 +204,16 @@ class GPID:
 
         for file_data_id in self.geometry_particle_models:
             uint32.write(f, file_data_id)
+
+
+#############################################################
+######                 BfA Chunks                      ######
+#############################################################
+
+class MD20(M2Header):
+    pass
+
+
+class MD21(M2Header):
+    pass
+
