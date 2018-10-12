@@ -770,16 +770,17 @@ class MCVP:
 
 
 class GFID:
-    def __init__(self, size=0, n_groups=0, has_n_lods=False):
+    def __init__(self, size=0, use_lods=False, n_groups=0, n_lods=0):
         self.header = ChunkHeader(magic='DIFG')
         self.header.size = size
-        self.group_file_data_ids = [] if not has_n_lods else [[], [], []]
+        self.group_file_data_ids = [[]] if not use_lods else [[] for _ in range(n_lods)]
 
         self.n_groups = n_groups
-        self.has_n_lods = has_n_lods
+        self.n_lods = n_lods
+        self.use_lods = use_lods
 
     def read(self, f):
-        self.group_file_data_ids = [] if not self.has_n_lods else [[], [], []]
+        self.group_file_data_ids = [[]] if not self.use_lods else [[] for _ in range(self.n_lods)]
 
         for i in range(self.n_groups):
             for _ in range(self.n_groups):
