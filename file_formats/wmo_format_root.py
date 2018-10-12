@@ -796,26 +796,25 @@ class GFID:
 
 
 class MOUV:
-    def __init__(self, size):
+    def __init__(self, size=0, n_materials=0):
         self.header = ChunkHeader(magic='VUOM')
         self.header.size = size
         self.map_object_uv = []
 
-        self.translation_speed = [0, 0]  # c2vector
-        self.materials_count = 0  # TODO: не знаю, где взять переменную кол-ва материалов
+        self.n_materials = 0
 
     def read(self, f):
-        self.map_object_uv = []                              # TODO: запутался; не знаю куда записать material_count
+        self.map_object_uv = []
 
-        for i in range(self.translation_speed):
-            self.map_object_uv = unpack("ff", f.read(8))     # TODO: думаю, что я тут лишнего намудрил
-                                                            # пытался сам ковырнуть эти pack/unpack, но ошибся, скорее всего
+        for _ in range(self.n_materials):
+            self.map_object_uv.append(vec2D.read(f, 2))
 
     def write(self, f):
-        f.write(pack('ff', *self.map_object_uv))
+        self.header.size = len(self.map_object_uv) * 8
+        self.header.write(f)
 
         for val in self.map_object_uv:
-            f.write(f, val)
+            vec2D.write(f, val, 2)
 
 
 #############################################################
