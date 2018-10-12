@@ -1,5 +1,5 @@
 from struct import pack, unpack
-from .wow_common_types import ChunkHeader, MVER
+from .wow_common_types import *
 
 
 ###########################
@@ -763,4 +763,127 @@ class MCVP:
         for i in self.convex_volume_planes:
             f.write(pack('ffff', self.convex_volume_planes[i]))
 
+
+#############################################################
+######                 Legion Chunks                   ######
+#############################################################
+
+# TODO: fix your 'unpack' things
+# я знаю, что это фиксится импортом io_utils.types, но не знаю, насколько это применимо к системе этого файла
+# ты вроде упоминал, что переведёшь все эти unpack'и на тот формат, в котором сейчас чанки для М2
+
+class GFID:
+    def __init__(self, size=0, n_groups=0, flag_lod=0, num_lod=0):  # TODO: i'm not sure about 0 size
+        self.header = ChunkHeader(magic='DIFG')
+        self.header.size = size
+        self.group_file_data_ids = []
+
+        self.n_groups = n_groups
+        self.flag_lod = flag_lod
+        self.num_lod = num_lod
+
+    def read(self, f):
+        self.group_file_data_ids = []
+
+        for i in range(self.n_groups):
+            self.group_file_data_ids.append(uint32.read(f))
+
+        for i in range(self.flag_lod):
+            self.group_file_data_ids.append(uint32.read(f))
+
+        for i in range(self.num_lod):
+            self.group_file_data_ids.append(uint32.read(f))
+
+    def write(self, f):
+        self.header.size = len(self.group_file_data_ids) * 12  # TODO: check size
+        self.header.write(f)
+
+        for val in self.group_file_data_ids:
+            uint32.write(f, val)
+
+
+class MOUV:
+    def __init__(self, size):
+        self.header = ChunkHeader(magic='VUOM')
+        self.header.size = size
+        self.map_object_uv = []
+
+        self.translation_speed = [0, 0]  # c2vector
+        self.materials_count = 0  # TODO: не знаю, где взять переменную кол-ва материалов
+
+    def read(self, f):
+        self.map_object_uv = []                              # TODO: запутался; не знаю куда записать material_count
+
+        for i in range(self.translation_speed):
+            self.map_object_uv = unpack("ff", f.read(8))     # TODO: думаю, что я тут лишнего намудрил
+                                                            # пытался сам ковырнуть эти pack/unpack, но ошибся, скорее всего
+
+    def write(self, f):
+        f.write(pack('ff', *self.map_object_uv))
+
+        for val in self.map_object_uv:
+            f.write(f, val)
+
+
+#############################################################
+######                 BfA Chunks                      ######
+#############################################################
+
+######                >= 8.1 only!                     ######
+
+class MOTX:  # TODO: resolve the naming conflict (класс MOTX уже используется выше)
+             # вообще лучше сам глянь вики на эту тему. Думаю, стоит перенести в MOMT
+
+    def __init__(self, size):
+        self.header = ChunkHeader(magic='XTOM')
+        self.header.size = size
+        self. texture_name_list = []
+
+    def read(self, f):
+        self.texture_name_list = []
+
+        for i in range(self.texture_name_list):
+            self.texture_name_list.append(int8.read(f))
+
+    def write(self, f):
+        self.header.size = len(self.texture_name_list)
+        self.header.write(f)
+
+        for val in self.texture_name_list:
+            int8.write(f, val)
+
+
+class MOSI:
+    def __init__(self, size):
+        self.header = ChunkHeader(magic='ISOM')
+        self.header.size = size
+        self.skybox_file_id = 0
+
+    def read(self, f):
+        self.skybox_file_id = uint32.read(f)
+
+    def write(self, f):
+        self.header.size = 4
+        self.header.write(f)
+        uint32.write(f, self.skybox_file_id)
+
+
+class MODI:
+    def __init__(self, size):
+        self.header = ChunkHeader(magic='IDOM')
+        self.header.size = size
+        self.doodad_file_ids = []
+
+    def read(self, f):
+        self.doodad_file_ids = []
+
+        for i in range(self.doodad_file_ids):
+            self.doodad_file_ids.append(uint32.read(f))
+
+    def write(self, f):
+        self.header.size = len(self.doodad_file_ids)
+        self.header.write(f)
+
+        for val in self.doodad_file_ids:
+            uint32.write(f, val)
 

@@ -34,6 +34,59 @@ class CArgb:
         uint8.write(f, (self.r, self.g, self.b, self.a), 4)
 
 
+class CImVector:
+    """A color given in values of blue, green, red and alpha"""
+    def __init__(self, color=(255, 255, 255, 255)):
+        self.b, self.g, self.r, self.a = color
+
+    def read(self, f):
+        self.b, self.g, self.r, self.a = uint8.read(f, 4)
+
+    def write(self, f):
+        uint8.write(f, (self.b, self.g, self.r, self.a), 4)
+
+
+class C3Vector:
+    """A three component float vector"""
+    def __init__(self):
+        self.x = 0.0
+        self.y = 0.0
+        self.z = 0.0
+
+    def read(self, f):
+        self.x = float32.read(f)
+        self.y = float32.read(f)
+        self.z = float32.read(f)
+
+        return self
+
+    def write(self, f):
+        float32.write(f, self.x)
+        float32.write(f, self.y)
+        float32.write(f, self.z)
+
+        return self
+
+
+class C4Plane:  # TODO: verify
+    """A 3D plane defined by four floats"""
+    def __init__(self, distance=0):
+        self.C3Vector = C3Vector
+        self.distance = distance
+
+    def read(self, f):
+        self.C3Vector.read(f, self)
+        self.distance = float32.read(f)
+
+        return self
+
+    def write(self, f):
+        C3Vector.write(f, self)
+        float32.write(f, self.distance)
+
+        return self
+
+
 class CRange:
     """A one dimensional float range defined by the bounds."""
     def __init__(self):
