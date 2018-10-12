@@ -541,9 +541,7 @@ class MLIQ:
 ######                 Legion Chunks                   ######
 #############################################################
 
-# TODO: fix binary types
-# пока просто добавлил импорт, но у тебя тут тоже система pack/unpack, хз правильно ли я поступил
-
+'''
 class MOPB:
     def __init__(self, size):
         self.header = ChunkHeader(magic='BPOM')
@@ -580,13 +578,13 @@ class MOLS:
 
         for val in self.map_object_spot_lights:
             char.write(f, val)
+'''
 
-
-class MapObjectPointLights:
+class MapObjectPointLight:
     def __init__(self):
         self.unk = 0
-        self.color = CImVector
-        self.pos = C3Vector
+        self.color = CImVector()
+        self.pos = (0, 0, 0)
         self.intensity = 0.0
         self.attenuation_start = 0.0
         self.attenuation_end = 0.0
@@ -596,8 +594,8 @@ class MapObjectPointLights:
 
     def read(self, f):
         self.unk = uint32.read(f)
-        self.color = CImVector.read(f, 4)
-        self.pos = C3Vector.read(f, 3)
+        self.color.read(f)
+        self.pos = vec3D.read(f)
         self.intensity = float32.read(f)
         self.attenuation_start = float32.read(f)
         self.attenuation_end = float32.read(f)
@@ -607,8 +605,8 @@ class MapObjectPointLights:
 
     def write(self, f):
         uint32.write(f, self.unk)
-        CImVector.write(f, self.color)
-        C3Vector.write(f, self.pos)
+        self.color.write(f)
+        vec3D.write(f, self.pos)
         float32.write(f, self.intensity)
         float32.write(f, self.attenuation_start)
         float32.write(f, self.attenuation_end)
@@ -618,19 +616,19 @@ class MapObjectPointLights:
 
 
 class MOLP:
-    def __init__(self, size):
+    def __init__(self, size=0):
         self.header = ChunkHeader(magic='PLOM')
         self.header.size = size
         self.map_object_point_lights = []
 
     def read(self, f):
-        for _ in range(self.header.size // ??):  # TODO: do math
-            mopl = MapObjectPointLights()
+        for _ in range(self.header.size // 44):
+            mopl = MapObjectPointLight()
             mopl.read(f)
             self.map_object_point_lights.append(mopl)
 
     def write(self, f):
-        self.header.size = len(self.map_object_point_lights) * ??  # TODO: do math
+        self.header.size = len(self.map_object_point_lights) * 44
         self.header.write(f)
 
         for val in self.map_object_point_lights:
@@ -642,26 +640,26 @@ class MOLP:
 #############################################################
 
 class MORB:
-    def __init__(self, size):
+    def __init__(self, size=8):
         self.header = ChunkHeader(magic='BROM')
         self.header.size = size
         self.start_index = 0
         self.index_count = 0
-        self.padding = 0
 
     def read(self, f):
         self.start_index = uint32.read(f)
         self.index_count = uint16.read(f)
-        self.padding = uint16.read(f)
+        f.skip(2)
 
     def write(self, f):
         self.header.size = 8
         self.header.write(f)
         uint32.write(f, self.start_index)
         uint16.write(f, self.index_count)
-        uint16.write(f, self.padding)
+        uint16.write(f, 0)
 
 
+'''
 class MOTA:
     """ Map Object Tangent Array """
 
@@ -708,45 +706,46 @@ class MOBS:
         for val in self.map_object_shadow_batches:
             int8.write(f, val)
 
+'''
 
 #############################################################
 ######                 WoD Chunks                     ######
 #############################################################
 
 class MDAL:
-    def __init__(self, size=0):
+    def __init__(self, size=4):
         self.header = ChunkHeader(magic='LADM')
         self.header.size = size
-        self.mdal = CArgb
+        self.mdal = (0, 0, 0, 0)
 
     def read(self, f):
-        for i in range(self.header.size // 4):
-            replacement_for_header_color = CArgb()
-            replacement_for_header_color.read(f)
-            self.mdal.read(replacement_for_header_color)  # TODO: не знаю, какой нужен метод для тупла
-            # тут точно проверь, уверен, что ошибся
+        self.mdal = uint8.read(f, 4)
 
     def write(self, f):
-        self.header.size = len(self.mdal) * 4  # тут точно проверь, уверен, что ошибся
+        self.header.size = 4
         self.header.write(f)
 
-        for val in self.mdal:
-            val.write(f)
+        uint8.write(f, self.mdal, 4)
 
 
 class MOPL:
-    def __init__(self, size):
+    def __init__(self, size=0):
         self.header = ChunkHeader(magic='LPOM')
         self.header.size = size
         self.terrain_cutting_planes = []
 
     def read(self, f):
-        for i in range(self.header.size // 4):
-            self.terrain_cutting_planes.append(C4Plane.read(f))
+        for _ in range(self.header.size // 16):
+            self.terrain_cutting_planes.append(C4Plane().read(f))
 
     def write(self, f):
-        self.header.size = len(self.terrain_cutting_planes) * 4
+        n_planes = len(self.terrain_cutting_planes)
+
+        if n_planes > 32:
+            raise OverflowError("\nMax. number of cutting planes is 32.")
+
+        self.header.size = len(self.terrain_cutting_planes) * 16
         self.header.write(f)
 
         for val in self.terrain_cutting_planes:
-            C4Plane.write(f, val)
+            val.write(f)

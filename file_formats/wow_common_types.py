@@ -68,20 +68,20 @@ class C3Vector:
         return self
 
 
-class C4Plane:  # TODO: verify
+class C4Plane:
     """A 3D plane defined by four floats"""
-    def __init__(self, distance=0):
-        self.C3Vector = C3Vector
-        self.distance = distance
+    def __init__(self):
+        self.normal = (0, 0, 0)
+        self.distance = 0.0
 
     def read(self, f):
-        self.C3Vector.read(f, self)
+        self.normal = vec3D.read(f)
         self.distance = float32.read(f)
 
         return self
 
     def write(self, f):
-        C3Vector.write(f, self)
+        vec3D.write(f, self.normal)
         float32.write(f, self.distance)
 
         return self
