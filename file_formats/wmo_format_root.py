@@ -796,17 +796,15 @@ class GFID:
 
 
 class MOUV:
-    def __init__(self, size=0, n_materials=0):
+    def __init__(self, size=0):
         self.header = ChunkHeader(magic='VUOM')
         self.header.size = size
         self.map_object_uv = []
 
-        self.n_materials = 0
-
     def read(self, f):
         self.map_object_uv = []
 
-        for _ in range(self.n_materials):
+        for _ in range(self.header.size // 8):
             self.map_object_uv.append(vec2D.read(f, 2))
 
     def write(self, f):
