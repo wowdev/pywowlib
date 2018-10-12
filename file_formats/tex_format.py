@@ -3,7 +3,7 @@ from ..io_utils.types import *
 
 
 class TXVR:
-    def __init__(self, size=8):
+    def __init__(self, size=4):
         self.header = ChunkHeader(magic='RVXT')
         self.header.size = size
         self.version = 0
