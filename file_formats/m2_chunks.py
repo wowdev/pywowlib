@@ -1,3 +1,4 @@
+from io import BytesIO
 from .wow_common_types import ChunkHeader, MVER
 from ..io_utils.types import *
 from .m2_format import M2Header
@@ -207,7 +208,7 @@ class GPID:
 
 
 #############################################################
-######                 BfA Chunks                      ######
+######                 Main Chunks                     ######
 #############################################################
 
 class MD20(M2Header):
@@ -215,5 +216,26 @@ class MD20(M2Header):
 
 
 class MD21(M2Header):
-    pass
+    def __init__(self, size=0):
+        self.header = ChunkHeader(magic='MD21')
+        self.header.size = size
+        super().__init__()
+
+    def read(self, f):
+        md20_raw = f.read(self.header.size)
+
+        with BytesIO(md20_raw) as f2:
+            magic = f2.read(4)
+            assert magic != 'MD20'
+
+            super().read(f2)
+
+    def write(self, f):
+
+        with BytesIO() as f2:
+            super().write(f2)
+            md20_raw = f2.read()
+            self.header.size = len(md20_raw)
+            self.header.write(f)
+            f.write(md20_raw)
 

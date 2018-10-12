@@ -47,10 +47,15 @@ class M2File:
         with open(self.filepath, 'rb') as f:
 
             while True:
+                size = None
+
                 try:
                     magic = f.read(4).decode('utf-8')
 
-                    if magic not in ('MD20', 'MD21'):
+                    if magic == 'MD20':
+                        self.is_chunked = False
+
+                    else:
                         size = uint32.read(f)
 
                 except EOFError:
@@ -67,19 +72,24 @@ class M2File:
                 chunk = getattr(m2_chunks, magic, None)
 
                 # skipping unknown chunks
-                if chunk is None:
+                if self.is_chunked and chunk is None:
                     print("\nEncountered unknown chunk \"{}\"".format(magic))
                     f.seek(size, 1)
                     continue
 
-                if magic not in ('MD20', 'MD21'):
+                if not self.is_chunked:
+                    header = chunk()
+                    header.read(f)
+                    self.root = header
+
+                else:
                     read_chunk = chunk(size=size)
                     read_chunk.read(f)
-                    setattr(self, magic.lower(), read_chunk)
-                else:
-                    read_chunk = chunk()
-                    read_chunk.read(f)
-                    self.root = read_chunk
+
+                    if magic != 'MD21':
+                        setattr(self, magic.lower(), read_chunk)
+                    else:
+                        self.root = read_chunk
 
                 if self.version >= M2Versions.WOTLK:
                     # load skins
@@ -124,6 +134,10 @@ class M2File:
                                     frame_values.read(anim_file, ignore_header=True)
                 else:
                     self.skins = self.root.skin_profiles
+
+                # do not attempt reading raw data as chunked for nonn-chunked files
+                if not self.is_chunked:
+                    break
 
     def write(self, filepath):
         with open(filepath, 'wb') as f:

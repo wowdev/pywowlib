@@ -1211,7 +1211,7 @@ class M2Header:
     def __init__(self):
         self._size = 324 if VERSION <= M2Versions.TBC else 304
 
-        self.magic = 'MD20' if VERSION < M2Versions.LEGION else 'MD21'
+        self.magic = 'MD20'
         self.version = VERSION
         self.name = M2String()
         self.global_flags = 0
