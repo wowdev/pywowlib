@@ -768,38 +768,30 @@ class MCVP:
 ######                 Legion Chunks                   ######
 #############################################################
 
-# TODO: fix your 'unpack' things
-# я знаю, что это фиксится импортом io_utils.types, но не знаю, насколько это применимо к системе этого файла
-# ты вроде упоминал, что переведёшь все эти unpack'и на тот формат, в котором сейчас чанки для М2
 
 class GFID:
-    def __init__(self, size=0, n_groups=0, flag_lod=0, num_lod=0):  # TODO: i'm not sure about 0 size
+    def __init__(self, size=0, n_groups=0, has_n_lods=False):
         self.header = ChunkHeader(magic='DIFG')
         self.header.size = size
-        self.group_file_data_ids = []
+        self.group_file_data_ids = [] if not has_n_lods else [[], [], []]
 
         self.n_groups = n_groups
-        self.flag_lod = flag_lod
-        self.num_lod = num_lod
+        self.has_n_lods = has_n_lods
 
     def read(self, f):
-        self.group_file_data_ids = []
+        self.group_file_data_ids = [] if not self.has_n_lods else [[], [], []]
 
         for i in range(self.n_groups):
-            self.group_file_data_ids.append(uint32.read(f))
-
-        for i in range(self.flag_lod):
-            self.group_file_data_ids.append(uint32.read(f))
-
-        for i in range(self.num_lod):
-            self.group_file_data_ids.append(uint32.read(f))
+            for _ in range(self.n_groups):
+                self.group_file_data_ids[i].append(uint32.read(f))
 
     def write(self, f):
-        self.header.size = len(self.group_file_data_ids) * 12  # TODO: check size
+        self.header.size = len(self.group_file_data_ids) * self.n_groups * 4
         self.header.write(f)
 
-        for val in self.group_file_data_ids:
-            uint32.write(f, val)
+        for lod_level in self.group_file_data_ids:
+            for val in lod_level:
+                uint32.write(f, val)
 
 
 class MOUV:
