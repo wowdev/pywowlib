@@ -821,30 +821,9 @@ class MOUV:
 
 ######                >= 8.1 only!                     ######
 
-class MOTX:  # TODO: resolve the naming conflict (класс MOTX уже используется выше)
-             # вообще лучше сам глянь вики на эту тему. Думаю, стоит перенести в MOMT
-
-    def __init__(self, size):
-        self.header = ChunkHeader(magic='XTOM')
-        self.header.size = size
-        self. texture_name_list = []
-
-    def read(self, f):
-        self.texture_name_list = []
-
-        for i in range(self.texture_name_list):
-            self.texture_name_list.append(int8.read(f))
-
-    def write(self, f):
-        self.header.size = len(self.texture_name_list)
-        self.header.write(f)
-
-        for val in self.texture_name_list:
-            int8.write(f, val)
-
 
 class MOSI:
-    def __init__(self, size):
+    def __init__(self, size=4):
         self.header = ChunkHeader(magic='ISOM')
         self.header.size = size
         self.skybox_file_id = 0
@@ -867,11 +846,11 @@ class MODI:
     def read(self, f):
         self.doodad_file_ids = []
 
-        for i in range(self.doodad_file_ids):
+        for i in range(len(self.doodad_file_ids)):
             self.doodad_file_ids.append(uint32.read(f))
 
     def write(self, f):
-        self.header.size = len(self.doodad_file_ids)
+        self.header.size = len(self.doodad_file_ids) * 4
         self.header.write(f)
 
         for val in self.doodad_file_ids:
