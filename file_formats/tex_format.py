@@ -57,13 +57,13 @@ class TXBT:
         self.entries = []
 
     def read(self, f):
-        for _ in range(self.header.size // ??):
+        for _ in range(self.header.size // 12):
             s_blob_texture = SBlobTexture()
             s_blob_texture.read(f)
             self.entries.append(s_blob_texture)
 
     def write(self, f):
-        self.header.size = len(self.entries) * ??
+        self.header.size = len(self.entries) * 12
         self.header.write(f)
 
         for val in self.entries:
