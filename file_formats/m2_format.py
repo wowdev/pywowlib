@@ -293,53 +293,11 @@ class M2CompQuaternion:
         pass
         # TODO: implement
 
-#############################################################
-######                  M2 Chunks                      ######
-#############################################################
-# The following section applies to Legion+
-
-'''
-class PFID(Struct):
-    __fields__ = (
-        string_t[4] | ('magic', 'DIFP'),
-        uint32 | ('size', 4),
-        uint32 | 'phys_file_id'
-    )
-
-
-class SFID(Struct):
-    pass
-
-
-class Chunk(Struct):
-    __fields__ = ()
-
-    def __write__(self, f):
-        self.size = self.__size__() - 8
-        super().__write__(f)
-
-
-class AnimFileID(Struct):
-    __fields__ = (
-        uint16 | 'anim_id',
-        uint16 | 'sub_anim_id',
-        uint32 | 'file_id'
-    )
-
-
-class AFID(Chunk):
-    __fields__ = (
-        string_t[4] | ('magic', 'DIFA'),
-        uint32 | 'size',
-        dynamic_array[this.size / 8] << AnimFileID | 'anim_file_ids'
-    )
-
-'''
-        
 
 #############################################################
 ######              Animation sequences                ######
 #############################################################
+
 
 class M2SequenceFlags:
     blended_animation_auto = 0x1                                # Sets 0x80 when loaded. (M2Init)
@@ -380,32 +338,32 @@ class M2Sequence:
         self.alias_next = 0                                     # id in the list of animations. Used to find actual animation if this sequence is an alias (flags & 0x40)
 
     def read(self, f):
-        self.id = uint16.read(f)
-        self.variation_index = uint16.read(f)
+        self.id = uint16.read(f) #2
+        self.variation_index = uint16.read(f) #2
 
         if VERSION <= M2Versions.TBC:
-            self.start_timestamp = uint32.read(f)
-            self.end_timestamp = uint32.read(f)
+            self.start_timestamp = uint32.read(f) #4
+            self.end_timestamp = uint32.read(f) #4
 
             self.size += 4
         else:
-            self.duration = uint32.read(f)
+            self.duration = uint32.read(f)  #4
         
-        self.movespeed = float32.read(f)
-        self.flags = uint32.read(f)
-        self.frequency = int16.read(f)
-        self.padding = uint16.read(f)
+        self.movespeed = float32.read(f) #4
+        self.flags = uint32.read(f) #4
+        self.frequency = int16.read(f) #2
+        self.padding = uint16.read(f) #2
         self.replay.read(f)
 
         if VERSION < M2Versions.WOD:
-            self.blend_time = uint32.read(f)
+            self.blend_time = uint32.read(f) #4
         else:
-            self.blend_time_in = uint16.read(f)
-            self.blend_time_out = uint16.read(f)
+            self.blend_time_in = uint16.read(f) #2
+            self.blend_time_out = uint16.read(f) #2
 
         self.bounds.read(f)
-        self.variation_next = int16.read(f)
-        self.alias_next = uint16.read(f)
+        self.variation_next = int16.read(f) #2
+        self.alias_next = uint16.read(f) #2
 
         return self
 
@@ -435,6 +393,10 @@ class M2Sequence:
         uint16.write(f, self.alias_next)
 
         return self
+
+    @staticmethod
+    def size():
+        return 32 if VERSION <= M2Versions.TBC else 28
 
 
 #############################################################
