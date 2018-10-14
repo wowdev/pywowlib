@@ -21,6 +21,10 @@ class MPQFile(object):
             self.add_archive(name, flags)
 
     def __contains__(self, name):
+
+        if not name:
+            raise TypeError("\nRequested file can't be empty string.")
+
         for mpq in self._archives:
             if storm.SFileHasFile(mpq, name):
                 return True
@@ -30,6 +34,10 @@ class MPQFile(object):
         return "<%s paths=%r>" % (self.__class__.__name__, self.paths)
 
     def _archive_contains(self, name):
+
+        if not name:
+            raise TypeError("\nRequested file can't be empty string.")
+
         for mpq in self._archives:
             if storm.SFileHasFile(mpq, name):
                 return mpq
