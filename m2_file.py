@@ -83,7 +83,8 @@ class M2File:
                     self.root = header
 
                 else:
-                    read_chunk = chunk(size=size)
+                    read_chunk = chunk(size=size) if magic != 'SFID' else chunk(size=size,
+                                                                                n_views=self.root.num_skin_profiles)
                     read_chunk.read(f)
 
                     if magic != 'MD21':

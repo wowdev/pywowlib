@@ -15,7 +15,7 @@ class M2Versions:
     MOP = 272
     WOD = 273  # ?
     LEGION = 274
-    BFA = 275  # TODO: verify
+    BFA = 274  # TODO: verify
 
 
 #############################################################

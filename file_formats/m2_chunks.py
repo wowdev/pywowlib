@@ -24,14 +24,13 @@ class PFID:
 
 
 class SFID:
-    def __init__(self, size=0, n_views=0, lod_bands=0):
+    def __init__(self, size=0, n_views=0):
         self.header = ChunkHeader(magic='SFID')
         self.header.size = size
         self.skin_file_data_ids = []
         self.lod_skin_file_data_ids = []
 
         self.n_views = n_views
-        self.lod_bands = lod_bands
 
     def read(self, f):
         self.skin_file_data_ids = []
@@ -40,7 +39,7 @@ class SFID:
         for i in range(self.n_views):
             self.skin_file_data_ids.append(uint32.read(f))
 
-        for i in range(self.lod_bands):
+        for i in range((self.header.size - self.n_views * 4) // 4):
             self.lod_skin_file_data_ids.append(uint32.read(f))
 
     def write(self, f):
