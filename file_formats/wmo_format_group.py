@@ -46,42 +46,42 @@ class MOGP:
         self.unknown2 = 0
 
     def read(self, f):
-        self.group_name_ofs = unpack("I", f.read(4))[0]
-        self.desc_group_name_ofs = unpack("I", f.read(4))[0]
-        self.flags = unpack("I", f.read(4))[0]
-        self.bounding_box_corner1 = unpack("fff", f.read(12))
-        self.bounding_box_corner2 = unpack("fff", f.read(12))
-        self.portal_start = unpack("H", f.read(2))[0]
-        self.portal_count = unpack("H", f.read(2))[0]
-        self.n_batches_a = unpack("H", f.read(2))[0]
-        self.n_batches_b = unpack("H", f.read(2))[0]
-        self.n_batches_c = unpack("H", f.read(2))[0]
-        self.n_batches_d = unpack("H", f.read(2))[0]
-        self.fog_indices = unpack("BBBB", f.read(4))
-        self.liquid_type = unpack("I", f.read(4))[0]
-        self.group_id = unpack("I", f.read(4))[0]
-        self.unknown1 = unpack("I", f.read(4))[0]
-        self.unknown2 = unpack("I", f.read(4))[0]
+        self.group_name_ofs = uint32.read(f)
+        self.desc_group_name_ofs = uint32.read(f)
+        self.flags = uint32.read(f)
+        self.bounding_box_corner1 = vec3D.read(f)
+        self.bounding_box_corner2 = vec3D.read(f)
+        self.portal_start = uint16.read(f)
+        self.portal_count = uint16.read(f)
+        self.n_batches_a = uint16.read(f)
+        self.n_batches_b = uint16.read(f)
+        self.n_batches_c = uint16.read(f)
+        self.n_batches_d = uint16.read(f)
+        self.fog_indices = uint8.read(f, 4)
+        self.liquid_type = uint32.read(f)
+        self.group_id = uint32.read(f)
+        self.unknown1 = uint32.read(f)
+        self.unknown2 = uint32.read(f)
 
     def write(self, f):
         self.header.write(f)
 
-        f.write(pack('I', self.group_name_ofs))
-        f.write(pack('I', self.desc_group_name_ofs))
-        f.write(pack('I', self.flags))
-        f.write(pack('fff', *self.bounding_box_corner1))
-        f.write(pack('fff', *self.bounding_box_corner2))
-        f.write(pack('H', self.portal_start))
-        f.write(pack('H', self.portal_count))
-        f.write(pack('H', self.n_batches_a))
-        f.write(pack('H', self.n_batches_b))
-        f.write(pack('H', self.n_batches_c))
-        f.write(pack('H', self.n_batches_d))
-        f.write(pack('BBBB', *self.fog_indices))
-        f.write(pack('I', self.liquid_type))
-        f.write(pack('I', self.group_id))
-        f.write(pack('I', self.unknown1))
-        f.write(pack('I', self.unknown2))
+        uint32.write(f, self.group_name_ofs)
+        uint32.write(f, self.desc_group_name_ofs)
+        uint32.write(f, self.flags)
+        vec3D.write(f, self.bounding_box_corner1)
+        vec3D.write(f, self.bounding_box_corner2)
+        uint16.write(f, self.portal_start)
+        uint16.write(f, self.portal_count)
+        uint16.write(f, self.n_batches_a)
+        uint16.write(f, self.n_batches_b)
+        uint16.write(f, self.n_batches_c)
+        uint16.write(f, self.n_batches_d)
+        uint8.write(f, self.fog_indices, 4)
+        uint32.write(f, self.liquid_type)
+        uint32.write(f, self.group_id)
+        uint32.write(f, self.unknown1)
+        uint32.write(f, self.unknown2)
 
 
 class TriangleMaterial:
@@ -92,12 +92,12 @@ class TriangleMaterial:
         self.material_id = 0
 
     def read(self, f):
-        self.flags = unpack("B", f.read(1))[0]
-        self.material_id = unpack("B", f.read(1))[0]
+        self.flags = uint8.read(f)
+        self.material_id = uint8.read(f)
 
     def write(self, f):
-        f.write(pack('B', self.flags))
-        f.write(pack('B', self.material_id))
+        uint8.write(f, self.flags)
+        uint8.write(f, self.material_id)
 
 
 class MOPY:
@@ -141,14 +141,14 @@ class MOVI:
         self.indices = []
 
         for i in range(count):
-            self.indices.append(unpack("H", f.read(2))[0])
+            self.indices.append(uint16.read(f))
 
     def write(self, f):
         self.header.size = len(self.indices) * 2
         self.header.write(f)
 
         for i in self.indices:
-            f.write(pack('H', i))
+            uint16.write(f, i)
 
 
 class MOVT:
@@ -167,14 +167,14 @@ class MOVT:
         self.vertices = []
 
         for i in range(count):
-            self.vertices.append(unpack("fff", f.read(12)))
+            self.vertices.append(vec3D.read(f))
 
     def write(self, f):
         self.header.size = len(self.vertices) * 12
         self.header.write(f)
 
         for v in self.vertices:
-            f.write(pack('fff', *v))
+            vec3D.write(f, v)
 
 
 class MONR:
@@ -192,14 +192,14 @@ class MONR:
         self.normals = []
 
         for i in range(count):
-            self.normals.append(unpack("fff", f.read(12)))
+            self.normals.append(vec3D.read(f))
 
     def write(self, f):
         self.header.size = len(self.normals) * 12
         self.header.write(f)
 
         for n in self.normals:
-            f.write(pack('fff', *n))
+            vec3D.write(f, n)
 
 
 class MOTV:
@@ -217,14 +217,14 @@ class MOTV:
         self.tex_coords = []
 
         for i in range(count):
-            self.tex_coords.append(unpack("ff", f.read(8)))
+            self.tex_coords.append(float32.read(f, 2))
 
     def write(self, f):
         self.header.size = len(self.tex_coords) * 8
         self.header.write(f)
 
         for tc in self.tex_coords:
-            f.write(pack('ff', *tc))
+            float32.write(f, tc, 2)
 
 
 class Batch:
@@ -238,22 +238,22 @@ class Batch:
         self.material_id = 0
 
     def read(self, f):
-        self.bounding_box = unpack("hhhhhh", f.read(12))
-        self.start_triangle = unpack("I", f.read(4))[0]
-        self.n_triangles = unpack("H", f.read(2))[0]
-        self.start_vertex = unpack("H", f.read(2))[0]
-        self.last_vertex = unpack("H", f.read(2))[0]
-        self.unknown = unpack("B", f.read(1))[0]
-        self.material_id = unpack("B", f.read(1))[0]
+        self.bounding_box = int16.read(f, 6)
+        self.start_triangle = uint32.read(f)
+        self.n_triangles = uint16.read(f)
+        self.start_vertex = uint16.read(f)
+        self.last_vertex = uint16.read(f)
+        self.unknown = uint8.read(f)
+        self.material_id = uint8.read(f)
 
     def write(self, f):
-        f.write(pack('hhhhhh', *self.bounding_box))
-        f.write(pack('I', self.start_triangle))
-        f.write(pack('H', self.n_triangles))
-        f.write(pack('H', self.start_vertex))
-        f.write(pack('H', self.last_vertex))
-        f.write(pack('B', self.unknown))
-        f.write(pack('B', self.material_id))
+        int16.write(f, self.bounding_box, 6)
+        uint32.write(f, self.start_triangle)
+        uint16.write(f, self.n_triangles)
+        uint16.write(f, self.start_vertex)
+        uint16.write(f, self.last_vertex)
+        uint8.write(f, self.unknown)
+        uint8.write(f, self.material_id)
 
 
 class MOBA:
@@ -297,14 +297,14 @@ class MOLR:
         self.light_refs = []
 
         for i in range(count):
-            self.light_refs.append(unpack("h", f.read(2))[0])
+            self.light_refs.append(int16.read(f))
 
     def write(self, f):
         self.header.size = len(self.light_refs) * 2
 
         self.header.write(f)
         for lr in self.light_refs:
-            f.write(pack('h', lr))
+            int16.write(f, lr)
 
 
 class MODR:
@@ -322,14 +322,14 @@ class MODR:
         self.doodad_refs = []
 
         for i in range(count):
-            self.doodad_refs.append(unpack("h", f.read(2))[0])
+            self.doodad_refs.append(int16.read(f))
 
     def write(self, f):
         self.header.size = len(self.doodad_refs) * 2
         self.header.write(f)
 
         for dr in self.doodad_refs:
-            f.write(pack('h', dr))
+            int16.write(f, dr)
 
 
 class BSPPlaneType:
@@ -348,18 +348,18 @@ class BSPNode:
         self.dist = 0
 
     def read(self, f):
-        self.plane_type = unpack("h", f.read(2))[0]
-        self.children = unpack("hh", f.read(4))
-        self.num_faces = unpack("H", f.read(2))[0]
-        self.first_face = unpack("I", f.read(4))[0]
-        self.dist = unpack("f", f.read(4))[0]
+        self.plane_type = int16.read(f)
+        self.children = int16.read(f, 2)
+        self.num_faces = uint16.read(f)
+        self.first_face = uint32.read(f)
+        self.dist = float32.read(f)
 
     def write(self, f):
-        f.write(pack('h', self.plane_type))
-        f.write(pack('hh', *self.children))
-        f.write(pack('H', self.num_faces))
-        f.write(pack('I', self.first_face))
-        f.write(pack('f', self.dist))
+        int16.write(f, self.plane_type)
+        int16.write(f, self.children, 2)
+        uint16.write(f, self.num_faces)
+        uint32.write(f, self.first_face)
+        float32.write(f, self.dist)
 
 
 class MOBN:
@@ -400,14 +400,14 @@ class MOBR:
         self.faces = []
 
         for i in range(count):
-            self.faces.append(unpack("H", f.read(2))[0])
+            self.faces.append(uint16.read(f))
 
     def write(self, f):
         self.header.size = len(self.faces) * 2
         self.header.write(f)
 
         for face in self.faces:
-            f.write(pack('H', face))
+            uint16.write(f, face)
 
 
 class MOCV:
@@ -425,14 +425,14 @@ class MOCV:
         self.vert_colors = []
 
         for i in range(count):
-            self.vert_colors.append(unpack("BBBB", f.read(4)))
+            self.vert_colors.append(uint8.read(f, 4))
 
     def write(self, f):
         self.header.size = len(self.vert_colors) * 4
         self.header.write(f)
 
         for vc in self.vert_colors:
-            f.write(pack('BBBB', *vc))
+            uint8.write(f, vc, 4)
 
 
 class LiquidVertex:
@@ -453,29 +453,29 @@ class LiquidVertex:
     def read(self, f):
         pos = f.tell()
 
-        self.flow1 = unpack("B", f.read(1))[0]
-        self.flow2 = unpack("B", f.read(1))[0]
-        self.flow1_pct = unpack("B", f.read(1))[0]
-        self.filler = unpack("B", f.read(1))[0]
+        self.flow1 = uint8.read(f)
+        self.flow2 = uint8.read(f)
+        self.flow1_pct = uint8.read(f)
+        self.filler = uint8.read(f)
 
         f.seek(pos)
 
-        self.u = unpack("h", f.read(2))[0]
-        self.v = unpack("h", f.read(2))[0]
+        self.u = int16.read(f)
+        self.v = int16.read(f)
 
-        self.height = unpack("f", f.read(4))
+        self.height = float32.read(f)
 
     def write(self, f):
         if self.is_water:
-            f.write(pack('B', self.flow1))
-            f.write(pack('B', self.flow2))
-            f.write(pack('B', self.flow1_pct))
-            f.write(pack('B', self.filler))
+            uint8.write(f, self.flow1)
+            uint8.write(f, self.flow2)
+            uint8.write(f, self.flow1_pct)
+            uint8.write(f, self.filler)
         else:
-            f.write(pack('h', self.u))
-            f.write(pack('h', self.v))
+            int16.write(f, self.u)
+            int16.write(f, self.v)
 
-        f.write(pack('f', self.height))
+        float32.write(f, self.height)
 
 
 class MLIQ:
@@ -495,12 +495,12 @@ class MLIQ:
         self.is_water = True
 
     def read(self, f):
-        self.x_verts = unpack("I", f.read(4))[0]
-        self.y_verts = unpack("I", f.read(4))[0]
-        self.x_tiles = unpack("I", f.read(4))[0]
-        self.y_tiles = unpack("I", f.read(4))[0]
-        self.position = unpack("fff", f.read(12))
-        self.material_id = unpack("H", f.read(2))[0]
+        self.x_verts = uint32.read(f)
+        self.y_verts = uint32.read(f)
+        self.x_tiles = uint32.read(f)
+        self.y_tiles = uint32.read(f)
+        self.position = vec3D.read(f)
+        self.material_id = uint16.read(f)
 
         self.vertex_map = []
 
@@ -516,25 +516,25 @@ class MLIQ:
         # well some other strange things (e.g 0x7F = visible, etc...)
 
         for i in range(self.x_tiles * self.y_tiles):
-            self.tile_flags.append(unpack("B", f.read(1))[0])
+            self.tile_flags.append(uint8.read(f))
 
     def write(self, f):
         self.header.size = 30 + self.x_verts * self.y_verts * 8 + self.x_tiles * self.y_tiles
         self.header.write(f)
 
-        f.write(pack('I', self.x_verts))
-        f.write(pack('I', self.y_verts))
-        f.write(pack('I', self.x_tiles))
-        f.write(pack('I', self.y_tiles))
-        f.write(pack('fff', *self.position))
-        f.write(pack('H', self.material_id))
+        uint32.write(f, self.x_verts)
+        uint32.write(f, self.y_verts)
+        uint32.write(f, self.x_tiles)
+        uint32.write(f, self.y_tiles)
+        vec3D.write(f, *self.position)
+        uint16.write(f, self.material_id)
 
         for vtx in self.vertex_map:
             vtx.is_water = self.is_water
             vtx.write(f)
 
         for tile_flag in self.tile_flags:
-            f.write(pack('B', tile_flag))
+            uint8.write(f, tile_flag)
 
 
 #############################################################
