@@ -1,4 +1,3 @@
-from struct import pack, unpack
 from .wow_common_types import *
 
 
@@ -26,33 +25,33 @@ class MOHD:
         self.flags = 0
 
     def read(self, f):
-        self.n_materials = unpack("I", f.read(4))[0]
-        self.n_groups = unpack("I", f.read(4))[0]
-        self.n_portals = unpack("I", f.read(4))[0]
-        self.n_lights = unpack("I", f.read(4))[0]
-        self.n_models = unpack("I", f.read(4))[0]
-        self.n_doodads = unpack("I", f.read(4))[0]
-        self.n_sets = unpack("I", f.read(4))[0]
-        self.ambient_color = unpack("BBBB", f.read(4))
-        self.id = unpack("I", f.read(4))[0]
-        self.bounding_box_corner1 = unpack("fff", f.read(12))
-        self.bounding_box_corner2 = unpack("fff", f.read(12))
-        self.flags = unpack("I", f.read(4))[0]
+        self.n_materials = uint32.read(f)
+        self.n_groups = uint32.read(f)
+        self.n_portals = uint32.read(f)
+        self.n_lights = uint32.read(f)
+        self.n_models = uint32.read(f)
+        self.n_doodads = uint32.read(f)
+        self.n_sets = uint32.read(f)
+        self.ambient_color = uint8.read(f, 4)
+        self.id = uint32.read(f)
+        self.bounding_box_corner1 = vec3D.read(f)
+        self.bounding_box_corner2 = vec3D.read(f)
+        self.flags = uint32.read(f)
 
     def write(self, f):
         self.header.write(f)
-        f.write(pack('I', self.n_materials))
-        f.write(pack('I', self.n_groups))
-        f.write(pack('I', self.n_portals))
-        f.write(pack('I', self.n_lights))
-        f.write(pack('I', self.n_models))
-        f.write(pack('I', self.n_doodads))
-        f.write(pack('I', self.n_sets))
-        f.write(pack('BBBB', *self.ambient_color))
-        f.write(pack('I', self.id))
-        f.write(pack('fff', *self.bounding_box_corner1))
-        f.write(pack('fff', *self.bounding_box_corner2))
-        f.write(pack('I', self.flags))
+        uint32.write(f, self.n_materials)
+        uint32.write(f, self.n_groups)
+        uint32.write(f, self.n_portals)
+        uint32.write(f, self.n_lights)
+        uint32.write(f, self.n_models)
+        uint32.write(f, self.n_doodads)
+        uint32.write(f, self.n_sets)
+        uint8.write(f, self.ambient_color, 4)
+        uint32.write(f, self.id)
+        vec3D.write(f, self.bounding_box_corner1)
+        vec3D.write(f, self.bounding_box_corner2)
+        uint32.write(f, self.flags)
 
 
 class MOTX:
@@ -124,34 +123,34 @@ class WMOMaterial:
         self.runtime_data = (0, 0, 0, 0)
 
     def read(self, f):
-        self.flags = unpack("I", f.read(4))[0]
-        self.shader = unpack("I", f.read(4))[0]
-        self.blend_mode = unpack("I", f.read(4))[0]
-        self.texture1_ofs = unpack("I", f.read(4))[0]
-        self.emissive_color = unpack("BBBB", f.read(4))
-        self.sidn_emissive_color = unpack("BBBB", f.read(4))
-        self.texture2_ofs = unpack("I", f.read(4))[0]
-        self.diff_color = unpack("BBBB", f.read(4))
-        self.terrain_type = unpack("I", f.read(4))[0]
-        self.texture3_ofs = unpack("I", f.read(4))[0]
-        self.color3 = unpack("BBBB", f.read(4))
-        self.tex3_flags = unpack("I", f.read(4))[0]
-        self.runtime_data = unpack("IIII", f.read(16))[0]
+        self.flags = uint32.read(f)
+        self.shader = uint32.read(f)
+        self.blend_mode = uint32.read(f)
+        self.texture1_ofs = uint32.read(f)
+        self.emissive_color = uint8.read(f, 4)
+        self.sidn_emissive_color = uint8.read(f, 4)
+        self.texture2_ofs = uint32.read(f)
+        self.diff_color = uint8.read(f, 4)
+        self.terrain_type = uint32.read(f)
+        self.texture3_ofs = uint32.read(f)
+        self.color3 = uint8.read(f, 4)
+        self.tex3_flags = uint32.read(f)
+        self.runtime_data = uint32.read(f, 4)
 
     def write(self, f):
-        f.write(pack('I', self.flags))
-        f.write(pack('I', self.shader))
-        f.write(pack('I', self.blend_mode))
-        f.write(pack('I', self.texture1_ofs))
-        f.write(pack('BBBB', *self.emissive_color))
-        f.write(pack('BBBB', *self.sidn_emissive_color))
-        f.write(pack('I', self.texture2_ofs))
-        f.write(pack('BBBB', *self.diff_color))
-        f.write(pack('I', self.terrain_type))
-        f.write(pack('I', self.texture3_ofs))
-        f.write(pack('BBBB', *self.color3))
-        f.write(pack('I', self.tex3_flags))
-        f.write(pack('IIII', *self.runtime_data))
+        uint32.write(f, self.flags)
+        uint32.write(f, self.shader)
+        uint32.write(f, self.blend_mode)
+        uint32.write(f, self.texture1_ofs)
+        uint8.write(f, self.emissive_color, 4)
+        uint8.write(f, self.sidn_emissive_color, 4)
+        uint32.write(f, self.texture2_ofs)
+        uint8.write(f, self.diff_color, 4)
+        uint32.write(f, self.terrain_type)
+        uint32.write(f, self.texture3_ofs)
+        uint8.write(f, self.color3, 4)
+        uint32.write(f, self.tex3_flags)
+        uint32.write(f, self.runtime_data, 4)
 
 
 class MOMT:
@@ -225,16 +224,16 @@ class GroupInfo:
         self.name_ofs = 0
 
     def read(self, f):
-        self.flags = unpack("I", f.read(4))[0]
-        self.bounding_box_corner1 = unpack("fff", f.read(12))
-        self.bounding_box_corner2 = unpack("fff", f.read(12))
-        self.name_ofs = unpack("I", f.read(4))[0]
+        self.flags = uint32.read(f)
+        self.bounding_box_corner1 = vec3D.read(f)
+        self.bounding_box_corner2 = vec3D.read(f)
+        self.name_ofs = uint32.read(f)
 
     def write(self, f):
-        f.write(pack('I', self.flags))
-        f.write(pack('fff', *self.bounding_box_corner1))
-        f.write(pack('fff', *self.bounding_box_corner2))
-        f.write(pack('I', self.name_ofs))
+        uint32.write(f, self.flags)
+        vec3D.write(f, self.bounding_box_corner1)
+        vec3D.write(f, self.bounding_box_corner2)
+        uint32.write(f, self.name_ofs)
 
 
 class MOGI:
@@ -297,14 +296,14 @@ class MOPV:
 
         # 12 = sizeof(float) * 3
         for i in range(count):
-            self.portal_vertices.append(unpack("fff", f.read(12)))
+            self.portal_vertices.append(vec3D.read(f))
 
     def write(self, f):
         self.header.size = len(self.portal_vertices) * 12
         self.header.write(f)
 
         for v in self.portal_vertices:
-            f.write(pack('fff', *v))
+            vec3D.write(f, v)
 
 
 class PortalInfo:
@@ -315,16 +314,16 @@ class PortalInfo:
         self.unknown = 0
 
     def read(self, f):
-        self.start_vertex = unpack("H", f.read(2))[0]
-        self.n_vertices = unpack("H", f.read(2))[0]
-        self.normal = unpack("fff", f.read(12))
-        self.unknown = unpack("f", f.read(4))[0]
+        self.start_vertex = uint16.read(f)
+        self.n_vertices = uint16.read(f)
+        self.normal = vec3D.read(f)
+        self.unknown = float32.read(f)
 
     def write(self, f):
-        f.write(pack('H', self.start_vertex))
-        f.write(pack('H', self.n_vertices))
-        f.write(pack('fff', *self.normal))
-        f.write(pack('f', self.unknown))
+        uint16.write(f, self.start_vertex)
+        uint16.write(f, self.n_vertices)
+        vec3D.write(f, self.normal)
+        float32.write(f, self.unknown)
 
 
 # portal infos
@@ -359,16 +358,16 @@ class PortalRelation:
         self.padding = 0
 
     def read(self, f):
-        self.portal_index = unpack("H", f.read(2))[0]
-        self.group_index = unpack("H", f.read(2))[0]
-        self.side = unpack("h", f.read(2))[0]
-        self.padding = unpack("H", f.read(2))[0]
+        self.portal_index = uint16.read(f)
+        self.group_index = uint16.read(f)
+        self.side = int16.read(f)
+        self.padding = uint16.read(f)
 
     def write(self, f):
-        f.write(pack('H', self.portal_index))
-        f.write(pack('H', self.group_index))
-        f.write(pack('h', self.side))
-        f.write(pack('H', self.padding))
+        uint16.write(f, self.portal_index)
+        uint16.write(f, self.group_index)
+        int16.write(f, self.side)
+        uint16.write(f, self.padding)
 
 
 class MOPR:
@@ -407,14 +406,14 @@ class MOVV:
         self.visible_vertices = []
 
         for i in range(self.header.size // 12):
-            self.visible_vertices.append(unpack("fff", f.read(12)))
+            self.visible_vertices.append(vec3D.read(f))
 
     def write(self, f):
         self.header.size = len(self.visible_vertices) * 12
         self.header.write(f)
 
         for v in self.visible_vertices:
-            f.write(pack('fff', *v))
+            vec3D.write(f, v)
 
 
 class VisibleBatch:
@@ -423,12 +422,12 @@ class VisibleBatch:
         self.n_vertices = 0
 
     def read(self, f):
-        self.start_vertex = unpack("H", f.read(2))[0]
-        self.n_vertices = unpack("H", f.read(2))[0]
+        self.start_vertex = uint16.read(f)
+        self.n_vertices = uint16.read(f)
 
     def write(self, f):
-        f.write(pack('H', self.start_vertex))
-        f.write(pack('H', self.n_vertices))
+        uint16.write(f, self.start_vertex)
+        uint16.write(f, self.n_vertices)
 
 
 class MOVB:
@@ -474,34 +473,34 @@ class Light:
         self.unknown4 = 0
 
     def read(self, f):
-        self.light_type = unpack("B", f.read(1))[0]
-        self.type = unpack("B", f.read(1))[0]
-        self.use_attenuation = unpack("B", f.read(1))[0]
-        self.padding = unpack("B", f.read(1))[0]
-        self.color = unpack("BBBB", f.read(4))
-        self.position = unpack("fff", f.read(12))
-        self.intensity = unpack("f", f.read(4))[0]
-        self.attenuation_start = unpack("f", f.read(4))[0]
-        self.attenuation_end = unpack("f", f.read(4))[0]
-        self.unknown1 = unpack("f", f.read(4))[0]
-        self.unknown2 = unpack("f", f.read(4))[0]
-        self.unknown3 = unpack("f", f.read(4))[0]
-        self.unknown4 = unpack("f", f.read(4))[0]
+        self.light_type = uint8.read(f)
+        self.type = uint8.read(f)
+        self.use_attenuation = uint8.read(f)
+        self.padding = uint8.read(f)
+        self.color = uint8.read(f, 4)
+        self.position = vec3D.read(f)
+        self.intensity = float32.read(f)
+        self.attenuation_start = float32.read(f)
+        self.attenuation_end = float32.read(f)
+        self.unknown1 = float32.read(f)
+        self.unknown2 = float32.read(f)
+        self.unknown3 = float32.read(f)
+        self.unknown4 = float32.read(f)
 
     def write(self, f):
-        f.write(pack('B', self.light_type))
-        f.write(pack('B', self.type))
-        f.write(pack('B', self.use_attenuation))
-        f.write(pack('B', self.padding))
-        f.write(pack('BBBB', *self.color))
-        f.write(pack('fff', *self.position))
-        f.write(pack('f', self.intensity))
-        f.write(pack('f', self.attenuation_start))
-        f.write(pack('f', self.attenuation_end))
-        f.write(pack('f', self.unknown1))
-        f.write(pack('f', self.unknown2))
-        f.write(pack('f', self.unknown3))
-        f.write(pack('f', self.unknown4))
+        uint8.write(f, self.light_type)
+        uint8.write(f, self.type)
+        uint8.write(f, self.use_attenuation)
+        uint8.write(f, self.padding)
+        uint8.write(f, self.color, 4)
+        vec3D.write(f, self.position)
+        float32.write(f, self.intensity)
+        float32.write(f, self.attenuation_start)
+        float32.write(f, self.attenuation_end)
+        float32.write(f, self.unknown1)
+        float32.write(f, self.unknown2)
+        float32.write(f, self.unknown3)
+        float32.write(f, self.unknown4)
 
 
 class MOLT:
@@ -539,15 +538,15 @@ class DoodadSet:
 
     def read(self, f):
         self.name = f.read(20).decode("ascii")
-        self.start_doodad = unpack("I", f.read(4))[0]
-        self.n_doodads = unpack("I", f.read(4))[0]
-        self.padding = unpack("I", f.read(4))[0]
+        self.start_doodad = uint32.read(f)
+        self.n_doodads = uint32.read(f)
+        self.padding = uint32.read(f)
 
     def write(self, f):
         f.write(self.name.ljust(20, '\0').encode('ascii'))
-        f.write(pack('I', self.start_doodad))
-        f.write(pack('I', self.n_doodads))
-        f.write(pack('I', self.padding))
+        uint32.write(f, self.start_doodad)
+        uint32.write(f, self.n_doodads)
+        uint32.write(f, self.padding)
 
 
 class MODS:
@@ -637,21 +636,21 @@ class DoodadDefinition:
         self.color = [0, 0, 0, 0]
 
     def read(self, f):
-        weird_thing = unpack("I", f.read(4))[0]
+        weird_thing = uint32.read(f)
         self.name_ofs = weird_thing & 0xFFFFFF
         self.flags = (weird_thing >> 24) & 0xFF
-        self.position = unpack("fff", f.read(12))
-        self.rotation = unpack("ffff", f.read(16))
-        self.scale = unpack("f", f.read(4))[0]
-        self.color = unpack("BBBB", f.read(4))
+        self.position = vec3D.read(f)
+        self.rotation = float32.read(f, 4)
+        self.scale = float32.read(f)
+        self.color = uint8.read(f, 4)
 
     def write(self, f):
         weird_thing = ((self.flags & 0xFF) << 24) | (self.name_ofs & 0xFFFFFF)
-        f.write(pack('I', weird_thing))
-        f.write(pack('fff', *self.position))
-        f.write(pack('ffff', *self.rotation))
-        f.write(pack('f', self.scale))
-        f.write(pack('BBBB', *self.color))
+        uint32.write(f, weird_thing)
+        vec3D.write(f, self.position)
+        float32.write(f, self.rotation, 4)
+        float32.write(f, self.scale)
+        uint8.write(f, self.color, 4)
 
 
 class MODD:
@@ -693,28 +692,28 @@ class Fog:
         self.color2 = (0, 0, 0, 0)
 
     def read(self, f):
-        self.flags = unpack("I", f.read(4))[0]
-        self.position = unpack("fff", f.read(12))
-        self.small_radius = unpack("f", f.read(4))[0]
-        self.big_radius = unpack("f", f.read(4))[0]
-        self.end_dist = unpack("f", f.read(4))[0]
-        self.start_factor = unpack("f", f.read(4))[0]
-        self.color1 = unpack("BBBB", f.read(4))
-        self.end_dist2 = unpack("f", f.read(4))[0]
-        self.start_factor2 = unpack("f", f.read(4))[0]
-        self.color2 = unpack("BBBB", f.read(4))
+        self.flags = uint32.read(f)
+        self.position = vec3D.read(f)
+        self.small_radius = float32.read(f)
+        self.big_radius = float32.read(f)
+        self.end_dist = float32.read(f)
+        self.start_factor = float32.read(f)
+        self.color1 = uint8.read(f, 4)
+        self.end_dist2 = float32.read(f)
+        self.start_factor2 = float32.read(f)
+        self.color2 = uint8.read(f, 4)
 
     def write(self, f):
-        f.write(pack('I', self.flags))
-        f.write(pack('fff', *self.position))
-        f.write(pack('f', self.small_radius))
-        f.write(pack('f', self.big_radius))
-        f.write(pack('f', self.end_dist))
-        f.write(pack('f', self.start_factor))
-        f.write(pack('BBBB', *self.color1))
-        f.write(pack('f', self.end_dist2))
-        f.write(pack('f', self.start_factor2))
-        f.write(pack('BBBB', *self.color2))
+        uint32.write(f, self.flags)
+        vec3D.write(f, self.position)
+        float32.write(f, self.small_radius)
+        float32.write(f, self.big_radius)
+        float32.write(f, self.end_dist)
+        float32.write(f, self.start_factor)
+        uint8.write(f, self.color1, 4)
+        float32.write(f, self.end_dist2)
+        float32.write(f, self.start_factor2)
+        uint8.write(f, self.color2, 4)
 
 
 class MFOG:
@@ -761,7 +760,7 @@ class MCVP:
         self.header.write(f)
 
         for i in self.convex_volume_planes:
-            f.write(pack('ffff', self.convex_volume_planes[i]))
+            float32.write(f, self.convex_volume_planes[i], 4)
 
 
 #############################################################

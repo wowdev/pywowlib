@@ -1,4 +1,3 @@
-from struct import pack, unpack
 from .wow_common_types import *
 
 
