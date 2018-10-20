@@ -141,7 +141,7 @@ std::vector<DirectoryEntry> LocalCascHandler::listFiles(const std::string &direc
     BOOL result;
     if(hFindFile != INVALID_HANDLE_VALUE) {
         do {
-            if((findData.dwFileAttributes & FILE_ATTRIBUTE_NORMAL) != 0) {
+            if((findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0) {
                 files.push_back(findData.cFileName);
             }
             result = FindNextFile(hFindFile, &findData);
