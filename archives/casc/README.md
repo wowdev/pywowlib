@@ -7,6 +7,7 @@
 `python setup.py build_ext --inplace`
 #### MSVC
 Modify `setup.py` and change `extra_compile_args=['-O3']` to `extra_compile_args=['/Ox']`
+
 `python setup.py build_ext --inplace`
 
 ## API
