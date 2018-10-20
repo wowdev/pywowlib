@@ -4,6 +4,7 @@
 #include "assert.h"
 #include <iostream>
 #include <sstream>
+#include <cctype>
 
 std::string String::rtrim(const std::string &s) {
     if(s.empty()) {
