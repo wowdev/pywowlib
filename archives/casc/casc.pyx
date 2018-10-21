@@ -54,3 +54,6 @@ cdef class CascHandlerLocal:
         ret = memoryview(mview).tobytes()
         free(data_ptr)
         return ret
+
+    def __contains__(self, item):
+        return self.exists(item)
