@@ -32,24 +32,25 @@ cdef class CascHandlerLocal:
 
     def exists(self, file):
         if isinstance(file, str):
-            return self.c_casc.fileExists(file)
+            return self.c_casc.fileExists(file.encode('utf-8'))
         elif isinstance(file, int):
             return self.c_casc.fileDataIdExists(file)
         else:
             raise ValueError('file must be either string or int')
 
     def open_file(self, file):
-        cdef int fileSize
+        cdef int file_size
         cdef void* dataPtr
-        fileSize = 0
+        file_size = 0
+
         if isinstance(file, str):
-            dataPtr = self.c_casc.openFile(file, fileSize)
+            data_ptr = self.c_casc.openFile(file, file_size.encode('utf-8'))
         elif isinstance(file, int):
-            dataPtr = self.c_casc.openFileByFileId(file, fileSize)
+            data_ptr = self.c_casc.openFileByFileId(file, file_size)
         else:
             raise ValueError("File must be either string or int")
 
-        cdef unsigned char[::1] mview = <unsigned char[:fileSize]>(dataPtr)
+        cdef unsigned char[::1] mview = <unsigned char[:file_size]>(data_ptr)
         ret = memoryview(mview).tobytes()
-        free(dataPtr)
+        free(data_ptr)
         return ret
