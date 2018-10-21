@@ -161,10 +161,9 @@ class WoWFileData:
         start_time = time.time()
 
         wow_path = os.path.join(wow_path, '')  # ensure the path has trailing slash
-        print(wow_path)
 
         casc = CascHandlerLocal()
-        casc.initialize(wow_path.encode('utf-8'))
+        casc.initialize(wow_path)
 
         print("\nDone initializing data packages.")
         print("Total loading time: ", time.strftime("%M minutes %S seconds", time.gmtime(time.time() - start_time)))
