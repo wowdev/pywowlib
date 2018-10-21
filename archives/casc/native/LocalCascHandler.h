@@ -59,11 +59,16 @@ private:
 
     void* toPointer(const BinaryReader& reader, int& size);
 
+    void initializeInternal(const std::string& buildKey, int buildId);
+
 public:
     explicit LocalCascHandler();
     ~LocalCascHandler();
 
     void initialize(const std::string& path);
+    void initializeWithBuildKey(const std::string& path, const std::string& buildKey);
+    void initializeWithBuildInfo(const std::string &path, const std::string &buildInfo);
+    void initializeWithBuildInfoPath(const std::string &path, const std::string &buildInfoPath);
 
     bool fileExists(const std::string &name);
     bool fileDataIdExists(uint32_t fileDataId);

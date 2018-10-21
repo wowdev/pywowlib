@@ -38,14 +38,7 @@ void LocalCascHandler::initialize(const std::string& path) {
         throw std::runtime_error("No active build found");
     }
 
-    const std::string buildKey = activeBuild.first;
-    mBuildId = activeBuild.second;
-
-    loadBuildConfig(buildKey);
-    loadIndexFiles();
-    parseIndexFiles();
-    parseEncodingFile();
-    parseRootFile();
+    initializeInternal(activeBuild.first, activeBuild.second);
 }
 
 BinaryReader LocalCascHandler::tryFindBuildInfo() {
@@ -79,6 +72,7 @@ BinaryReader LocalCascHandler::openFileInMemory(const std::string &path) {
 }
 
 std::pair<std::string, int> LocalCascHandler::selectBuild(const TokenConfig &buildConfig) {
+    std::pair<std::string, int> retBuild;
     for(uint32_t i = 0; i < buildConfig.size(); ++i) {
         std::map<std::string, std::string> build = buildConfig[i];
         std::string version = build["Version"];
@@ -90,12 +84,13 @@ std::pair<std::string, int> LocalCascHandler::selectBuild(const TokenConfig &bui
         }
 
         std::string buildKey = build["Build Key"];
+        retBuild = std::make_pair(buildKey, buildId);
         if(active) {
-            return std::make_pair(buildKey, buildId);
+            return retBuild;
         }
     }
 
-    return std::pair<std::string, int>();
+    return retBuild;
 }
 
 void LocalCascHandler::loadBuildConfig(const std::string &buildKey) {
@@ -401,4 +396,43 @@ bool LocalCascHandler::fileDataIdExists(uint32_t fileDataId) {
     }
 
     return false;
+}
+
+void LocalCascHandler::initializeWithBuildKey(const std::string &path, const std::string &buildKey) {
+    mRootPath = path;
+    initializeInternal(buildKey, -1);
+}
+
+void LocalCascHandler::initializeInternal(const std::string &buildKey, int buildId) {
+    mBuildId = buildId;
+
+    loadBuildConfig(buildKey);
+    loadIndexFiles();
+    parseIndexFiles();
+    parseEncodingFile();
+    parseRootFile();
+}
+
+void LocalCascHandler::initializeWithBuildInfo(const std::string &path, const std::string &buildInfo) {
+    std::stringstream data;
+    data.str(buildInfo);
+    TokenConfig buildInfoConfig;
+    buildInfoConfig.parse(data);
+    std::pair<std::string, int> activeBuild = selectBuild(buildInfoConfig);
+    if(activeBuild.first.empty()) {
+        throw std::runtime_error("No active build found");
+    }
+
+    initializeInternal(activeBuild.first, activeBuild.second);
+}
+
+void LocalCascHandler::initializeWithBuildInfoPath(const std::string &path, const std::string &buildInfoPath) {
+    TokenConfig buildInfoConfig;
+    buildInfoConfig.parse(openFileInMemory(buildInfoPath));
+    std::pair<std::string, int> activeBuild = selectBuild(buildInfoConfig);
+    if(activeBuild.first.empty()) {
+        throw std::runtime_error("No active build found");
+    }
+
+    initializeInternal(activeBuild.first, activeBuild.second);
 }

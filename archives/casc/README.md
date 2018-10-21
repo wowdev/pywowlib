@@ -22,6 +22,27 @@ def class CascHandlerLocal:
     def initialize(self, folder):
         ## compiled code
 
+    # path:      Path to a wow install location (does not need to contain a .build.info)
+    # build_key: File key of the build config file
+    #
+    # throws: RuntimeError if the build config file with this key does not exist or initialization failed
+    def initialize_with_build_key(self, path, build_key):
+        ## compiled code
+
+    # path:       Path to a wow install location (does not need to contain a .build.info)
+    # build_info: String containing the content of a .build.info file
+    #
+    # throws RuntimeError if initialization failed
+    def initialize_with_build_info(self, path, build_info):
+        ## compiled code
+
+    # path:            Path to a wow install location (does not need to contain a .build.info)
+    # build_info_path: Path to a .build.info file (does not need to be inside path)
+    #
+    # throws RuntimeError if the build info file does not exist or initialization failed
+    def initialize_with_build_info_path(self, path, build_info_path):
+        ## compiled code
+
     # file: if string -> check if file exists
     #       if int    -> check if file data id exists
     #
@@ -36,7 +57,7 @@ def class CascHandlerLocal:
     # return: bytearray with the file content
     # throws: RuntimeError if the file is not found
     #         ValueError if the 'file' parameter is neither string nor int
-    def openFile(self, file):
+    def open_file(self, file):
         ## compiled code
 ```        
 
