@@ -11,7 +11,7 @@ else:
     extra_link_args = ['-stdlib=libc++', '-mmacosx-version-min=10.9']
     
 setup(
-    name='Python CASC Handler',
+    name='PythonCASC',
     ext_modules=cythonize(Extension(
         "CASC",
         sources=[
@@ -49,4 +49,4 @@ setup(
         extra_link_args=extra_link_args
     )),
     requires=['Cython']
-)
+)nativ
