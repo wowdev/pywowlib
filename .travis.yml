@@ -8,3 +8,6 @@ python:
 
 install:
   - python build.py
+  
+ script:
+  - __init__.py
