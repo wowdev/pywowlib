@@ -1,0 +1,3 @@
+[submodule "archives/mpq/native/stormlib"]
+	path = archives/mpq/native/stormlib
+	url = https://github.com/ladislav-zezula/StormLib
