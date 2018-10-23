@@ -1,4 +1,6 @@
 # pywowlib
+[![Build Status](https://travis-ci.org/WowDevTools/pywowlib.svg?branch=master)](https://travis-ci.org/WowDevTools/pywowlib)
+
 **pywowlib** is a Python 3.5+ libary featuring the functionality of reading and writing various World of Warcraft related file formats.
 The goal of the library is to initially target 3 WoW versions: 3.3.5a, 7.3.5, retail. 
 In the future, we may target other core expansion versions: 1.12, 2.4.3, 4.3.4, 5.4.8, 6.2.4
