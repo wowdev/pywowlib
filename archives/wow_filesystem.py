@@ -2,7 +2,7 @@ import re
 import os
 import time
 from .. import CLIENT_VERSION, WoWVersions
-from .mpq.storm import MPQFile
+from .mpq import MPQFile
 from .casc.CASC import CascHandlerLocal
 from ..wdbx.wdbc import DBCFile
 from ..blp.BLP2PNG import BlpConverter
