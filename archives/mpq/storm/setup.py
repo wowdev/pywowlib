@@ -11,9 +11,9 @@ else:
     extra_link_args = ['-stdlib=libc++', '-mmacosx-version-min=10.9']
     
 setup(
-    name='Python CASC Handler',
-    ext_modules=cythonize(Extension(
-        "CASC",
+    name='Python MPQ',
+    ext_modules=Extension(
+        "storm",
         sources=[
             "casc.pyx",
 
