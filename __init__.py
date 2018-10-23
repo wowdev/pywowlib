@@ -1,5 +1,6 @@
 CLIENT_VERSION = 6
 
+
 class WoWVersions:
     CLASSIC = 0
     TBC = 1
