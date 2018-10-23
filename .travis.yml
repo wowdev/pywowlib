@@ -10,5 +10,6 @@ install:
   - pip install Cython
   - python build.py
   
- script: pytest
+ script: 
+  - pytest
  
