@@ -11,4 +11,4 @@ install:
   - python build.py
   
 script: 
-  - pytest
+  - __init__.py
