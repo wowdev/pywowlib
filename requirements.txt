@@ -1,2 +1,2 @@
 require-python-3
-bitarray
+bitarray==0.8.3
