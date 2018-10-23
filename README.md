@@ -15,9 +15,10 @@ In the future, we may target other core expansion versions: 1.12, 2.4.3, 4.3.4, 
 | ADT    	| Terrain Tile               	| TBI         	| TBI           	| TBI            | By this category, _tex.adt and other additional ADT-related files are implied as well.                                                                                	|
 | WDT    	| World Terrain Layout       	| TBI         	| TBI           	| TBI           	|                                                                                                                                                                       	|
 | WDL    	| Lowres Terrain             	| TBI         	| TBI           	| TBI           	|                                                                                                                                                                       	|
-| MPQ    	| Storage                    	| ✔           	| -             	| -             	| Writing can be implemented by extending StormLib Python wrapper that we are using.                                                                                    	|
+| MPQ    	| Storage                    	| ✔           	| -               | -             	| Writing can be implemented by extending StormLib Python wrapper that we are using.                                                                                    	|
 | CASC   	| Storage (multiple formats) 	| -           	| ✔           	  | ✔           	| Read-only. CASCHost integration is planned.|
-| BLP     | Images                      | ✔             | ✔                | ✔            |  Read only                                   |
+| BLP     | Images                      | ✔             | ✔               | ✔            |  Read only                                   |
+| DBC/DB2     |    DBFilesClient        | ✔             | %               | %            |                                    |
 # Contribution
 Feel free to contribute to the library development by either making a pull request or contacting Skarn directly to gain write access.
 
