@@ -9,9 +9,7 @@ if platform.system() != 'Darwin':
 else:
     extra_compile_args = ['-O3', '-mmacosx-version-min=10.9', '-stdlib=libc++', '-Wdeprecated']
     extra_link_args = ['-stdlib=libc++', '-mmacosx-version-min=10.9']
-
-extra_compile_args = ['-O3']
-extra_link_args = []    
+  
 
 setup(
     name='Python CASC Handler',
