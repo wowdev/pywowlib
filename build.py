@@ -22,7 +22,7 @@ def build_project():
 
     extension_dirs = (
         "archives/casc/",
-        "archives/mpq/",
+        "archives/mpq/native/",
         "blp/"
     )
 
