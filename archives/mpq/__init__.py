@@ -3,7 +3,7 @@ Python wrapper around Storm C API bindings
 """
 import os
 import sys
-from . import storm
+from .native import storm
 
 
 class MPQFile(object):
