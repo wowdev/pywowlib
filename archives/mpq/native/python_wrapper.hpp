@@ -2,6 +2,7 @@
 
 #include <Python.h>
 
+#include <cstdint>
 #include <string>
 
 namespace python
