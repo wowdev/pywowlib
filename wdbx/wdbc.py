@@ -1,8 +1,9 @@
-from ..io_utils.types import *
 from collections import namedtuple
 from io import BytesIO
+
+from pywowlib.wdbx.types import DBCString, DBCLangString
 from .definitions import wotlk
-from .definitions.types import DBCString, DBCLangString
+from ..io_utils.types import *
 
 
 class DBCHeader:

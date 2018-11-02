@@ -1,5 +1,5 @@
-from ...io_utils.types import uint32
-from ... import CLIENT_VERSION, WoWVersions
+from ..io_utils.types import uint32
+from .. import CLIENT_VERSION, WoWVersions
 
 
 class DBCString:

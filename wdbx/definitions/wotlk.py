@@ -1,5 +1,6 @@
 from collections import OrderedDict
-from .types import DBCString, DBCLangString
+
+from ..types import DBCString, DBCLangString
 from ...io_utils.types import *
 
 iRefID = uint32
