@@ -1,7 +1,7 @@
 from collections import namedtuple
 from io import BytesIO
 
-from pywowlib.wdbx.types import DBCString, DBCLangString
+from .types import DBCString, DBCLangString
 from .definitions import wotlk
 from ..io_utils.types import *
 

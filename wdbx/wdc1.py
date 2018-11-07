@@ -1,4 +1,5 @@
 from ..io_utils.types import *
+from collections import OrderedDict
 from enum import IntEnum
 
 
@@ -123,19 +124,9 @@ class FieldStorageInfo:
         self.additional_data_size = 0
         self.storage_type = FieldCompression.NONE
 
-        self.bitpacking_offset_bits = 0
-        self.bitpacking_size_bits = 0
-        self.flags = 0
-        self.default_value = 0
-        self.array_count = 0
-
-        self.unk_or_unused1 = 0
-        self.unk_or_unused2 = 0
-        self.unk_or_unused3 = 0
-
     def read(self, f):
-        self.field_offset_bits = uint32.read(f)
-        self.field_size_bits = uint32.read(f)
+        self.field_offset_bits = uint16.read(f)
+        self.field_size_bits = uint16.read(f)
         self.additional_data_size = uint32.read(f)
         self.storage_type = uint32.read(f)
 
@@ -200,25 +191,6 @@ class FieldStorageInfo:
         return self
 
 
-class CopyTableEntry:
-
-    def __init__(self):
-        self.id_of_new_row = 0
-        self.id_of_copied_row = 0
-
-    def read(self, f):
-        self.id_of_new_row = uint32.read(f)
-        self.id_of_copied_row = uint32.read(f)
-
-        return self
-
-    def write(self, f):
-        uint32.write(f, self.id_of_new_row)
-        uint32.write(f, self.id_of_copied_row)
-
-        return self
-
-
 class RelationshipEntry:
     def __init__(self):
         self.foreign_id = 0
@@ -233,6 +205,32 @@ class RelationshipEntry:
     def write(self, f):
         uint32.write(f, self.foreign_id)
         uint32.write(f, self.record_index)
+
+        return self
+
+
+class RelationshipMapping:
+    def __init__(self):
+        self.num_entries = 0
+        self.min_id = 0
+        self.max_id = 0
+        self.entries = []
+
+    def read(self, f):
+        self.num_entries = uint32.read(f)
+        self.min_id = uint32.read(f)
+        self.max_id = uint32.read(f)
+        self.entries = [RelationshipEntry().read(f) for _ in range(self.num_entries)]
+
+        return self
+
+    def write(self, f):
+        uint32.write(f, len(self.entries))
+        uint32.write(f, self.min_id)
+        uint32.write(f, self.max_id)
+
+        for entry in self.entries:
+            entry.write(f)
 
         return self
 
@@ -264,15 +262,12 @@ class WDC1:
         self.variable_record_data = None
         self.offset_map = []
 
-        self.copy_table = []
+        self.copy_table = {}
         self.field_info = []
         self.pallet_data = None
         self.common_data = None
 
-        self.num_entries = 0
-        self.min_id = 0
-        self.max_id = 0
-        self.relationship_map = []
+        self.relationship_map = RelationshipMapping()
 
     def read(self, f):
         self.header.read(f)
@@ -294,89 +289,31 @@ class WDC1:
         self.id_list = [uint32.read(f) for _ in range(self.header.id_list_size // 4)]
 
         if self.header.copy_table_size > 0:
-            self.copy_table = [CopyTableEntry().read(f) for _ in range(self.header.copy_table_size // 8)]
+            self.copy_table = {uint32.read(f): uint32.read(f) for _ in range(self.header.copy_table_size // 8)}
 
-        self.field_info = [FieldStorageInfo().read(f) for _ in range(self.header.field_storage_info_size // 38)]
+        self.field_info = [FieldStorageInfo().read(f) for _ in range(self.header.field_storage_info_size // 24)]
         self.pallet_data = f.read(self.header.pallet_data_size)
         self.common_data = f.read(self.header.common_data_size)
 
         if self.header.relationship_data_size > 0:
-            self.num_entries = uint32.read(f)
-            self.min_id = uint32.read(f)
-            self.max_id = uint32.read(f)
-            self.relationship_map = [RelationshipEntry().read(f) for _ in range(self.num_entries)]
+            self.relationship_map = RelationshipMapping().read(f)
 
-    def write(self, f):
-        # calculate header values
-        self.header.total_field_count = len(self.fields)
+    def parse_field_data(self):
 
+        has_non_inline_ids = self.header.flags & WDBFlags.HasNonInlineIDs
+
+        records = OrderedDict()
+
+        # normal records
         if not (self.header.flags & WDBFlags.HasOffsetMap):
-            self.header.record_count = len(self.record_data) * self.header.record_size
-            self.header.string_table_size = len(self.string_data)
+            if has_non_inline_ids:
+                pass
+            else:
+                pass
 
+        # offset map records
         else:
-            self.header.offset_map_offset = len(self.variable_record_data) \
-                                            + self.header.size + (4 * self.header.total_field_count)
-
-            self.header.min_id = 0  # TODO: verify
-            self.header.max_id = len(self.offset_map) - 1  # TODO: verify
-
-        self.header.id_list_size = len(self.id_list) * 4
-        self.header.copy_table_size = len(self.copy_table) * 8
-        self.header.field_storage_info_size = len(self.field_info) * 38
-        self.header.pallet_data_size = len(self.pallet_data)
-        self.header.common_data_size = len(self.common_data)
-        self.header.relationship_data_size = len(self.relationship_map) * 8
-
-        # write data
-        self.header.write(f)
-
-        for fs in self.fields:
-            fs.write(f)
-
-        if not (self.header.flags & WDBFlags.HasOffsetMap):
-            f.write(self.record_data)
-            f.write(self.string_data)
-
-        else:
-            f.write(self.variable_record_data)
-
-            for ofs_map_entry in self.offset_map:
-                ofs_map_entry.write(f)
-
-        for id in self.id_list:
-            uint32.write(f, id)
-
-        for entry in self.copy_table:
-            entry.write(f)
-
-        for info in self.field_info:
-            info.write(f)
-
-        f.write(self.pallet_data)
-        f.write(self.common_data)
-
-        if self.header.relationship_data_size > 0:
-            self.num_entries = len(self.relationship_map)
-            uint32.write(f, self.num_entries)
-
-            min_id = self.relationship_map[0].foreign_id
-            max_id = min_id
-
-            for entry in self.relationship_map:
-                entry.foreid_id = min(min_id, entry.foreid_id)
-                entry.foreid_id = max(max_id, entry.foreid_id)
-
-            self.min_id = min_id
-            self.max_id = max_id
-
-            uint32.write(f, self.min_id)
-            uint32.write(f, self.max_id)
-
-            for entry in self.relationship_map:
-                entry.write(f)
-
-
+            pass
 
 
 
