@@ -2,6 +2,7 @@ from collections import namedtuple
 from io import BytesIO
 
 from pywowlib.wdbx.types import DBCString, DBCLangString
+from pywowlib.wdbx.dbd_wrapper import DBDefinition
 from .definitions import wotlk
 from ..io_utils.types import *
 
@@ -37,9 +38,7 @@ class DBCHeader:
 
 class DBCFile:
     def __init__(self, name):
-        definition = getattr(wotlk, name)
-        if not definition:
-            raise FileNotFoundError('No definition for DB <<{}>> found.'.format(name))
+        definition = DBDefinition(name, '3.3.5.12340')
 
         self.header = DBCHeader()
         self.name = name

@@ -1,4 +1,5 @@
 import os
+from collections import OrderedDict
 from .dbd.code.Python3.dbd import parse_dbd_file
 from .types import DBCString, DBCLangString
 from ..io_utils import types
@@ -25,7 +26,7 @@ class DBDefinition:
 
         columns = {column.name: column.type for column in self._dbd_raw.columns}
 
-        self.definition = {}
+        self.definition = OrderedDict()
         for entry in definition.entries:
             type_name = columns[entry.column]
 
@@ -50,6 +51,14 @@ class DBDefinition:
     def __getitem__(self, item):
         return self.definition[item]
 
+    def keys(self):
+        return self.definition.keys()
+
+    def items(self):
+        return self.definition.items()
+
+    def values(self):
+        return self.definition.values()
 
 
 
