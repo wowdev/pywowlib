@@ -23,7 +23,7 @@ class SKL1:
             self.unk2 = [uint8.read(f2) for _ in range(4)]
 
     def write(self, f):
-        self.header.size = len(self.unk2) + self.unk1 * 4 + self.name.n_elements * char.size_()
+        self.header.size = len(self.unk2) + self.unk1 * 4 + self.name.n_elements * char.size_() + self._size
         self.header.write(f)
 
         with BytesIO() as f2:
@@ -57,13 +57,13 @@ class SKA1:
 
     def write(self, f):
         self.header.size = self.attachments.n_elements * M2Attachment.size() \
-                           + self.attachment_lookup_table.n_elements * 2
+                           + self.attachment_lookup_table.n_elements * 2 + self._size
         self.header.write(f)
 
         with BytesIO() as f2:
             MemoryManager.mem_reserve(f2, self._size)
             self.attachments.write(f2)
-            uint16.write(f2, self.attachment_lookup_table)
+            self.attachment_lookup_table.write(f2)
             f2.seek(0)
 
         f.write(f2.read())
@@ -86,13 +86,13 @@ class SKB1:
             self.key_bone_lookup.read(f2)
 
     def write(self, f):
-        self.header.size = self.bones.n_elements * M2Attachment.size() + self.key_bone_lookup.n_elements * 2
+        self.header.size = self.bones.n_elements * M2Attachment.size() + self.key_bone_lookup.n_elements * 2 + self._size
         self.header.write(f)
 
         with BytesIO() as f2:
             MemoryManager.mem_reserve(f2, self._size)
             self.bones.write(f2)
-            uint16.write(f2, self.key_bone_lookup)
+            self.key_bone_lookup.write(f2)
             f2.seek(0)
 
         f.write(f2.read())
@@ -120,8 +120,8 @@ class SKS1:
             self.unk = [uint8.read(f2) for _ in range(8)]
 
     def write(self, f):
-        self.header.size = len(self.unk) + self.global_loops.n_elements * 4 + self.sequences.n_elements * M2Sequence.size()\
-        + self.sequence_lookups.n_elements * 2
+        self.header.size = len(self.unk) + self.global_loops.n_elements * 4 + self.sequences.n_elements * \
+                           M2Sequence.size() + self.sequence_lookups.n_elements * 2 + self._size
         self.header.write(f)
 
         with BytesIO() as f2:
@@ -138,7 +138,6 @@ class SKS1:
 
 
 class SKPD:
-    _size = 32
 
     def __init__(self, size=0):
         self.header = ChunkHeader(magic='SKPD')
@@ -162,4 +161,3 @@ class SKPD:
 
         for val in self.unk2:
             uint8.write(f, val)
-
