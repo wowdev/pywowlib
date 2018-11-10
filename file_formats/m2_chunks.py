@@ -128,6 +128,61 @@ class TXAC:
                 int8.write(f, val)
 
 
+class EXPT:
+    def __init__(self, size=0):
+        self.header = ChunkHeader(magic='EXPT')
+        self.header.size = size
+        self.extended_particle = []
+
+    def read(self, f):
+        self.extended_particle = []
+        for i in range(self.header.size // 12):
+            self.extended_particle.append(int8.read(f))
+
+    def write(self, f):
+        self.header.size = len(self.extended_particle) * 12
+        for val in self.extended_particle:
+            int8.write(f, val)
+
+
+class ExtendedParticle2:
+    def __init__(self):
+        self.unk = vec3D
+        self.base = 0
+        self.vary = 0
+
+    def read(self, f):
+        self.unk = vec3D.read(f)
+        self.base = uint16.read(f)
+        self.vary = uint32.read(f)
+
+    def write(self, f):
+        vec3D.write(f, self.unk)
+        uint16.write(f, self.base)
+        uint16.write(f, self.vary)
+
+
+class EXP2:
+    def __init__(self, size=0):
+        self.header = ChunkHeader(magic='EXP2')
+        self.header.size = size
+        self.extended_particle2 = []
+
+    def read(self, f):
+        self.extended_particle2 = []
+        for _ in range(self.header.size // 16):
+            exp2 = ExtendedParticle2()
+            exp2.read(f)
+            self.extended_particle2.append(exp2)
+
+    def write(self, f):
+        self.header.size = len(self.extended_particle2) * 16
+        self.header.write(f)
+
+        for val in self.extended_particle2:
+            val.write(f)
+
+
 class SKID:
     def __init__(self, size=8):
         self.header = ChunkHeader(magic='SKID')
