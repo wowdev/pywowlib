@@ -1,5 +1,15 @@
+import os
+import platform
 from distutils.core import setup, Extension
 from Cython.Build import cythonize
+
+if platform.system() != 'Darwin':
+    extra_compile_args = ['-O3'] 
+    extra_link_args = []
+else:
+    extra_compile_args = ['-O3', '-mmacosx-version-min=10.9', '-stdlib=libc++', '-Wdeprecated']
+    extra_link_args = ['-stdlib=libc++', '-mmacosx-version-min=10.9']
+  
 
 setup(
     name='Python CASC Handler',
@@ -36,7 +46,8 @@ setup(
 
         include_dirs=["native/zlib"],
         language="c++",
-        extra_compile_args=['-O3']
+        extra_compile_args=extra_compile_args,
+        extra_link_args=extra_link_args
     )),
     requires=['Cython']
 )

@@ -1,0 +1,3 @@
+[submodule "wdbx/dbd"]
+	path = wdbx/dbd
+	url = https://github.com/wowdev/WoWDBDefs/

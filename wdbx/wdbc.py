@@ -1,8 +1,9 @@
-from ..io_utils.types import *
 from collections import namedtuple
 from io import BytesIO
-from .definitions import wotlk
-from .definitions.types import DBCString, DBCLangString
+
+from .dbd_wrapper import DBDefinition
+from .types import DBCString, DBCLangString
+from ..io_utils.types import *
 
 
 class DBCHeader:
@@ -36,9 +37,7 @@ class DBCHeader:
 
 class DBCFile:
     def __init__(self, name):
-        definition = getattr(wotlk, name)
-        if not definition:
-            raise FileNotFoundError('No definition for DB <<{}>> found.'.format(name))
+        definition = DBDefinition(name, '3.3.5.12340')
 
         self.header = DBCHeader()
         self.name = name

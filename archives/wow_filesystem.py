@@ -1,7 +1,9 @@
 import re
 import os
 import time
-from .mpq.storm import MPQFile
+from .. import CLIENT_VERSION, WoWVersions
+from .mpq import MPQFile
+from .casc.CASC import CascHandlerLocal
 from ..wdbx.wdbc import DBCFile
 from ..blp.BLP2PNG import BlpConverter
 
@@ -9,7 +11,8 @@ from ..blp.BLP2PNG import BlpConverter
 class WoWFileData:
     def __init__(self, wow_path, project_path):
         self.wow_path = wow_path
-        self.files = self.open_game_resources(self.wow_path, project_path)
+        self.files = self.init_mpq_storage(self.wow_path, project_path) if CLIENT_VERSION < WoWVersions.WOD \
+                     else self.init_casc_storage(self.wow_path, project_path)
 
         self.db_files_client = DBFilesClient(self)
         self.db_files_client.init_tables()
@@ -148,36 +151,55 @@ class WoWFileData:
         return False
 
     @staticmethod
-    def open_game_resources(wow_path, project_path=None):
+    def init_casc_storage(wow_path, project_path=None):
+
+        if not WoWFileData.is_wow_path_valid(wow_path):
+            print("\nPath to World of Warcraft is empty or invalid. Failed to load game data.")
+            return None
+
+        print("\nProcessing available game resources of client: " + wow_path)
+        start_time = time.time()
+
+        wow_path = os.path.join(wow_path, '')  # ensure the path has trailing slash
+
+        casc = CascHandlerLocal()
+        casc.initialize(wow_path)
+
+        print("\nDone initializing data packages.")
+        print("Total loading time: ", time.strftime("%M minutes %S seconds", time.gmtime(time.time() - start_time)))
+        return [(casc, True), (project_path.lower().strip(os.sep), False)] if project_path else [(casc, True)]
+
+    @staticmethod
+    def init_mpq_storage(wow_path, project_path=None):
         """Open game resources and store links to them in memory"""
 
         print("\nProcessing available game resources of client: " + wow_path)
         start_time = time.time()
 
-        if WoWFileData.is_wow_path_valid(wow_path):
-            data_packages = WoWFileData.list_game_data_paths(os.path.join(wow_path, "Data"))
-
-            # project path takes top priority if it is not loaded already
-            p_path = project_path.lower().strip(os.sep)
-            if p_path not in data_packages:
-                data_packages.append(p_path)
-
-            resource_map = []
-
-            for package in data_packages:
-                if os.path.isfile(package):
-                    resource_map.append((MPQFile(package, 0x00000100), True))
-                    print("\nLoaded MPQ: " + os.path.basename(package))
-                else:
-                    resource_map.append((package, False))
-                    print("\nLoaded folder patch: {}".format(os.path.basename(package)))
-
-            print("\nDone initializing data packages.")
-            print("Total loading time: ", time.strftime("%M minutes %S seconds", time.gmtime(time.time() - start_time)))
-            return resource_map
-        else:
+        if not WoWFileData.is_wow_path_valid(wow_path):
             print("\nPath to World of Warcraft is empty or invalid. Failed to load game data.")
             return None
+
+        data_packages = WoWFileData.list_game_data_paths(os.path.join(wow_path, "Data"))
+
+        # project path takes top priority if it is not loaded already
+        p_path = project_path.lower().strip(os.sep)
+        if p_path not in data_packages:
+            data_packages.append(p_path)
+
+        resource_map = []
+
+        for package in data_packages:
+            if os.path.isfile(package):
+                resource_map.append((MPQFile(package, 0x00000100), True))
+                print("\nLoaded MPQ: " + os.path.basename(package))
+            else:
+                resource_map.append((package, False))
+                print("\nLoaded folder patch: {}".format(os.path.basename(package)))
+
+        print("\nDone initializing data packages.")
+        print("Total loading time: ", time.strftime("%M minutes %S seconds", time.gmtime(time.time() - start_time)))
+        return resource_map
 
 
 class DBFilesClient:

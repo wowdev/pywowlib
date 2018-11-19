@@ -1,5 +1,6 @@
 from libcpp cimport bool
 from libc.stdlib cimport free
+from typing import Any
 
 cdef extern from "native/LocalCascHandler.h":
     cdef cppclass LocalCascHandler:
@@ -15,41 +16,46 @@ cdef extern from "native/LocalCascHandler.h":
 
 cdef class CascHandlerLocal:
     cdef LocalCascHandler c_casc;
+
     def __cinit__(self):
         self.c_casc = LocalCascHandler()
 
-    def initialize(self, path):
+    def initialize(self, path: str):
         self.c_casc.initialize(path.encode('utf-8'))
 
-    def initialize_with_build_key(self, path, build_key):
+    def initialize_with_build_key(self, path: str, build_key: str):
         self.c_casc.initializeWithBuildKey(path.encode('utf-8'), build_key.encode('utf-8'))
 
-    def initialize_with_build_info(self, path, build_info):
+    def initialize_with_build_info(self, path: str, build_info: str):
         self.c_casc.initializeWithBuildInfo(path.encode('utf-8'), build_info.encode('utf-8'))
 
-    def initialize_with_build_info_path(self, path, build_info_path):
+    def initialize_with_build_info_path(self, path: str, build_info_path: str):
         self.c_casc.initializeWithBuildInfoPath(path.encode('utf-8'), build_info_path.encode('utf-8'))
 
-    def exists(self, file):
+    def exists(self, file: Any):
         if isinstance(file, str):
-            return self.c_casc.fileExists(file)
+            return self.c_casc.fileExists(file.encode('utf-8'))
         elif isinstance(file, int):
             return self.c_casc.fileDataIdExists(file)
         else:
             raise ValueError('file must be either string or int')
 
-    def open_file(self, file):
-        cdef int fileSize
+    def open_file(self, file: Any):
+        cdef int file_size
         cdef void* dataPtr
-        fileSize = 0
+        file_size = 0
+
         if isinstance(file, str):
-            dataPtr = self.c_casc.openFile(file, fileSize)
+            data_ptr = self.c_casc.openFile(file, file_size.encode('utf-8'))
         elif isinstance(file, int):
-            dataPtr = self.c_casc.openFileByFileId(file, fileSize)
+            data_ptr = self.c_casc.openFileByFileId(file, file_size)
         else:
             raise ValueError("File must be either string or int")
 
-        cdef unsigned char[::1] mview = <unsigned char[:fileSize]>(dataPtr)
+        cdef unsigned char[::1] mview = <unsigned char[:file_size]>(data_ptr)
         ret = memoryview(mview).tobytes()
-        free(dataPtr)
+        free(data_ptr)
         return ret
+
+    def __contains__(self, item: Any):
+        return self.exists(item)
