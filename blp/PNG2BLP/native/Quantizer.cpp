@@ -1,6 +1,6 @@
 #include <cstring>
 #include <stdexcept>
-#include "libimagequant/libimagequant.h"
+#include <libimagequant.h>
 #include "Quantizer.h"
 
 template<typename T>

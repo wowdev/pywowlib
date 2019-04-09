@@ -23,7 +23,8 @@ def build_project():
     extension_dirs = (
         "archives/casc/",
         "archives/mpq/native/",
-        "blp/"
+        "blp/BLP2PNG/",
+        "blp/PNG2BLP/"
     )
 
     print('\nBuilding pywowlib C++ extensions.')

@@ -8,11 +8,13 @@
 #include "BinaryWriter.h"
 #include "MipMapGenerator.h"
 #include "Quantizer.h"
-#include "pngpp/png.hpp"
+#include <png.hpp>
+
 
 extern "C" {
-#include "libtxc_dxtn/txc_dxtn.h"
+#include <txc_dxtn.h>
 }
+
 
 Png2Blp::Png2Blp() {
 }

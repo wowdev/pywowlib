@@ -307,7 +307,14 @@ class WDC1:
         # normal records
         if not (self.header.flags & WDBFlags.HasOffsetMap):
             if has_non_inline_ids:
-                pass
+
+                for field_struct, field_info in zip(self.fields, self.field_info):
+                    is_array = False
+
+                    if field_struct.size != 0:
+                        length = field_info.field_size_bits // (32 - field_struct.size)
+                        is_array = length > 1
+
             else:
                 pass
 
