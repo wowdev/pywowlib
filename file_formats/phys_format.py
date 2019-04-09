@@ -27,9 +27,9 @@ class PHYV:
         self.header.size = size
 
     def read(self, f):
-
+        pass
     def write(self, f):
-
+        pass
 
 class PHYT:
 
@@ -38,9 +38,9 @@ class PHYT:
         self.header.size = size
 
     def read(self, f):
-
+        pass
     def write(self, f):
-
+        pass
 
 class BODY:
 
@@ -49,9 +49,9 @@ class BODY:
         self.header.size = size
 
     def read(self, f):
-
+        pass
     def write(self, f):
-
+        pass
 
 class BDY2(BODY):
     pass
@@ -70,9 +70,9 @@ class SHAP:
         self.header.size = size
 
     def read(self, f):
-
+        pass
     def write(self, f):
-
+        pass
 
 class SHP2(SHAP):
     pass
@@ -88,9 +88,9 @@ class PLYT:
         self.header.size = size
 
     def read(self, f):
-
+        pass
     def write(self, f):
-
+        pass
 
 class JOIN:
 
@@ -99,9 +99,9 @@ class JOIN:
         self.header.size = size
 
     def read(self, f):
-
+        pass
     def write(self, f):
-
+        pass
 
 #TODO: create joint types enum
 
@@ -113,9 +113,9 @@ class WELJ:
         self.header.size = size
 
     def read(self, f):
-
+        pass
     def write(self, f):
-
+        pass
 
 class WLJ2(WELJ):
     pass
@@ -127,9 +127,9 @@ class SPHJ:
         self.header.size = size
 
     def read(self, f):
-
+        pass
     def write(self, f):
-
+        pass
 
 class SHOJ:
 
@@ -138,9 +138,9 @@ class SHOJ:
         self.header.size = size
 
     def read(self, f):
-
+        pass
     def write(self, f):
-
+        pass
 
 class PRSJ:
 
@@ -149,9 +149,9 @@ class PRSJ:
         self.header.size = size
 
     def read(self, f):
-
+        pass
     def write(self, f):
-
+        pass
 
 class REVJ:
 
@@ -160,9 +160,9 @@ class REVJ:
         self.header.size = size
 
     def read(self, f):
-
+        pass
     def write(self, f):
-
+        pass
 
 class DSTJ:
 
@@ -171,5 +171,6 @@ class DSTJ:
         self.header.size = size
 
     def read(self, f):
-
+        pass
     def write(self, f):
+        pass

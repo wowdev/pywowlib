@@ -5,7 +5,7 @@ from .. import CLIENT_VERSION, WoWVersions
 from .mpq import MPQFile
 from .casc.CASC import CascHandlerLocal
 from ..wdbx.wdbc import DBCFile
-from ..blp.BLP2PNG import BlpConverter
+from ..blp import BLP2PNG
 
 
 class WoWFileData:
@@ -93,7 +93,7 @@ class WoWFileData:
                 except KeyError as e:
                     print(e)
         if pairs:
-            BlpConverter().convert(pairs, dir.encode('utf-8'))
+            BLP2PNG().convert(pairs, dir.encode('utf-8'))
 
     @staticmethod
     def list_game_data_paths(path):
