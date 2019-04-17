@@ -1,4 +1,5 @@
 #include <cstdio>
+#include <algorithm>
 #include "GaussFiltering.h"
 
 static float kernel[] = {
