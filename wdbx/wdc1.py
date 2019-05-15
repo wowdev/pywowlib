@@ -1,5 +1,6 @@
-from ..io_utils.types import *
 from collections import OrderedDict
+from ..io_utils.types import *
+from .dbd_wrapper import DBDefinition
 from enum import IntEnum
 
 
@@ -269,6 +270,9 @@ class WDC1:
 
         self.relationship_map = RelationshipMapping()
 
+        # deserialized records
+        self.records = OrderedDict()
+
     def read(self, f):
         self.header.read(f)
         self.fields = [FieldStructure().read(f) for _ in range(self.header.total_field_count)]
@@ -298,29 +302,11 @@ class WDC1:
         if self.header.relationship_data_size > 0:
             self.relationship_map = RelationshipMapping().read(f)
 
-    def parse_field_data(self):
+    def deserialize(self, table_name, build):
+        definition = DBDefinition(table_name, build)
 
-        has_non_inline_ids = self.header.flags & WDBFlags.HasNonInlineIDs
-
-        records = OrderedDict()
-
-        # normal records
-        if not (self.header.flags & WDBFlags.HasOffsetMap):
-            if has_non_inline_ids:
-
-                for field_struct, field_info in zip(self.fields, self.field_info):
-                    is_array = False
-
-                    if field_struct.size != 0:
-                        length = field_info.field_size_bits // (32 - field_struct.size)
-                        is_array = length > 1
-
-            else:
-                pass
-
-        # offset map records
-        else:
-            pass
+        for raw_record in self.record_data:
+            self.records[]
 
 
 

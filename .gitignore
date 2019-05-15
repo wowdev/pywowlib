@@ -1,4 +1,5 @@
 __pycache__/
 archives/casc/build/
 archives/mpq/native/build/
-blp/build
+blp/BLP2PNG/build/
+blp/PNG2BLP/build/

@@ -1,21 +1,35 @@
 import os
 from collections import OrderedDict
-from .dbd.code.Python3.dbd import parse_dbd_file
+from .dbd.code.Python3.dbd import parse_dbd_file, build_version_raw
 from .types import DBCString, DBCLangString
 from ..io_utils import types
 
 
+type_map = {
+    'int': lambda entry: getattr(types, "{}{}{}".format(
+        'u' if entry.is_unsigned else '', 'int', entry.int_width)),
+    'float': lambda x: types.float32,
+    'string': lambda x: DBCString,
+    'locstring': lambda x: DBCLangString
+
+}
+
+
 class DBDefinition:
     def __init__(self, name, build):
-        self._dbd_raw = parse_dbd_file('{}/dbd/definitions/{}.dbd'.format(os.path.dirname(os.path.abspath(__file__)),
+        dbd_raw = parse_dbd_file('{}/dbd/definitions/{}.dbd'.format(os.path.dirname(os.path.abspath(__file__)),
                                                                           name))
 
         self.name = name
         self.build = build
 
-        for _def in self._dbd_raw.definitions:
+        for _def in dbd_raw.definitions:
             for _build in _def.builds:
-                if str(_build) == build:
+                if not isinstance(_build, tuple):
+                    if str(_build) == build:
+                        definition = _def
+                        break
+                elif _build[0] <= build_version_raw(*(int(s) for s in build.split('.'))) <= _build[1]:
                     definition = _def
                     break
             else:
@@ -24,26 +38,15 @@ class DBDefinition:
         else:
             raise NotImplementedError('\nNo definition found for table \"{}\" for build \"{}\"'.format(name, build))
 
-        columns = {column.name: column.type for column in self._dbd_raw.columns}
+        columns = {column.name: column.type for column in dbd_raw.columns}
 
         self.definition = OrderedDict()
         for entry in definition.entries:
+
             type_name = columns[entry.column]
+            real_type = type_map.get(type_name)(entry)
 
-            if type_name == 'int':
-                real_type = getattr(types, "{}{}{}".format('u' if entry.is_unsigned else '',
-                                                           type_name, entry.int_width))
-
-            elif type_name == 'float':
-                real_type = types.float32
-
-            elif type_name == 'string':
-                real_type = DBCString
-
-            elif type_name == 'locstring':
-                real_type = DBCLangString
-
-            else:
+            if not real_type:
                 raise TypeError('\nUnknown DBD type \"{}\"'.format(type_name))
 
             self.definition[entry.column] = real_type
@@ -59,8 +62,6 @@ class DBDefinition:
 
     def values(self):
         return self.definition.values()
-
-
 
 
 
