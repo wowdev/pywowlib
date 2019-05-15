@@ -6,14 +6,12 @@
 
 unsigned int msb32(unsigned int x)
 {
-    for (unsigned int m = 31; m; --m)
-    {
-        if (x & (1 << m)) return m;
-    }
+    for(unsigned pos{31}; pos != ::std::numeric_limits<unsigned>::max(); --pos)
+        if(bits & 1 << pos)
+            return(pos);
 
-    throw std::invalid_argument ("no bit set in msb32");
+    throw(::std::invalid_argument{"no bit set in msb32"};
 }
-
 
 std::vector<std::vector<uint32_t> > MipMapGenerator::operator()(
         const std::vector<uint32_t> &colors,
