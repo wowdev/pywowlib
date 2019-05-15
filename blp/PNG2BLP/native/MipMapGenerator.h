@@ -6,7 +6,7 @@
 #include <vector>
 #include <stdint.h>
 
-unsigned int msb32(unsigned int x);
+unsigned int msb32(unsigned int bits);
 
 class MipMapGenerator {
 public:

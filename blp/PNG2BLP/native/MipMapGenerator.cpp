@@ -4,7 +4,7 @@
 #include "GaussFiltering.h"
 
 
-unsigned int msb32(unsigned int x)
+unsigned int msb32(unsigned int bits)
 {
     for(unsigned pos{31}; pos != ::std::numeric_limits<unsigned>::max(); --pos)
         if(bits & 1 << pos)
