@@ -10,7 +10,7 @@ unsigned int msb32(unsigned int bits)
         if(bits & 1 << pos)
             return(pos);
 
-    throw(::std::invalid_argument{"no bit set in msb32"};
+    throw ::std::invalid_argument{"no bit set in msb32"};
 }
 
 std::vector<std::vector<uint32_t> > MipMapGenerator::operator()(
