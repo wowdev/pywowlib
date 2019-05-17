@@ -306,7 +306,7 @@ class WDC1:
         definition = DBDefinition(table_name, build)
 
         for raw_record in self.record_data:
-            self.records[]
+            self.records
 
 
 

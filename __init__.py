@@ -1,4 +1,4 @@
-CLIENT_VERSION = 6
+CLIENT_VERSION = 2
 
 
 class WoWVersions:
