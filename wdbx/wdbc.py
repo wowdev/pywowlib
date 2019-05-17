@@ -1,8 +1,7 @@
 from collections import namedtuple
 from io import BytesIO
 
-from .dbd_wrapper import DBDefinition
-from .types import DBCString, DBCLangString
+from .dbd_wrapper import DBDefinition, DBCString, DBCLangString
 from ..io_utils.types import *
 
 
@@ -54,7 +53,7 @@ class DBCFile:
         for _ in range(self.header.record_count):
             args = []
             for f_type in self.field_types:
-                if f_type in (DBCString, DBCLangString):
+                if f_type in (DBCString, DBCLangString):   # TODO: fix id issues
                     args.append(f_type.read(f, str_block_ofs))
                 else:
                     args.append(f_type.read(f))

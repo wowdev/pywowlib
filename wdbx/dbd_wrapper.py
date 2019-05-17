@@ -1,6 +1,6 @@
 import os
 from collections import OrderedDict
-from .dbd.code.Python3.dbd import parse_dbd_file, build_version_raw
+from .dbd_parser import parse_dbd_file, build_version_raw
 from .types import DBCString, DBCLangString
 from ..io_utils import types
 
