@@ -1,4 +1,5 @@
 from ..io_utils.types import *
+from io import SEEK_CUR
 
 __reload_order_index__ = 1
 
@@ -48,10 +49,10 @@ class CImVector:
 
 class C3Vector:
     """A three component float vector"""
-    def __init__(self):
-        self.x = 0.0
-        self.y = 0.0
-        self.z = 0.0
+    def __init__(self, vector=None):
+        if vector is None:
+            vector = (0.0, 0.0, 0.0)
+        self.x, self.y, self.z = vector
 
     def read(self, f):
         self.x = float32.read(f)
@@ -108,9 +109,13 @@ class CRange:
 
 class CAaBox:
     """An axis aligned box described by the minimum and maximum point."""
-    def __init__(self):
-        self.min = (0.0, 0.0, 0.0)
-        self.max = (0.0, 0.0, 0.0)
+    def __init__(self, min_=None, max_=None):
+        if min_ is None:
+            min_ = (0.0, 0.0, 0.0)
+        if max_ is None:
+            max_ = (0.0, 0.0, 0.0)
+        self.min = min_
+        self.max = max_
 
     def read(self, f):
         self.min = vec3D.read(f)
@@ -269,6 +274,8 @@ class M2Array(metaclass=Template):
 
 
 class ChunkHeader:
+    size = 8    # Oops, duplicate name. It resolves fine, though.
+
     def __init__(self, magic='', size=0):
         self.magic = magic
         self.size = size
@@ -298,28 +305,42 @@ class StringBlock:
         cur_str = ""
 
         for _ in range(self.size):
-            byte = f.read(1)
-            if byte:
-                cur_str += chr(byte)
+            # byte = f.read(1)
+            # if byte != b'\x00':
+            #     cur_str += byte.decode('ascii')
+            charcode = uint8.read(f)
+            if charcode:
+                cur_str += chr(charcode)
             elif cur_str:
                 self.strings.append(cur_str)
-                self.size += len(cur_str)
                 cur_str = ""
-                f.skip(self.padding)
+                f.seek(self.padding, SEEK_CUR)
 
         return self
 
     def write(self, f):
         for str_ in self.strings:
-            string.write(f, str_, len(str_))
-            f.skip(self.padding)
+            f.write((str_ + '\x00').encode())
+            f.seek(self.padding, SEEK_CUR)
 
-    def add(self, str_):
+    def _add(self, str_):
+        self.size += len(str_) + 1
         self.strings.append(str_)
-        self.size += len(str_)
+        
+    def _replace(self, index, str_):
+        size_change = len(str_) - len(self.strings[index])
+        self.strings[index] = str_
+        self.size += size_change
+
+    def _remove(self, index):
+        self.size -= len(self.strings[index]) + 1
+        del self.strings[index]
 
     def __getitem__(self, index):
         return self.strings[index]
+
+    def __len__(self):
+        return len(self.strings)
 
 
 class StringBlockChunk:
