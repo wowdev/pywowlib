@@ -18,6 +18,10 @@ class ADTChunkFlags(IntEnum):
 	HIGH_RES_HOLES			= 0b1 << 16
 	# +15 bits
 
+class ADTAlphaSize(IntEnum):
+	LOWRES		= 2048
+	HIGHRES		= 4096
+
 
 class ADTAlphaTypes(IntEnum):
 	#    MCLY flags    |    WDT MPHD flags    |    MCNK flags    |    mode

@@ -58,8 +58,11 @@ class MOBILE_CHUNK(ADT_REF):
 
 
 class MVER:
+	magic = 'REVM'
+	data_size = 4
+
 	def __init__(self):
-		self.header = ChunkHeader('REVM', 4)
+		self.header = ChunkHeader(MVER.magic, MVER.data_size)
 		self.version = 18
 
 	def read(self, f):
@@ -76,8 +79,11 @@ class MVER:
 
 
 class MHDR:
+	magic = 'RDHM'
+	data_size = 54
+
 	def __init__(self, adt):
-		self.header = ChunkHeader('RDHM', 54)
+		self.header = ChunkHeader(MHDR.magic, MHDR.data_size)
 		self.start_data = 0
 		self.flags = 0
 		self.ofs_mcin = OFFSET(adt)
@@ -133,6 +139,8 @@ class MHDR:
 
 
 class MCIN_entry:
+	size = 16
+
 	def __init__(self, adt):
 		self.offset = OFFSET(adt)
 		self.size = 0
@@ -158,9 +166,12 @@ class MCIN_entry:
 
 
 class MCIN(MOBILE_CHUNK):
+	magic = 'NICM'
+	data_size = 16
+
 	def __init__(self, adt):
 		MOBILE_CHUNK.__init__(self, adt)
-		self.header = ChunkHeader('NICM', 16)
+		self.header = ChunkHeader(MCIN.magic, MCIN.data_size)
 		self.entries = [MCIN_entry(adt) for _ in range(256)]
 
 	def read(self, f):
@@ -172,7 +183,7 @@ class MCIN(MOBILE_CHUNK):
 		return self
 
 	def write(self, f):
-		self.header.size = len(self.entries) * 16
+		self.header.size = len(self.entries) * MCIN_entry.size
 		self.header.write(f)
 
 		for entry in self.entries:
@@ -205,11 +216,12 @@ class MMDX(MOBILE_CHUNK, StringBlockChunk):
 
 
 class MMID(MOBILE_CHUNK):
+	magic = 'DIMM'
 	entry_size = 4
 
 	def __init__(self, adt):
 		MOBILE_CHUNK.__init__(self, adt)
-		self.header = ChunkHeader('DIMM')
+		self.header = ChunkHeader(MMID.magic)
 		self.offsets = []
 
 	def _add(self, ofs):
@@ -253,11 +265,12 @@ class MWMO(MOBILE_CHUNK, StringBlockChunk):
 
 
 class MWID(MOBILE_CHUNK):
+	magic = 'DIWM'
 	entry_size = 4
 
 	def __init__(self, adt):
 		MOBILE_CHUNK.__init__(self, adt)
-		self.header = ChunkHeader('DIWM')
+		self.header = ChunkHeader(MWID.magic)
 		self.offsets = []
 
 	def _add(self, ofs):
@@ -326,9 +339,11 @@ class ADTDoodadDefinition:
 
 
 class MDDF(MOBILE_CHUNK):
+	magic = 'FDDM'
+
 	def __init__(self, adt):
 		MOBILE_CHUNK.__init__(self, adt)
-		self.header = ChunkHeader('FDDM')
+		self.header = ChunkHeader(MDDF.magic)
 		self.doodad_instances = []
 
 	def _add(self, name_id, unique_id, position, rotation, scale, flags):
@@ -405,9 +420,11 @@ class ADTWMODefinition:
 
 
 class MODF(MOBILE_CHUNK):
+	magic = 'FDOM'
+
 	def __init__(self, adt):
 		MOBILE_CHUNK.__init__(self, adt)
-		self.header = ChunkHeader('FDOM')
+		self.header = ChunkHeader(MODF.magic)
 		self.wmo_instances = []
 
 	def _add(self, name_id, unique_id, position, rotation, 
@@ -442,9 +459,11 @@ class MODF(MOBILE_CHUNK):
 
 
 class MFBO(MOBILE_CHUNK):
+	magic = 'OBFM'
+
 	def __init__(self, adt):
 		MOBILE_CHUNK.__init__(self, adt)
-		self.header = ChunkHeader('OBFM')
+		self.header = ChunkHeader(MFBO.magic)
 		self.maximum = [[0] * 3] * 3
 		self.minimum = [[0] * 3] * 3
 
@@ -508,9 +527,11 @@ class MFBO(MOBILE_CHUNK):
 
 #     def write(self, f):
 class MH2O(MOBILE_CHUNK):
+	magic = 'O2HM'
+
 	def __init__(self, adt):
 		MOBILE_CHUNK.__init__(self, adt)
-		self.header = ChunkHeader('O2HM')
+		self.header = ChunkHeader(MH2O.magic)
 		# TODO
 		self.data = []
 
@@ -527,11 +548,12 @@ class MH2O(MOBILE_CHUNK):
 
 
 class MTXF(MOBILE_CHUNK):
+	magic = 'FXTM'
 	entry_size = 4
 
 	def __init__(self, adt):
 		MOBILE_CHUNK.__init__(self, adt)
-		self.header = ChunkHeader('FXTM')
+		self.header = ChunkHeader(MTXF.magic)
 		self.flags = []
 
 	def _add(self, flags):
@@ -554,9 +576,11 @@ class MTXF(MOBILE_CHUNK):
 
 
 class MCNK(MOBILE_CHUNK):
+	magic = 'KNCM'
+
 	def __init__(self, adt):
 		MOBILE_CHUNK.__init__(self, adt)
-		self.header = ChunkHeader('KNCM')
+		self.header = ChunkHeader(MCNK.magic)
 		self.flags = 0
 		self.index_x = 0
 		self.index_y = 0
@@ -727,7 +751,8 @@ class MCNK(MOBILE_CHUNK):
 			is_comp = layer.flags & ADTChunkLayerFlags.alpha_map_compressed
 			alpha_is_compressed.append(is_comp)
 		f.seek(self.address + int(self.ofs_mcal))
-		self.mcal.read(f, self.n_layers, alpha_is_broken, alpha_is_compressed)
+		n_alpha_layers = self.n_layers - 1
+		self.mcal.read(f, n_alpha_layers, alpha_is_broken, alpha_is_compressed)
 
 		if (self.flags & ADTChunkFlags.HAS_MCSH):
 			f.seek(self.address + int(self.ofs_mcsh))
@@ -875,9 +900,12 @@ class MCNK(MOBILE_CHUNK):
 
 
 class MCVT(MOBILE_CHUNK):
+	magic = 'TVCM'
+	data_size = 580
+
 	def __init__(self, adt):
 		MOBILE_CHUNK.__init__(self, adt)
-		self.header = ChunkHeader('TVCM', 580)
+		self.header = ChunkHeader(MCVT.magic, MCVT.data_size)
 		self.height = [0.0] * 145
 
 	def read(self, f):
@@ -907,9 +935,12 @@ class MCLV(MOBILE_CHUNK):
 
 
 class MCCV(MOBILE_CHUNK):
+	magic = 'VCCM'
+	data_size = 580
+
 	def __init__(self, adt):
 		MOBILE_CHUNK.__init__(self, adt)
-		self.header = ChunkHeader('VCCM', 580)
+		self.header = ChunkHeader(MCCV.magic, MCCV.data_size)
 		self.colors = [(255, 255, 255, 255)] * 145
 
 	def read(self, f):
@@ -923,9 +954,12 @@ class MCCV(MOBILE_CHUNK):
 
 
 class MCNR(MOBILE_CHUNK):
+	magic = 'RNCM'
+	data_size = 435 if CLIENT_VERSION <= WoWVersions.WOTLK else 448
+
 	def __init__(self, adt):
 		MOBILE_CHUNK.__init__(self, adt)
-		self.header = ChunkHeader('RNCM', 435 if CLIENT_VERSION <= WoWVersions.WOTLK else 448)
+		self.header = ChunkHeader(MCNR.magic, MCNR.data_size)
 		self.normals = [(0, 0, 0)] * 145
 		self.unknown = [0] * 13
 
@@ -969,10 +1003,12 @@ class MCLYLayer:
 
 
 class MCLY(MOBILE_CHUNK):
+	magic = 'YLCM'
+
 	def __init__(self, adt, chunk):
 		MOBILE_CHUNK.__init__(self, adt)
 		self.chunk = chunk
-		self.header = ChunkHeader('YLCM')
+		self.header = ChunkHeader(MCLY.magic)
 		self.layers = []
 
 	def _add_layer(self, texture_id, flags, offset_in_mcal, effect_id):
@@ -1002,11 +1038,12 @@ class MCLY(MOBILE_CHUNK):
 
 
 class MCRF(MOBILE_CHUNK):
+	magic = 'MCRF'
 	entry_size = 4
 
 	def __init__(self, adt):
 		MOBILE_CHUNK.__init__(self, adt)
-		self.header = ChunkHeader('MCRF')
+		self.header = ChunkHeader(MCRF.magic)
 		self.doodad_refs = []
 		self.object_refs = []
 
@@ -1046,9 +1083,11 @@ class MCRF(MOBILE_CHUNK):
 			uint32.write(f, self.object_refs, n_object_refs)
 
 class MCSH(MOBILE_CHUNK):
+	magic = 'HSCM'
+	data_size = 512
 	def __init__(self, adt):
 		MOBILE_CHUNK.__init__(self, adt)
-		self.header = ChunkHeader('HSCM', 512)
+		self.header = ChunkHeader(MCSH.magic, MCSH.data_size)
 		self.shadow_map = [[0 for _ in range(64)] for _ in range(64)]
 
 	def read(self, f):
@@ -1095,13 +1134,13 @@ class MCALLayer:
 
 
 class MCALLayerLowresOrBroken(MCALLayer):
-	size = 2048
+	size = ADTAlphaSize.LOWRES
 
 	def read(self, f):
 		cur_pos = 0
-		alpha_map_flat = [0] * 4096
+		alpha_map_flat = [0] * ADTAlphaSize.HIGHRES
 
-		for i in range(2048):
+		for i in range(ADTAlphaSize.LOWRES):
 			cur_byte = uint8.read(f)
 
 			nibble1 = cur_byte & 0x0F
@@ -1131,14 +1170,14 @@ class MCALLayerLowresOrBroken(MCALLayer):
 			for value in row:
 				alpha_map_flat.append(value)
 
-		for i in range(0, 4096, 2):
+		for i in range(0, ADTAlphaSize.HIGHRES, 2):
 			nibble1 = alpha_map_flat[i] // (255 // 15)
 			nibble2 = alpha_map_flat[i + 1] // (255 // 15)
 			uint8.write(f, nibble1 + (nibble2 << 4))
 
 
 class MCALLayerHighres(MCALLayer):
-	size = 4096
+	size = ADTAlphaSize.HIGHRES
 
 	def read(self, f):
 		self.alpha_map = [[uint8.read(f) for _ in range(64)] for _ in range(64)]
@@ -1150,13 +1189,13 @@ class MCALLayerHighres(MCALLayer):
 
 
 class MCALLayerHighresCompressed(MCALLayer):
-	size = 4096
+	size = ADTAlphaSize.HIGHRES
 	
 	def read(self, f):
-		alpha_map_flat = [0] * 4096
+		alpha_map_flat = [0] * ADTAlphaSize.HIGHRES
 		alpha_offset = 0
 
-		while alpha_offset < 4096:
+		while alpha_offset < ADTAlphaSize.HIGHRES:
 			cur_byte = uint8.read(f)
 			mode = bool(cur_byte >> 7)
 			count = cur_byte & 0b1111111
@@ -1234,9 +1273,11 @@ class MCALLayerHighresCompressed(MCALLayer):
 
 
 class MCAL(MOBILE_CHUNK):
+	magic = 'LACM'
+
 	def __init__(self, adt):
 		MOBILE_CHUNK.__init__(self, adt)
-		self.header = ChunkHeader('LACM')
+		self.header = ChunkHeader(MCAL.magic)
 		self.layers = []
 
 	def _add_layer(self, type):
@@ -1255,48 +1296,39 @@ class MCAL(MOBILE_CHUNK):
 		self.adt._size_changed(-self.layers[index].size, address)
 		del self.layers[index]
 
-	def read(self, f, n_layers, alpha_is_broken, alpha_is_compressed):
+	def _get_alpha_type(self, alpha_is_highres, alpha_is_compressed, alpha_is_broken):
+		alpha_type = None
+
+		if alpha_is_highres:
+			if alpha_is_compressed:
+				alpha_type = ADTAlphaTypes.HIGHRES_COMPRESSED
+			else:
+				alpha_type = ADTAlphaTypes.HIGHRES
+		else:
+			if alpha_is_broken:
+				alpha_type = ADTAlphaTypes.BROKEN
+			else:
+				alpha_type = ADTAlphaTypes.LOWRES
+
+		return alpha_type
+
+	def read(self, f, n_alpha_layers, alpha_is_broken, alpha_is_compressed):
 		self.set_address(f.tell())
 		self.header.read(f)
 
-		if n_layers < 2:
+		if n_alpha_layers < 1:
 			return
-		
-		# Inferred from MCAL size, rather than WDT MPHD flags
-		# Assume all layers have the same size
-		# TODO: read from WDT MPHD flags
-		alpha_is_highres = False
-		alpha_size = self.header.size / (n_layers - 1)
-		if alpha_size == 2048:
-			alpha_is_highres = False
-		elif alpha_size == 4096:
-			alpha_is_highres = True
-		else:
-			raise Exception("MCAL alpha size must be 2048 or 4096. Found: {}".format(alpha_size))
 
-		for i in range(n_layers - 1):
-			alpha_type = None
-
-			if alpha_is_highres:
-				if alpha_is_compressed[i]:
-					alpha_type = ADTAlphaTypes.HIGHRES_COMPRESSED
-				else:
-					alpha_type = ADTAlphaTypes.HIGHRES
-			else:
-				if alpha_is_broken:
-					alpha_type = ADTAlphaTypes.BROKEN
-				else:
-					alpha_type = ADTAlphaTypes.LOWRES
-
+		alpha_is_highres = self.adt.highres
+		for i in range(n_alpha_layers):
 			layer = MCALLayer()
+			alpha_type = self._get_alpha_type(alpha_is_highres, alpha_is_compressed[i], alpha_is_broken)
 			layer.read(f, alpha_type)
 			self.layers.append(layer)
 
 	def write(self, f):
 		size = 0
 		for layer in self.layers:
-			# l_type = layer.type
-			# size += l_type <= 1 and 2048 or 4096
 			size += layer.size
 		self.header.size = size
 		self.header.write(f)
@@ -1328,9 +1360,11 @@ class MCSESoundEmitter:
 
 
 class MCSE(MOBILE_CHUNK):
+	magic = 'ESCM'
+	
 	def __init__(self, adt):
 		MOBILE_CHUNK.__init__(self, adt)
-		self.header = ChunkHeader('ESCM')
+		self.header = ChunkHeader(MCSE.magic)
 		self.entries = []
 
 	def _add_entry(self, entry_id, position, size):
@@ -1362,7 +1396,7 @@ class MCSE(MOBILE_CHUNK):
 
 
 
-def uint8_to_smaller(uint8, bit_depth=1, LSB_first=True):
+def uint8_to_uintX_list(uint8, bit_depth=1, LSB_first=True):
 	l = []
 	mask = 0b1
 
@@ -1380,9 +1414,9 @@ def uint8_to_smaller(uint8, bit_depth=1, LSB_first=True):
 	return l
 
 def uint8_to_uint1_list(uint8, LSB_first=True):
-	return uint8_to_smaller(uint8, 1)
+	return uint8_to_uintX_list(uint8, 1)
 def uint8_to_uint2_list(uint8, LSB_first=True):
-	return uint8_to_smaller(uint8, 2)
+	return uint8_to_uintX_list(uint8, 2)
 
 
 def smaller_list_to_uint8(l, bit_depth=1, LSB_first=True):

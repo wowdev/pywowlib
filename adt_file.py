@@ -8,11 +8,14 @@ __reload_order_index__ = 3
 
 class ADTFile:
 	# def __init__(self, version, filepath=None):
-	def __init__(self, filepath=None):
+	def __init__(self, filepath=None, highres=True):
 
 		self.filepath = filepath
 		self._mobile_chunks = []
 		self._offsets = []
+
+		# TODO: read from WDT MPHD flags if available?
+		self.highres = highres
 
 		# initialize chunks
 		self.mver = MVER()
@@ -57,27 +60,12 @@ class ADTFile:
 	def _get_mwmo_data_start(self):
 		return self.mwmo.address + ChunkHeader.size
 
-	
-	def guess_alpha_is_highres(self):
-		for row in range(16):
-			for col in range(16):
-				chunk = self.mcnk[row][col]
-				for layer in chunk.mcly.layers:
-					if layer.flags & ADTChunkLayerFlags.alpha_map_compressed:
-						return True
-				for layer in chunk.mcal.layers:
-					if layer.type in [ADTAlphaTypes.HIGHRES, ADTAlphaTypes.HIGHRES_COMPRESSED]:
-						return True
-					else:
-						return False
-		return False
-
-
 	def add_texture_filename(self, filename, mtxf_flags=0):
-		for i, j in enumerate(self.mtex.filenames):
-			if j == filename:
-				return i
-
+		try:
+			return self.mtex.filenames.index(filename)
+		except:	# Python, more like Fuckoff
+			pass
+		
 		self.mtex.filenames._add(filename)
 		size = len(filename) + 1
 		self._size_changed(size, self.mtex.address)
