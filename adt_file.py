@@ -101,9 +101,10 @@ class ADTFile:
 			self._size_changed(-MTXF.entry_size, self.mtxf.address)
 
 	def _add_model_filename(self, filename, filename_chunk, offset_chunk):
-		for i, j in enumerate(filename_chunk.filenames):
-			if j == filename:
-				return i
+		try:
+			return filename_chunk.filenames.index(filename)
+		except:
+			pass
 
 		ofs_in_fc = filename_chunk.filenames.size
 		# Dirty, but should be safe:
