@@ -318,8 +318,6 @@ class ADTDoodadDefinition:
 		self.unique_id = uint32.read(f)
 		self.position.read(f)
 		self.rotation.read(f)
-		# self.position = vec3D.read(f)
-		# self.rotation = vec3D.read(f)
 		self.scale = uint16.read(f)
 		self.flags = uint16.read(f)
 
@@ -330,8 +328,6 @@ class ADTDoodadDefinition:
 		uint32.write(f, self.unique_id)
 		self.position.write(f)
 		self.rotation.write(f)
-		# vec3D.write(f, self.position)
-		# vec3D.write(f, self.rotation)
 		uint16.write(f, self.scale)
 		uint16.write(f, self.flags)
 
@@ -395,8 +391,6 @@ class ADTWMODefinition:
 	def read(self, f):
 		self.name_id = uint32.read(f)
 		self.unique_id = uint32.read(f)
-		# self.position = vec3D.read(f)
-		# self.rotation = vec3D.read(f)
 		self.position.read(f)
 		self.rotation.read(f)
 		self.extents.read(f)
@@ -408,8 +402,6 @@ class ADTWMODefinition:
 	def write(self, f):
 		uint32.write(f, self.name_id)
 		uint32.write(f, self.unique_id)
-		# vec3D.write(f, self.position)
-		# vec3D.write(f, self.rotation)
 		self.position.write(f)
 		self.rotation.write(f)
 		self.extents.write(f)
@@ -464,8 +456,8 @@ class MFBO(MOBILE_CHUNK):
 	def __init__(self, adt):
 		MOBILE_CHUNK.__init__(self, adt)
 		self.header = ChunkHeader(MFBO.magic)
-		self.maximum = [[0] * 3] * 3
-		self.minimum = [[0] * 3] * 3
+		self.maximum = [[0 for _ in range(3)] for _ in range(3)]
+		self.minimum = [[0 for _ in range(3)] for _ in range(3)]
 
 	def read(self, f):
 		self.set_address(f.tell())
@@ -603,8 +595,8 @@ class MCNK(MOBILE_CHUNK):
 		self.n_map_obj_refs = 0
 		self.holes_low_res = 0
 		self.unknown_but_used = 0
-		self.low_quality_texture_map = [[0] * 8] * 8
-		self.no_effect_doodad = [[0] * 8] * 8
+		self.low_quality_texture_map = [[0 for _ in range(8)] for _ in range(8)]
+		self.no_effect_doodad = [[0 for _ in range(8)] for _ in range(8)]
 		self.ofs_mcse = OFFSET(self.adt)
 		self.n_sound_emitters = 0
 		self.ofs_mclq = OFFSET(self.adt)
@@ -643,7 +635,24 @@ class MCNK(MOBILE_CHUNK):
 		self.mcse._remove_entry(index)
 		self.n_sound_emitters -= 1
 
-	def add_texture_layer(self, texture_id, flags, effect_id, alpha_is_highres):
+	def _get_alpha_type(self, alpha_is_compressed):
+		alpha_type = None
+
+		if self.adt.highres:
+			if alpha_is_compressed:
+				alpha_type = ADTAlphaTypes.HIGHRES_COMPRESSED
+			else:
+				alpha_type = ADTAlphaTypes.HIGHRES
+		else:
+			alpha_is_broken = not (self.flags & ADTChunkFlags.DO_NOT_FIX_ALPHA_MAP)
+			if alpha_is_broken:
+				alpha_type = ADTAlphaTypes.BROKEN
+			else:
+				alpha_type = ADTAlphaTypes.LOWRES
+
+		return alpha_type
+
+	def add_texture_layer(self, texture_id, flags, effect_id):
 		if self.n_layers >= 4:
 			raise Exception("Chunk already has max texture layers.")
 
@@ -651,23 +660,12 @@ class MCNK(MOBILE_CHUNK):
 		ofs = 0
 		adr = 0
 		if self.n_layers > 1:
-			alpha_is_broken = not (self.flags & ADTChunkFlags.DO_NOT_FIX_ALPHA_MAP)
 			alpha_is_compressed = flags & ADTChunkLayerFlags.alpha_map_compressed
-			alpha_type = None
-			
-			if alpha_is_highres:
-				if alpha_is_compressed[i]:
-					alpha_type = ADTAlphaTypes.HIGHRES_COMPRESSED
-				else:
-					alpha_type = ADTAlphaTypes.HIGHRES
-			else:
-				if alpha_is_broken:
-					alpha_type = ADTAlphaTypes.BROKEN
-				else:
-					alpha_type = ADTAlphaTypes.LOWRES
+			alpha_type = self._get_alpha_type(alpha_is_compressed)
 			
 			ofs = self.mcal._add_layer(alpha_type)
 			adr = ofs + self.mcal.address + ChunkHeader.size
+		
 		offset_in_mcal = OFFSET(self.adt, ofs, adr)
 		self.mcly._add_layer(texture_id, flags, offset_in_mcal, effect_id)
 	
