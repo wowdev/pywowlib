@@ -151,7 +151,7 @@ class ADTFile:
 		self._remove_model_filename(index, self.mmdx, self.mmid)
 
 	def add_wmo_filename(self, filename):
-		self._add_model_filename(filename, self.mwmo, self.mwid)
+		return self._add_model_filename(filename, self.mwmo, self.mwid)
 	def replace_wmo_filename(self, index, new_filename):
 		self._replace_model_filename(index, new_filename, self.mwmo, self.mwid)
 	def remove_wmo_filename(self, index):
