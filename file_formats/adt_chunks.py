@@ -1286,7 +1286,7 @@ class MCAL(MOBILE_CHUNK):
 		for i in range(1, len(self.layers)):
 			ofs += self.layers[i].size
 
-		address_of_change = self.address + ChunkHeader.size + ofs
+		address_of_change = self.address + ChunkHeader.size + ofs - 1	# Dirty, but should be safe
 		self.adt._size_changed(layer.size, address_of_change)
 		return ofs
 
