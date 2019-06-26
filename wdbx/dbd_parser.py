@@ -4,6 +4,7 @@ from modgrammar import *
 from itertools import chain
 import os
 
+
 # parses a given dbd (as string) and returns an object with
 #
 # .columns[]
@@ -36,6 +37,10 @@ def parse_dbd(content):
 
 
 def parse_dbd_file(path):
+
+    if os.name != 'nt':
+        path = path.replace('/', '\\')
+
     with open(path) as f:
         return parse_dbd(f.read())
 
@@ -44,10 +49,14 @@ file_suffix = ".dbd"
 
 
 def parse_dbd_directory(path):
+
+    if os.name != 'nt':
+        path = path.replace('/', '\\')
+
     dbds = {}
     for file in os.listdir(path):
         if file.endswith(file_suffix):
-            dbds[file[:-len(file_suffix)]] = parse_dbd_file(os.path.join(path,file))
+            dbds[file[:-len(file_suffix)]] = parse_dbd_file(os.path.join(path, file))
     return dbds
 
 
@@ -82,8 +91,8 @@ class comma_list_separator(Grammar):
     grammar_collapse_skip = True
 
 
-class foreign_identifier (Grammar):
-    #! \todo table is not actually a identifier, but table_name?
+class foreign_identifier(Grammar):
+    # ! \todo table is not actually a identifier, but table_name?
     grammar = (L("<"), identifier, L("::"), identifier, L(">"))
 
     def grammar_elem_init(self, sessiondata):
@@ -94,12 +103,12 @@ class foreign_identifier (Grammar):
         return "{}::{}".format(self.table, self.column)
 
 
-class column_definition (Grammar):
-    grammar = ( column_type, OPTIONAL(foreign_identifier)
-                        , SPACE
-                        , G(identifier, name="column_name"), OPTIONAL(L("?"))
-                        , OPTIONAL(eol_c_comment)
-                        )
+class column_definition(Grammar):
+    grammar = (column_type, OPTIONAL(foreign_identifier)
+               , SPACE
+               , G(identifier, name="column_name"), OPTIONAL(L("?"))
+               , OPTIONAL(eol_c_comment)
+               )
 
     def grammar_elem_init(self, sessiondata):
         self.type = str(self.elements[0])
@@ -109,10 +118,11 @@ class column_definition (Grammar):
         self.comment = str(self.elements[5]).strip() if self.elements[5] else None
 
     def __str__(self):
-        return "type={} fk={} name={} confirmed={} comment={}".format(self.type, self.foreign, self.name, self.is_confirmed_name, self.comment)
+        return "type={} fk={} name={} confirmed={} comment={}".format(self.type, self.foreign, self.name,
+                                                                      self.is_confirmed_name, self.comment)
 
 
-class build_version (Grammar):
+class build_version(Grammar):
     grammar = (integer, L("."), integer, L("."), integer, L("."), integer)
 
     def grammar_elem_init(self, sessiondata):
@@ -133,14 +143,14 @@ class build_version_raw:
         self.build = build
 
     def __str__(self):
-        return "{}.{}".format (self.version(), self.build)
+        return "{}.{}".format(self.version(), self.build)
 
     def version(self):
         return "{}.{}.{}".format(self.major, self.minor, self.patch)
 
     def __lt__(self, rhs):
         return (self.major, self.minor, self.patch, self.build) \
-                 < (rhs.major, rhs.minor, rhs.patch, rhs.build)
+               < (rhs.major, rhs.minor, rhs.patch, rhs.build)
 
     def __le__(self, rhs):
         return (self.major, self.minor, self.patch, self.build) \
@@ -207,12 +217,14 @@ class definition_COMMENT(Grammar):
 
 
 class definition_entry(Grammar):
-    grammar = ( OPTIONAL(G(L("$"), G(LIST_OF(G(identifier, tags=["ANNOTATION"], sep=comma_list_separator), name="annotation", collapse=True), L("$"), collapse=True)))
-                        , G(identifier, name="column_name")
-                        , OPTIONAL(G(L("<"), G(OPTIONAL(L("u")), integer, name="int_width"), L(">"), collapse=True))
-                        , OPTIONAL(G(L("["), G(integer, name="array_size"), L("]"), collapse=True))
-                        , OPTIONAL(eol_c_comment)
-                        )
+    grammar = (OPTIONAL(G(L("$"), G(
+        LIST_OF(G(identifier, tags=["ANNOTATION"], sep=comma_list_separator), name="annotation", collapse=True), L("$"),
+        collapse=True)))
+               , G(identifier, name="column_name")
+               , OPTIONAL(G(L("<"), G(OPTIONAL(L("u")), integer, name="int_width"), L(">"), collapse=True))
+               , OPTIONAL(G(L("["), G(integer, name="array_size"), L("]"), collapse=True))
+               , OPTIONAL(eol_c_comment)
+               )
 
     def grammar_elem_init(self, sessiondata):
         self.annotation = [str(e) for e in self.elements[0].find_all("ANNOTATION")] if self.elements[0] else []
@@ -231,7 +243,9 @@ class definition_entry(Grammar):
         self.comment = str(self.elements[4]).strip() if self.elements[4] else None
 
     def __str__(self):
-        return "column={} int_width={} array_size={} annotation={} comment={}".format(self.column, self.int_width, self.array_size, self.annotation, self.comment)
+        return "column={} int_width={} array_size={} annotation={} comment={}".format(self.column, self.int_width,
+                                                                                      self.array_size, self.annotation,
+                                                                                      self.comment)
 
     grammar_tags = ["ENTRY"]
 
@@ -239,7 +253,7 @@ class definition_entry(Grammar):
 class definition(Grammar):
     grammar = (ONE_OR_MORE(G(definition_BUILD | definition_LAYOUT | definition_COMMENT, EOL, name="definition_header")),
                REPEAT(definition_entry, EOL)
-              )
+               )
 
     def grammar_elem_init(self, sessiondata):
 
