@@ -38,7 +38,7 @@ def parse_dbd(content):
 
 def parse_dbd_file(path):
 
-    if os.name != 'nt':
+    if os.name == 'nt':
         path = path.replace('/', '\\')
 
     with open(path) as f:
@@ -50,7 +50,7 @@ file_suffix = ".dbd"
 
 def parse_dbd_directory(path):
 
-    if os.name != 'nt':
+    if os.name == 'nt':
         path = path.replace('/', '\\')
 
     dbds = {}
