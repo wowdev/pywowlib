@@ -1,3 +1,4 @@
+from typing import List, Tuple
 from .wow_common_types import *
 
 
@@ -71,7 +72,7 @@ class MOTX:
 
         f.write(self.string_table)
 
-    def add_string(self, s):
+    def add_string(self, s : str):
         padding = len(self.string_table) % 4
         if padding > 0:
             for iPad in range(4 - padding):
@@ -82,7 +83,7 @@ class MOTX:
         self.string_table.append(0)
         return ofs
 
-    def get_string(self, ofs):
+    def get_string(self, ofs : int):
         if ofs >= len(self.string_table):
             return ''
         start = ofs
@@ -156,6 +157,8 @@ class WMOMaterial:
 class MOMT:
     """ Materials """
 
+    materials: List[WMOMaterial]
+
     def __init__(self, size=0):
         self.header = ChunkHeader(magic='TMOM')
         self.header.size = size
@@ -189,12 +192,6 @@ class MOGN:
 
     def write(self, f):
 
-        # padd 4 bytes after
-        padding = len(self.string_table) % 4
-        if padding > 0:
-            for i_pad in range(4 - padding):
-                self.string_table.append(0)
-
         self.header.size = len(self.string_table)
         self.header.write(f)
 
@@ -203,7 +200,7 @@ class MOGN:
     def add_string(self, s):
         ofs = len(self.string_table)
         self.string_table.extend(s.encode('ascii'))
-        self.string_table.append(0)
+        self.string_table.extend(b'\x00')
         return ofs
 
     def get_string(self, ofs):
@@ -238,6 +235,8 @@ class GroupInfo:
 
 class MOGI:
     """ Group informations """
+
+    infos: List[GroupInfo]
 
     def __init__(self, size=0):
         self.header = ChunkHeader(magic='IGOM')
@@ -285,6 +284,8 @@ class MOSB:
 class MOPV:
     """ Portal vertices """
 
+    portal_vertices: List[Tuple[float, float, float]]
+
     def __init__(self, size=0):
         self.header = ChunkHeader(magic='VPOM')
         self.header.size = size
@@ -328,8 +329,11 @@ class PortalInfo:
 
 # portal infos
 class MOPT:
+
+    infos: List[PortalInfo]
+
     def __init__(self, size=0):
-        self.header = ChunkHeader(magic='REVM')
+        self.header = ChunkHeader(magic='TPOM')
         self.header.size = size
         self.infos = []
 
@@ -373,6 +377,8 @@ class PortalRelation:
 class MOPR:
     """ Portal relations """
 
+    relations: List[PortalRelation]
+
     def __init__(self, size=0):
         self.header = ChunkHeader(magic='RPOM')
         self.header.size = size
@@ -396,6 +402,8 @@ class MOPR:
 
 class MOVV:
     """ Visible vertices """
+
+    visible_vertices: List[Tuple[float, float, float]]
 
     def __init__(self, size=0):
         self.header = ChunkHeader(magic='VVOM')
@@ -432,6 +440,8 @@ class VisibleBatch:
 
 class MOVB:
     """ Visible batches """
+
+    batches: List[VisibleBatch]
 
     def __init__(self, size=0):
         self.header = ChunkHeader(magic='BVOM')
@@ -506,6 +516,8 @@ class Light:
 class MOLT:
     """ Lights """
 
+    lights: List[Light]
+
     def __init__(self, size=0):
         self.header = ChunkHeader(magic='TLOM')
         self.header.size = size
@@ -552,6 +564,8 @@ class DoodadSet:
 class MODS:
     """ Doodad sets """
 
+    sets: List[DoodadSet]
+
     def __init__(self, size=0):
         self.header = ChunkHeader(magic='SDOM')
         self.header.size = size
@@ -563,9 +577,9 @@ class MODS:
         self.sets = []
 
         for i in range(count):
-            set = DoodadSet()
-            set.read(f)
-            self.sets.append(set)
+            d_set = DoodadSet()
+            d_set.read(f)
+            self.sets.append(d_set)
 
     def write(self, f):
         self.header.size = len(self.sets) * 32
@@ -656,6 +670,8 @@ class DoodadDefinition:
 class MODD:
     """ Doodad definition """
 
+    definitions: List[DoodadDefinition]
+
     def __init__(self, size=0):
         self.header = ChunkHeader(magic='DDOM')
         self.header.size = size
@@ -719,6 +735,8 @@ class Fog:
 class MFOG:
     """ Fogs """
 
+    fogs: List[Fog]
+
     def __init__(self, size=0):
         self.header = ChunkHeader(magic='GOFM')
         self.header.size = size
@@ -743,6 +761,8 @@ class MFOG:
 
 class MCVP:
     """ Convex volume plane, used only for transport objects """
+
+    convex_volume_planes: List[Tuple[float, float, float, float]]
 
     def __init__(self, size=0):
         self.header = ChunkHeader(magic='PVCM')
@@ -769,6 +789,9 @@ class MCVP:
 
 
 class GFID:
+
+    group_file_data_ids: List[List[int]]
+
     def __init__(self, size=0, use_lods=False, n_groups=0, n_lods=0):
         self.header = ChunkHeader(magic='DIFG')
         self.header.size = size
@@ -795,6 +818,9 @@ class GFID:
 
 
 class MOUV:
+
+    map_object_uv: List[Tuple[float, float]]
+
     def __init__(self, size=0):
         self.header = ChunkHeader(magic='VUOM')
         self.header.size = size
@@ -837,6 +863,9 @@ class MOSI:
 
 
 class MODI:
+
+    doodad_file_ids: List[int]
+
     def __init__(self, size):
         self.header = ChunkHeader(magic='IDOM')
         self.header.size = size

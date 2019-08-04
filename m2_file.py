@@ -8,7 +8,6 @@ from .file_formats.m2_chunks import *
 from .file_formats.skin_format import M2SkinProfile, M2SkinSubmesh, M2SkinTextureUnit
 from .file_formats.wow_common_types import M2Versions
 
-__reload_order_index__ = 3
 
 
 class M2File:

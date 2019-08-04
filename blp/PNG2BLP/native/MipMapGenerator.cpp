@@ -1,5 +1,6 @@
 #include <cmath>
 #include <algorithm>
+#include <stdexcept>
 #include "MipMapGenerator.h"
 #include "GaussFiltering.h"
 

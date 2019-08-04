@@ -1,6 +1,8 @@
 import os
 import struct
 
+from typing import List
+
 from .file_formats import wmo_format_root
 from .file_formats.wmo_format_root import *
 from .file_formats import wmo_format_group
@@ -14,7 +16,7 @@ class WMOFile:
         self.version = version
         self.filepath = filepath
         self.display_name = os.path.basename(os.path.splitext(filepath)[0])
-        self.groups = []
+        self.groups : List[WMOGroupFile] = []
 
         # initialize chunks
         self.mver = MVER()
@@ -127,6 +129,37 @@ class WMOFile:
         # write group files
         for group in self.groups:
             group.write()
+
+    def add_group(self):
+        filepath = os.path.splitext(self.filepath)[0]
+        group = WMOGroupFile(self.version, self, "{}_{}.wmo".format(filepath, str(len(self.groups)).zfill(3)))
+        self.groups.append(group)
+
+        return group
+
+    def get_global_bounding_box(self):
+        """ Calculate bounding box of an entire scene """
+        corner1 = self.mogi.infos[0].bounding_box_corner1
+        corner2 = self.mogi.infos[0].bounding_box_corner2
+
+        for gi in self.mogi.infos:
+            v = gi.bounding_box_corner1
+            if v[0] < corner1[0]:
+                corner1[0] = v[0]
+            if v[1] < corner1[1]:
+                corner1[1] = v[1]
+            if v[2] < corner1[2]:
+                corner1[2] = v[2]
+
+            v = gi.bounding_box_corner2
+            if v[0] > corner2[0]:
+                corner2[0] = v[0]
+            if v[1] > corner2[1]:
+                corner2[1] = v[1]
+            if v[2] > corner2[2]:
+                corner2[2] = v[2]
+
+        return corner1, corner2
 
 
 class WMOGroupFile:
@@ -242,7 +275,7 @@ class WMOGroupFile:
 
             # get file size
             f.seek(0, 2)
-            self.mogp.header.Size = f.tell() - 20
+            self.mogp.header.size = f.tell() - 20
 
             # write header
             f.seek(0xC)

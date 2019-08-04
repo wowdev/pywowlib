@@ -1,6 +1,9 @@
 import re
 import os
 import time
+
+from typing import Union
+
 from .. import CLIENT_VERSION, WoWVersions
 from .mpq import MPQFile
 from .casc.CASC import CascHandlerLocal
@@ -95,6 +98,44 @@ class WoWFileData:
         if pairs:
             BLP2PNG().convert(pairs, dir.encode('utf-8'))
 
+
+    def traverse_file_path(self, path: str) -> Union[None, str]:
+        """ Traverses WoW file system in order to identify internal file path. """
+
+        path = (os.path.splitext(path)[0] + ".blp", "")
+        rest_path = ""
+
+        matches = []
+        while True:
+            path = os.path.split(path[0])
+
+            if not path[1]:
+                break
+
+            rest_path = os.path.join(path[1], rest_path)
+            rest_path = rest_path[:-1] if rest_path.endswith('\\') else rest_path
+
+            if os.name != 'nt':
+                rest_path_n = rest_path.replace('/', '\\')
+            else:
+                rest_path_n = rest_path
+
+            rest_path_n = rest_path_n[:-1] if rest_path_n.endswith('\\') else rest_path_n
+
+            if self.has_file(rest_path_n)[0]:
+                matches.append(rest_path_n)
+
+        max_len = 0
+        ret_path = None
+        for match in matches:
+            length = len(match)
+
+            if length > max_len:
+                max_len = length
+                ret_path = match
+
+        return ret_path
+
     @staticmethod
     def list_game_data_paths(path):
         """List files and directories in a directory that correspond to WoW patch naming rules."""
@@ -141,6 +182,7 @@ class WoWFileData:
         locale_dir_files.sort(key=lambda s: os.path.splitext(s)[0])
 
         return dir_files + locale_dir_files
+
 
     @staticmethod
     def is_wow_path_valid(wow_path):

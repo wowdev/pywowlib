@@ -42,7 +42,7 @@ class ADTHeaderFlags(IntEnum):
 
 
 class ADTDoodadDefinitionFlags(IntEnum):
-	mddf_biodome				= 0b1 << 0		# this sets internal flags to | 0x800 (WDOODADDEF.var0xC).
+	mddf_biodome				= 0b1 << 0		# this sets eevee flags to | 0x800 (WDOODADDEF.var0xC).
 	mddf_shrubbery				= 0b1 << 1		# the actual meaning of these is unknown to me. maybe biodome is for really big M2s. 6.0.1.18179 seems
 												# not to check  for this flag
 	mddf_unk_4					= 0b1 << 2		# Legion+ᵘ
