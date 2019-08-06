@@ -525,7 +525,7 @@ class MLIQ:
         uint32.write(f, self.y_verts)
         uint32.write(f, self.x_tiles)
         uint32.write(f, self.y_tiles)
-        vec3D.write(f, *self.position)
+        vec3D.write(f, self.position)
         uint16.write(f, self.material_id)
 
         for vtx in self.vertex_map:

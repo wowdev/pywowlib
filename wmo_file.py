@@ -1,7 +1,7 @@
 import os
 import struct
 
-from typing import List
+from typing import Iterable
 
 from .file_formats import wmo_format_root
 from .file_formats.wmo_format_root import *
@@ -17,6 +17,8 @@ class WMOFile:
         self.filepath = filepath
         self.display_name = os.path.basename(os.path.splitext(filepath)[0])
         self.groups : List[WMOGroupFile] = []
+
+        self._texture_lookup = {}
 
         # initialize chunks
         self.mver = MVER()
@@ -136,6 +138,51 @@ class WMOFile:
         self.groups.append(group)
 
         return group
+
+    def add_material(  self
+                     , diff_texture_1: str
+                     , diff_texture_2: str = ""
+                     , shader: int = 0
+                     , blendmode: int = 0
+                     , terrain_type: int = 0
+                     , flags: int = 0
+                     , emissive_color: Tuple[int, int, int, int] = (0, 0, 0, 0)
+                     , diff_color: Tuple[int, int, int, int] = (0, 0, 0, 0)
+                    ):
+
+        wow_mat = WMOMaterial()
+
+        wow_mat.shader = shader
+        wow_mat.blend_mode = blendmode
+        wow_mat.terrain_type = terrain_type
+
+        if diff_texture_1:
+
+            if diff_texture_1 not in self._texture_lookup:
+                self._texture_lookup[diff_texture_1] = self.motx.add_string(diff_texture_1)
+
+            wow_mat.texture1_ofs = self._texture_lookup[diff_texture_1]
+
+        else:
+            raise ReferenceError('\nError. Material must have a diffuse texture.')
+
+        if diff_texture_2:
+            if diff_texture_2 not in self._texture_lookup:
+                self._texture_lookup[diff_texture_2] = self.motx.add_string(diff_texture_2)
+
+            wow_mat.texture2_ofs = self._texture_lookup[diff_texture_2]
+
+        wow_mat.emissive_color = emissive_color
+
+        wow_mat.diff_color = diff_color
+
+        wow_mat.flags = flags
+
+        mat_index = len(self.momt.materials)
+
+        self.momt.materials.append(wow_mat)
+
+        return mat_index
 
     def get_global_bounding_box(self):
         """ Calculate bounding box of an entire scene """
