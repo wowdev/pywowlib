@@ -261,6 +261,37 @@ class WMOFile:
 
         self.molt.lights.append(light)
 
+    def add_fog(  self
+                , big_radius: float
+                , small_radius: float
+                , color1: Tuple[int, int, int, int]
+                , color2: Tuple[int, int, int, int]
+                , end_dist: float
+                , end_dist2: float
+                , position: Tuple[float, float, float]
+                , start_factor: float
+                , start_factor2: float
+                , flags: int
+               ):
+
+        """ Add fog sphere. Note that colors are BGRA"""
+
+        fog = Fog()
+
+        fog.big_radius = big_radius
+        fog.small_radius = fog.big_radius * (small_radius / 100)
+
+        fog.color1 = color1
+
+        fog.color2 = color2
+        fog.end_dist = end_dist
+        fog.end_dist2 = end_dist2
+        fog.position = position
+        fog.start_factor = start_factor
+        fog.start_factor2 = start_factor2
+        fog.flags = flags
+
+        self.mfog.fogs.append(fog)
 
 
     def get_global_bounding_box(self):
