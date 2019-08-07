@@ -561,6 +561,7 @@ class DoodadSet:
         uint32.write(f, self.padding)
 
 
+
 class MODS:
     """ Doodad sets """
 

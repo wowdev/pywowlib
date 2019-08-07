@@ -19,6 +19,7 @@ class WMOFile:
         self.groups : List[WMOGroupFile] = []
 
         self._texture_lookup = {}
+        self._doodad_lookup = {}
 
         # initialize chunks
         self.mver = MVER()
@@ -150,6 +151,8 @@ class WMOFile:
                      , diff_color: Tuple[int, int, int, int] = (0, 0, 0, 0)
                     ):
 
+        """ Add new material. Note that colors are BGRA """
+
         wow_mat = WMOMaterial()
 
         wow_mat.shader = shader
@@ -183,6 +186,82 @@ class WMOFile:
         self.momt.materials.append(wow_mat)
 
         return mat_index
+
+    def add_doodad_set(self, name: str, n_doodads: int = 0):
+        """ Allocate a new doodad set """
+
+        doodad_set = DoodadSet()
+        doodad_set.name = name
+        doodad_set.start_doodad = len(self.modd.definitions)
+        doodad_set.n_doodads = n_doodads
+
+        if name == "Set_$DefaultGlobal":
+            self.mods.sets.insert(0, doodad_set)
+        else:
+            self.mods.sets.append(doodad_set)
+
+    def add_doodad(  self
+                   , path: str
+                   , position: Tuple[float, float, float]
+                   , rotation_quat: Tuple[float, float, float, float]
+                   , scale: float
+                   , color: Tuple[float, float, float, float]
+                   , flags: int
+
+                  ):
+        """ Add doodad to last added doodad sets. This method should be called after add_doodad_set.
+            Note that colors are BGRA.
+        """
+
+        doodad_def = DoodadDefinition()
+
+        path = os.path.splitext(path)[0] + ".MDX"
+
+        doodad_def.name_ofs = self._doodad_lookup.get(path)
+        if not doodad_def.name_ofs:
+            doodad_def.name_ofs = self.modn.add_string(path)
+            self._doodad_lookup[path] = doodad_def.name_ofs
+
+        doodad_def.position = position
+        doodad_def.rotation = rotation_quat
+        doodad_def.scale = scale
+        doodad_def.color = color
+        doodad_def.flags = flags
+
+        self.modd.definitions.append(doodad_def)
+
+    def add_light(  self
+                  , type: int
+                  , unk1: float
+                  , unk2: bool
+                  , use_attenuation: bool
+                  , padding: bool
+                  , color: Tuple[int, int, int, int]
+                  , position: Tuple[float, float, float]
+                  , intensity: float
+                  , attenuation_start: float
+                  , attenuation_end: float
+                 ):
+        """ Add light. Not actually a light, rather than a shadow caster. """
+
+        light = Light()
+        light.light_type = type
+
+        if light.light_type in {0, 1}:
+            light.unknown4 = unk1
+
+        light.type = unk2
+        light.use_attenuation = use_attenuation
+        light.padding = padding
+        light.color = color
+        light.position = position
+        light.intensity = intensity
+        light.attenuation_start = attenuation_start
+        light.attenuation_end = attenuation_end
+
+        self.molt.lights.append(light)
+
+
 
     def get_global_bounding_box(self):
         """ Calculate bounding box of an entire scene """
