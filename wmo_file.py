@@ -17,6 +17,7 @@ class WMOFile:
         self.filepath = filepath
         self.display_name = os.path.basename(os.path.splitext(filepath)[0])
         self.groups : List[WMOGroupFile] = []
+        self.export = True
 
         self._texture_lookup = {}
         self._doodad_lookup = {}
@@ -106,28 +107,31 @@ class WMOFile:
                     raise FileNotFoundError('\nError: Unable to find WMO root file or it is corrupted.')
 
     def write(self):
-        # write root chunks
-        with open(self.filepath, 'wb') as f:
 
-            self.mver.write(f)
-            self.mohd.write(f)
-            self.motx.write(f)
-            self.momt.write(f)
-            self.mogn.write(f)
-            self.mogi.write(f)
-            self.mosb.write(f)
-            self.mopv.write(f)
-            self.mopt.write(f)
-            self.mopr.write(f)
-            self.movv.write(f)
-            self.movb.write(f)
-            self.molt.write(f)
-            self.mods.write(f)
-            self.modn.write(f)
-            self.modd.write(f)
-            self.mfog.write(f)
+        if self.export:
 
-            # TODO: MCVP and WotLK+
+            # write root chunks
+            with open(self.filepath, 'wb') as f:
+
+                self.mver.write(f)
+                self.mohd.write(f)
+                self.motx.write(f)
+                self.momt.write(f)
+                self.mogn.write(f)
+                self.mogi.write(f)
+                self.mosb.write(f)
+                self.mopv.write(f)
+                self.mopt.write(f)
+                self.mopr.write(f)
+                self.movv.write(f)
+                self.movb.write(f)
+                self.molt.write(f)
+                self.mods.write(f)
+                self.modn.write(f)
+                self.modd.write(f)
+                self.mfog.write(f)
+
+                # TODO: MCVP and WotLK+
 
         # write group files
         for group in self.groups:
@@ -325,6 +329,7 @@ class WMOGroupFile:
         self.version = version
         self.filepath = filepath
         self.root = root
+        self.export = True
 
         # initialize chunks
         self.mver = MVER()
@@ -396,6 +401,9 @@ class WMOGroupFile:
                 setattr(self, field_name, read_chunk)
 
     def write(self):
+
+        if not self.export:
+            return
 
         with open(self.filepath, 'wb') as f:
 
