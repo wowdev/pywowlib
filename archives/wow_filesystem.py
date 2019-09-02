@@ -6,7 +6,7 @@ from typing import Union
 
 from .. import CLIENT_VERSION, WoWVersions
 from .mpq import MPQFile
-from .casc.CASC import CascHandlerLocal
+from .casc.CASC import CASCHandler, FileOpenFlags, LocaleFlags
 from ..wdbx.wdbc import DBCFile
 from ..blp import BLP2PNG
 
@@ -97,7 +97,6 @@ class WoWFileData:
                     print(e)
         if pairs:
             BLP2PNG().convert(pairs, dir.encode('utf-8'))
-
 
     def traverse_file_path(self, path: str) -> Union[None, str]:
         """ Traverses WoW file system in order to identify internal file path. """
@@ -204,8 +203,7 @@ class WoWFileData:
 
         wow_path = os.path.join(wow_path, '')  # ensure the path has trailing slash
 
-        casc = CascHandlerLocal()
-        casc.initialize(wow_path)
+        casc = CascHandler(wow_path, LocaleFlags.CASC_LOCALE_ENUS, False)
 
         print("\nDone initializing data packages.")
         print("Total loading time: ", time.strftime("%M minutes %S seconds", time.gmtime(time.time() - start_time)))
