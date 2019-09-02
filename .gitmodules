@@ -1,3 +1,6 @@
 [submodule "wdbx/dbd"]
 	path = wdbx/dbd
 	url = https://github.com/wowdev/WoWDBDefs/
+[submodule "archives/casc"]
+	path = archives/casc
+	url = https://github.com/wowdev/pyCASCLib
