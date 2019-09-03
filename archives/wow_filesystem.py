@@ -21,7 +21,7 @@ class WoWFileData:
         self.db_files_client.init_tables()
 
     def __del__(self):
-        print("\nUnloading game data...")
+        print("\nUnloaded game data.")
 
     def has_file(self, filepath):
         """ Check if the file is available in WoW filesystem """
@@ -43,12 +43,16 @@ class WoWFileData:
         storage, type_ = self.has_file(filepath)
         if storage:
             if type_:
-                file = storage.open(filepath).read()
+                if CLIENT_VERSION < WoWVersions.WOD:
+                    file = storage.open(filepath).read()
+                else:
+                    with storage.open(filepath) as casc_file:
+                        file = casc_file.data
             else:
                 file = open(os.path.join(storage, filepath), "rb").read()
 
         else:
-            raise KeyError("\nRequested file <<{}>> not found in WoW filesystem.".format(filepath))
+            raise KeyError("\nRequested file \"{}\" was not found in WoW filesystem.".format(filepath))
 
         return file
 
@@ -203,7 +207,7 @@ class WoWFileData:
 
         wow_path = os.path.join(wow_path, '')  # ensure the path has trailing slash
 
-        casc = CascHandler(wow_path, LocaleFlags.CASC_LOCALE_ENUS, False)
+        casc = CASCHandler(wow_path, LocaleFlags.CASC_LOCALE_ENUS, False)
 
         print("\nDone initializing data packages.")
         print("Total loading time: ", time.strftime("%M minutes %S seconds", time.gmtime(time.time() - start_time)))
