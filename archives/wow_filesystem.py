@@ -4,7 +4,7 @@ import time
 
 from typing import Union
 
-from .. import CLIENT_VERSION, WoWVersions
+from .. import WoWVersionManager, WoWVersions
 from .mpq import MPQFile
 from .casc.CASC import CASCHandler, FileOpenFlags, LocaleFlags
 from ..wdbx.wdbc import DBCFile
@@ -14,7 +14,7 @@ from ..blp import BLP2PNG
 class WoWFileData:
     def __init__(self, wow_path, project_path):
         self.wow_path = wow_path
-        self.files = self.init_mpq_storage(self.wow_path, project_path) if CLIENT_VERSION < WoWVersions.WOD \
+        self.files = self.init_mpq_storage(self.wow_path, project_path) if WoWVersionManager().client_version < WoWVersions.WOD \
                      else self.init_casc_storage(self.wow_path, project_path)
 
         self.db_files_client = DBFilesClient(self)
@@ -23,13 +23,22 @@ class WoWFileData:
     def __del__(self):
         print("\nUnloaded game data.")
 
-    def has_file(self, filepath):
+    def has_file(self, identifier: Union[str, int]):
         """ Check if the file is available in WoW filesystem """
         for storage, type in reversed(self.files):
             if type:
-                file = filepath in storage
+                if WoWVersionManager().client_version < WoWVersions.WOD:
+                    file = identifier in storage
+                else:
+
+                    if isinstance(identifier, int):
+                        file = (identifier, FileOpenFlags.CASC_OPEN_BY_FILEID) in storage
+
+                    elif isinstance(identifier, str):
+                        file = (identifier, FileOpenFlags.CASC_OPEN_BY_NAME) in storage
+
             else:
-                abs_path = os.path.join(storage, filepath)
+                abs_path = os.path.join(storage, identifier)
                 file = os.path.exists(abs_path) and os.path.isfile(abs_path)
 
             if file:
@@ -43,10 +52,10 @@ class WoWFileData:
         storage, type_ = self.has_file(filepath)
         if storage:
             if type_:
-                if CLIENT_VERSION < WoWVersions.WOD:
+                if WoWVersionManager().client_version < WoWVersions.WOD:
                     file = storage.open(filepath).read()
                 else:
-                    with storage.open(filepath) as casc_file:
+                    with storage.read_file(filepath) as casc_file:
                         file = casc_file.data
             else:
                 file = open(os.path.join(storage, filepath), "rb").read()

@@ -1,4 +1,13 @@
-CLIENT_VERSION = 2
+from .io_utils.types import singleton
+
+@singleton
+class WoWVersionManager:
+
+    def __init__(self):
+        self.client_version = 0
+
+    def set_client_version(self, version: int):
+        self.client_version = version
 
 
 class WoWVersions:
@@ -9,4 +18,5 @@ class WoWVersions:
     MOP = 4
     WOD = 5  # ?
     LEGION = 6
-    # BFA - ?
+    BFA = 7
+    NEW_CLASSIC = 8

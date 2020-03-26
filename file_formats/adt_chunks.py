@@ -1,6 +1,6 @@
 from .wow_common_types import *
 from ..enums.adt_enums import *
-from .. import CLIENT_VERSION, WoWVersions
+from .. import WoWVersionManager, WoWVersions
 
 __reload_order_index__ = 2
 
@@ -579,7 +579,7 @@ class MCNK(MOBILE_CHUNK):
 		self.n_layers = 0
 		self.n_doodad_refs = 0
 
-		if CLIENT_VERSION >= WoWVersions.MOP:
+		if WoWVersionManager().client_version >= WoWVersions.MOP:
 			self.hole_high_res = 0
 		else:
 			self.ofs_mcvt = OFFSET(self.adt)
@@ -698,7 +698,7 @@ class MCNK(MOBILE_CHUNK):
 		self.n_layers = uint32.read(f)
 		self.n_doodad_refs = uint32.read(f)
 
-		if CLIENT_VERSION >= WoWVersions.MOP:
+		if WoWVersionManager().client_version >= WoWVersions.MOP:
 			self.hole_high_res = uint64.read(f)
 		else:
 			self.ofs_mcvt.set_rel(uint32.read(f), self.address)
@@ -830,7 +830,7 @@ class MCNK(MOBILE_CHUNK):
 		uint32.write(f, self.n_layers)
 		uint32.write(f, self.n_doodad_refs)
 
-		if CLIENT_VERSION >= WoWVersions.MOP:
+		if WoWVersionManager().client_version >= WoWVersions.MOP:
 			uint64.write(f, self.hole_high_res)
 		else:
 			uint32.write(f, int(self.ofs_mcvt))
@@ -953,7 +953,7 @@ class MCCV(MOBILE_CHUNK):
 
 class MCNR(MOBILE_CHUNK):
 	magic = 'RNCM'
-	data_size = 435 if CLIENT_VERSION <= WoWVersions.WOTLK else 448
+	data_size = 435 if WoWVersionManager().client_version <= WoWVersions.WOTLK else 448
 
 	def __init__(self, adt):
 		MOBILE_CHUNK.__init__(self, adt)

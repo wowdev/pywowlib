@@ -12,6 +12,8 @@ __reload_order_index__ = 2
 class M2SkinSubmesh:
     
     def __init__(self):
+        self.m2_version = M2VersionsManager().m2_version
+
         self.skin_section_id = 0                                # Mesh part ID, see below.
         self.level = 0                                          # (level << 16) is added (|ed) to startTriangle and alike to avoid having to increase those fields to uint32s.
         self.vertex_start = 0                                   # Starting vertex number.
@@ -24,7 +26,7 @@ class M2SkinSubmesh:
         self.center_bone_index = 0
         self.center_position = (0.0, 0.0, 0.0)                  # Average position of all the vertices in the sub mesh.
 
-        if VERSION >= M2Versions.TBC:
+        if self.m2_version >= M2Versions.TBC:
             self.sort_ceter_position = (0.0, 0.0, 0.0)          # The center of the box when an axis aligned box is built around the vertices in the submesh.
             self.sort_radius = 0.0                              # Distance of the vertex farthest from CenterBoundingBox.
    
@@ -41,7 +43,7 @@ class M2SkinSubmesh:
         self.center_bone_index = uint16.read(f)
         self.center_position = vec3D.read(f)
 
-        if VERSION >= M2Versions.TBC:
+        if self.m2_version >= M2Versions.TBC:
             self.sort_ceter_position = vec3D.read(f)
             self.sort_radius = float32.read(f)
             
@@ -60,7 +62,7 @@ class M2SkinSubmesh:
         uint16.write(f, self.center_bone_index)
         vec3D.write(f, self.center_position)
 
-        if VERSION >= M2Versions.TBC:
+        if self.m2_version >= M2Versions.TBC:
             vec3D.write(f, self.sort_ceter_position)
             float32.write(f, self.sort_radius)
 
@@ -157,9 +159,11 @@ class M2ShadowBatch:
 class M2SkinProfile:
 
     def __init__(self):
-        self._size = 48 if VERSION >= M2Versions.WOTLK else 44
+        self.m2_version = M2VersionsManager().m2_version
 
-        if VERSION >= M2Versions.WOTLK:
+        self._size = 48 if self.m2_version >= M2Versions.WOTLK else 44
+
+        if self.m2_version >= M2Versions.WOTLK:
             self.magic = 'SKIN'
 
         self.vertex_indices = M2Array(uint16)
@@ -169,7 +173,7 @@ class M2SkinProfile:
         self.texture_units = M2Array(M2SkinTextureUnit)
         self.bone_count_max = 0
 
-        if VERSION >= M2Versions.CATA:
+        if self.m2_version >= M2Versions.CATA:
             self.shadow_batches = M2Array(M2ShadowBatch)
             self._size += 8
 
@@ -182,7 +186,7 @@ class M2SkinProfile:
         self.texture_units.read(f)
         self.bone_count_max = uint32.read(f)
 
-        if VERSION >= M2Versions.CATA:
+        if self.m2_version >= M2Versions.CATA:
             self.shadow_batches.read(f)
 
         return self
@@ -198,7 +202,7 @@ class M2SkinProfile:
         self.texture_units.write(f)
         uint32.write(f, self.bone_count_max)
 
-        if VERSION >= M2Versions.CATA:
+        if self.m2_version >= M2Versions.CATA:
             self.shadow_batches.write(f)
 
         return self

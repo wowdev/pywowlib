@@ -5,7 +5,15 @@ __reload_order_index__ = 1
 
 
 ###### M2 file versions ######
-VERSION = 274
+
+@singleton
+class M2VersionsManager:
+
+    def __init__(self):
+        self.m2_version = 0
+
+    def set_m2_version(self, version: int):
+        self.m2_version = version
 
 
 class M2Versions:

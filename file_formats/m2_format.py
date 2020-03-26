@@ -1,4 +1,4 @@
-from .wow_common_types import CAaBox, CRange, VERSION, M2Array, M2Versions, fixed16, fixed_point, MemoryManager
+from .wow_common_types import CAaBox, CRange, M2Array, M2Versions, fixed16, fixed_point, MemoryManager, M2VersionsManager
 from ..io_utils.types import *
 from .skin_format import M2SkinProfile
 from ..enums.m2_enums import M2KeyBones, M2GlobalFlags, M2AttachmentTypes, M2EventTokens
@@ -127,10 +127,12 @@ class M2TrackBase:
     
     def __init__(self):
 
+        self.m2_version = M2VersionsManager().m2_version
+
         self.interpolation_type = 0
         self.global_sequence = -1
 
-        if VERSION < M2Versions.WOTLK:
+        if self.m2_version < M2Versions.WOTLK:
             self.interpolation_ranges = M2Array(M2Range)
             self.timestamps = M2Array(uint32)
         else:
@@ -140,17 +142,17 @@ class M2TrackBase:
         self.interpolation_type = uint16.read(f)
         self.global_sequence = int16.read(f)
 
-        if VERSION < M2Versions.WOTLK:
+        if self.m2_version < M2Versions.WOTLK:
             self.interpolation_ranges.read(f)
         self.timestamps.read(f)
 
         return self
-        
+
     def write(self, f):
         uint16.write(f, self.interpolation_type)
         int16.write(f, self.global_sequence)
 
-        if VERSION < M2Versions.WOTLK:
+        if self.m2_version < M2Versions.WOTLK:
             self.interpolation_ranges.write(f)
 
         self.timestamps.write(f)
@@ -158,21 +160,23 @@ class M2TrackBase:
         return self
 
     def new(self):
-        if VERSION < M2Versions.WOTLK:
+        if self.m2_version < M2Versions.WOTLK:
             return self.interpolation_ranges.new(), self.timestamps
         else:
             return self.timestamps.new()
 
     @staticmethod
     def size():
-        return 12 if VERSION >= M2Versions.WOTLK else 20
+        return 12 if M2VersionsManager().m2_version >= M2Versions.WOTLK else 20
 
 
 class M2Track(M2TrackBase, metaclass=Template):
 
     def __init__(self, type_):
+        self.m2_version = M2VersionsManager().m2_version
+
         super(M2Track, self).__init__()
-        self.values = M2Array(type_) if VERSION < M2Versions.WOTLK else M2Array(M2Array << type_)
+        self.values = M2Array(type_) if self.m2_version < M2Versions.WOTLK else M2Array(M2Array << type_)
 
     def read(self, f):
         super(M2Track, self).read(f)
@@ -190,7 +194,7 @@ class M2Track(M2TrackBase, metaclass=Template):
 
     @staticmethod
     def size():
-        return 20 if VERSION >= M2Versions.WOTLK else 28
+        return 20 if M2VersionsManager().m2_version >= M2Versions.WOTLK else 28
 
 
 class FBlock:
@@ -312,10 +316,12 @@ class M2SequenceFlags:
 class M2Sequence:
 
     def __init__(self):
+        self.m2_version = M2VersionsManager().m2_version
+
         self.id = 0                                             # Animation id in AnimationData.dbc
         self.variation_index = 0                                # Sub-animation id: Which number in a row of animations this one is.
 
-        if VERSION <= M2Versions.TBC:
+        if self.m2_version <= M2Versions.TBC:
             self.start_timestamp = 0
             self.end_timestamp = 0
         else:
@@ -327,7 +333,7 @@ class M2Sequence:
         self.padding = 0
         self.replay = M2Range()                                 # May both be 0 to not repeat. Client will pick a random number of repetitions within bounds if given.
 
-        if VERSION < M2Versions.WOD:
+        if self.m2_version < M2Versions.WOD:
             self.blend_time = 0
         else:
             self.blend_time_in = 0                              # The client blends (lerp) animation states between animations where the end and start values differ. This specifies how long that blending takes. Values: 0, 50, 100, 150, 200, 250, 300, 350, 500.
@@ -341,7 +347,7 @@ class M2Sequence:
         self.id = uint16.read(f) #2
         self.variation_index = uint16.read(f) #2
 
-        if VERSION <= M2Versions.TBC:
+        if self.m2_version <= M2Versions.TBC:
             self.start_timestamp = uint32.read(f) #4
             self.end_timestamp = uint32.read(f) #4
 
@@ -355,7 +361,7 @@ class M2Sequence:
         self.padding = uint16.read(f) #2
         self.replay.read(f)
 
-        if VERSION < M2Versions.WOD:
+        if self.m2_version < M2Versions.WOD:
             self.blend_time = uint32.read(f) #4
         else:
             self.blend_time_in = uint16.read(f) #2
@@ -370,7 +376,7 @@ class M2Sequence:
     def write(self, f):
         uint16.write(f, self.id)
         uint16.write(f, self.variation_index)
-        if VERSION <= M2Versions.TBC:
+        if self.m2_version <= M2Versions.TBC:
             uint32.write(f, self.start_timestamp)
             uint32.write(f, self.end_timestamp)
         else:
@@ -382,7 +388,7 @@ class M2Sequence:
         uint16.write(f, self.padding)
         self.replay.write(f)
 
-        if VERSION < M2Versions.WOD:
+        if self.m2_version < M2Versions.WOD:
             uint32.write(f, self.blend_time)
         else:
             uint16.write(f, self.blend_time_in)
@@ -396,7 +402,7 @@ class M2Sequence:
 
     @staticmethod
     def size():
-        return 32 if VERSION <= M2Versions.TBC else 28
+        return 32 if M2VersionsManager().m2_version <= M2Versions.TBC else 28
 
 
 #############################################################
@@ -406,6 +412,8 @@ class M2Sequence:
 class M2CompBone:
 
     def __init__(self):
+        self.m2_version = M2VersionsManager().m2_version
+
         self.key_bone_id = 0                                    # Back-reference to the key bone lookup table. -1 if this is no key bone.
         self.flags = 0
         self.parent_bone = 0                                    # Parent bone ID or -1 if there is none.
@@ -418,7 +426,7 @@ class M2CompBone:
         # unionend
 
         self.translation = M2Track(vec3D)
-        self.rotation = M2Track(quat if VERSION <= M2Versions.CLASSIC else M2CompQuaternion)  # compressed values, default is (32767,32767,32767,65535) == (0,0,0,1) == identity
+        self.rotation = M2Track(quat if self.m2_version <= M2Versions.CLASSIC else M2CompQuaternion)  # compressed values, default is (32767,32767,32767,65535) == (0,0,0,1) == identity
 
         self.scale = M2Track(vec3D)
         self.pivot = (0.0, 0.0, 0.0)                            # The pivot point of that bone.
@@ -486,7 +494,7 @@ class M2CompBone:
 
     @staticmethod
     def size():
-        return 86 if VERSION >= M2Versions.WOTLK else 110
+        return 86 if M2VersionsManager().m2_version >= M2Versions.WOTLK else 110
 
 
 #############################################################
@@ -571,7 +579,7 @@ class M2Color:
 
     @staticmethod
     def size():
-        return 40 if VERSION >= M2Versions.WOTLK else 56
+        return 40 if M2VersionsManager().m2_version >= M2Versions.WOTLK else 56
 
 
 class M2Texture:
@@ -627,12 +635,14 @@ class M2TextureTransform:
 
     @staticmethod
     def size():
-        return 60 if VERSION >= M2Versions.WOTLK else 84
+        return 60 if M2VersionsManager().m2_version >= M2Versions.WOTLK else 84
 
 
 class M2Ribbon:
 
     def __init__(self):
+        self.m2_version = M2VersionsManager().m2_version
+
         self.ribbon_id = -1                                     # Always (as I have seen): -1.
         self.bone_index = 0                                     # A bone to attach to.
         self.position = (0.0, 0.0, 0.0)                         # And a position, relative to that bone.
@@ -650,7 +660,7 @@ class M2Ribbon:
         self.tex_slot_track = M2Track(uint16)
         self.visibility_track = M2Track(uint8)
 
-        if VERSION >= M2Versions.WOTLK:                         # TODO: verify version
+        if self.m2_version >= M2Versions.WOTLK:                         # TODO: verify version
             self.priority_plane = 0
             self.padding = 0
 
@@ -672,7 +682,7 @@ class M2Ribbon:
         self.tex_slot_track.read(f)
         self.visibility_track.read(f)
 
-        if VERSION >= M2Versions.WOTLK:
+        if self.m2_version >= M2Versions.WOTLK:
             self.priority_plane = int16.read(f)
             self.padding = uint16.read(f)
 
@@ -696,7 +706,7 @@ class M2Ribbon:
         self.tex_slot_track.write(f)
         self.visibility_track.write(f)
 
-        if VERSION >= M2Versions.WOTLK:
+        if self.m2_version >= M2Versions.WOTLK:
             int16.write(f, self.priority_plane)
             uint16.write(f, self.padding)
 
@@ -704,12 +714,14 @@ class M2Ribbon:
 
     @staticmethod
     def size():
-        return 176 if VERSION >= M2Versions.WOTLK else 220
+        return 176 if M2VersionsManager().m2_version >= M2Versions.WOTLK else 220
 
 
 class M2Particle:
 
     def __init__(self):
+        self.m2_version = M2VersionsManager().m2_version
+
         self.particle_id = 0                                    # Always (as I have seen): -1.
         self.flags = 0                                          # See Below
         self.position = (0.0, 0.0, 0.0)                         # The position. Relative to the following bone.
@@ -718,7 +730,7 @@ class M2Particle:
         self.geometry_model_filename = M2Array(int8)            # if given, this emitter spawns models
         self.recursion_model_filename = M2Array(int8)           # if given, this emitter is an alias for the (maximum 4) emitters of the given model
 
-        if VERSION >= M2Versions.TBC:
+        if self.m2_version >= M2Versions.TBC:
             self.blending_type = 0                              # A blending type for the particle. See Below
             self.emitter_type = 0                               # 1 - Plane (rectangle), 2 - Sphere, 3 - Spline, 4 - Bone
             self.particle_color_index = 0                       # This one is used for ParticleColor.dbc. See below.
@@ -726,7 +738,7 @@ class M2Particle:
             self.blending_type = 0                              # A blending type for the particle. See Below
             self.emitter_type = 0                               # 1 - Plane (rectangle), 2 - Sphere, 3 - Spline, 4 - Bone
 
-        if VERSION >= M2Versions.CATA:
+        if self.m2_version >= M2Versions.CATA:
             self.multi_tex_param_x = fixed_point(uint8, 2, 5)
             self.multi_tex_param_y = fixed_point(uint8, 2, 5)
         else:
@@ -744,7 +756,7 @@ class M2Particle:
         self.gravity = M2Track(float32)                         # Not necessarily a float; see below.
         self.lifespan = M2Track(float32)                        # 0 makes the velocity have no sideways (y-axis) component.  For sphere generators, this is the maximum azimuth angle of the initial position.
 
-        if VERSION >= M2Versions.WOTLK:
+        if self.m2_version >= M2Versions.WOTLK:
             self.life_span_vary = 0.0                           # An individual particle's lifespan is added to by lifespanVary * random(-1, 1)
             self.emission_rate_vary = 0.0                       # This adds to the base emissionRate value the same way as lifespanVary. The random value is different every update.
 
@@ -753,7 +765,7 @@ class M2Particle:
         self.emission_area_width = M2Track(float32)             # For plane generators, this is the width of the plane in the y-axis. For sphere generators, this is the maximum radius.
         self.z_source = M2Track(float32)                        # When greater than 0, the initial velocity of the particle is (particle.position - C3Vector(0, 0, zSource)).Normalize()
         
-        if VERSION >= M2Versions.WOTLK:
+        if self.m2_version >= M2Versions.WOTLK:
             self.color_track = FBlock(vec3D)                    # Most likely they all have 3 timestamps for {start, middle, end}.
             self.alpha_track = FBlock(fixed16)
             self.scale_track = FBlock(vec2D)
@@ -775,7 +787,7 @@ class M2Particle:
         self.burst_multiplier = 0.0                             # ivelScale
         self.drag = 0.0                                         # For a non-zero values, instead of travelling linearly the particles seem to slow down sooner. Speed is multiplied by exp( -drag * t ).
         
-        if VERSION >= M2Versions.WOTLK:
+        if self.m2_version >= M2Versions.WOTLK:
             self.basespin = 0.0                                 # Initial rotation of the particle quad
             self.base_spin_vary = 0.0
             self.spin = 0.0                                     # Rotation of the particle quad per second
@@ -793,7 +805,7 @@ class M2Particle:
         self.spline_points = M2Array(vec3D)                     # Set only for spline praticle emitter. Contains array of points for spline
         self.enabled_in = M2Track(uint8)                        # (boolean) Appears to be used sparely now, probably there's a flag that links particles to animation sets where they are enabled.
 
-        if VERSION >= M2Versions.CATA:
+        if self.m2_version >= M2Versions.CATA:
             self.multi_texture_param0 = Array(Vector_2fp_6_9)
             self.multi_texture_param1 = Array(Vector_2fp_6_9)
 
@@ -806,7 +818,7 @@ class M2Particle:
         self.geometry_model_filename.read(f)
         self.recursion_model_filename.read(f)
 
-        if VERSION >= M2Versions.TBC:
+        if self.m2_version >= M2Versions.TBC:
             self.blending_type = uint8.read(f)
             self.emitter_type = uint8.read(f)
             self.particle_color_index = uint16.read(f)
@@ -814,7 +826,7 @@ class M2Particle:
             self.blending_type = uint16.read(f)
             self.emitter_type = uint16.read(f)
 
-        if VERSION >= M2Versions.CATA:
+        if self.m2_version >= M2Versions.CATA:
             self.multi_tex_param_x.read(f)
             self.multi_tex_param_y.read(f)
         else:
@@ -831,19 +843,19 @@ class M2Particle:
         self.gravity.read(f)
         self.lifespan.read(f)
 
-        if VERSION >= M2Versions.WOTLK:
+        if self.m2_version >= M2Versions.WOTLK:
             self.life_span_vary = float32.read(f)
 
         self.emission_rate.read(f)
 
-        if VERSION >= M2Versions.WOTLK:
+        if self.m2_version >= M2Versions.WOTLK:
             self.emission_rate_vary = float32.read(f)
 
         self.emission_area_length.read(f)
         self.emission_area_width.read(f)
         self.z_source.read(f)
 
-        if VERSION >= M2Versions.WOTLK:
+        if self.m2_version >= M2Versions.WOTLK:
             self.color_track.read(f)
             self.alpha_track.read(f)
             self.scale_track.read(f)
@@ -867,7 +879,7 @@ class M2Particle:
         self.burst_multiplier = float32.read(f)
         self.drag = float32.read(f)
 
-        if VERSION >= M2Versions.WOTLK:
+        if self.m2_version >= M2Versions.WOTLK:
             self.basespin = float32.read(f)
             self.base_spin_vary = float32.read(f)
             self.spin = float32.read(f)
@@ -885,7 +897,7 @@ class M2Particle:
         self.spline_points.read(f)
         self.enabled_in.read(f)
 
-        if VERSION >= M2Versions.CATA:
+        if self.m2_version >= M2Versions.CATA:
             self.multi_texture_param0.read(f)
             self.multi_texture_param1.read(f)
 
@@ -900,7 +912,7 @@ class M2Particle:
         self.geometry_model_filename.write(f)
         self.recursion_model_filename.write(f)
 
-        if VERSION >= M2Versions.TBC:
+        if self.m2_version >= M2Versions.TBC:
             uint8.write(f, self.blending_type)
             uint8.write(f, self.emitter_type)
             uint16.write(f, self.particle_color_index)
@@ -908,7 +920,7 @@ class M2Particle:
             uint16.write(f, self.blending_type)
             uint16.write(f, self.emitter_type)
             
-        if VERSION >= M2Versions.CATA:
+        if self.m2_version >= M2Versions.CATA:
             self.multi_tex_param_x.write(f)
             self.multi_tex_param_y.write(f)
         else:
@@ -925,19 +937,19 @@ class M2Particle:
         self.gravity.write(f)
         self.lifespan.write(f)
 
-        if VERSION >= M2Versions.WOTLK:
+        if self.m2_version >= M2Versions.WOTLK:
             float32.write(f, self.life_span_vary)
 
         self.emission_rate.write(f)
 
-        if VERSION >= M2Versions.WOTLK:
+        if self.m2_version >= M2Versions.WOTLK:
             float32.write(f, self.emission_rate_vary)
             
         self.emission_area_length.write(f)
         self.emission_area_width.write(f)
         self.z_source.write(f)
 
-        if VERSION >= M2Versions.WOTLK:
+        if self.m2_version >= M2Versions.WOTLK:
             self.color_track.write(f)
             self.alpha_track.write(f)
             self.scale_track.write(f)
@@ -961,7 +973,7 @@ class M2Particle:
         float32.write(f, self.burst_multiplier)
         float32.write(f, self.drag)
 
-        if VERSION >= M2Versions.WOTLK:
+        if self.m2_version >= M2Versions.WOTLK:
             float32.write(f, self.basespin)
             float32.write(f, self.base_spin_vary)
             float32.write(f, self.spin)
@@ -980,7 +992,7 @@ class M2Particle:
         self.spline_points.write(f)
         self.enabled_in.write(f)
 
-        if VERSION >= M2Versions.CATA:
+        if self.m2_version >= M2Versions.CATA:
             self.multi_texture_param0.write(f)
             self.multi_texture_param1.write(f)
 
@@ -1037,7 +1049,7 @@ class M2Light:
 
     @staticmethod
     def size():
-        return 156 if VERSION >= M2Versions.WOTLK else 212
+        return 156 if M2VersionsManager().m2_version >= M2Versions.WOTLK else 212
 
 
 ###### Cameras ######
@@ -1045,8 +1057,10 @@ class M2Light:
 class M2Camera:
 
     def __init__(self):
+        self.m2_version = M2VersionsManager().m2_version
+
         self.type = 0                                           # 0: portrait, 1: characterinfo; -1: else (flyby etc.); referenced backwards in the lookup table.
-        if VERSION < M2Versions.CATA:
+        if self.m2_version < M2Versions.CATA:
             self.fov = 0.0                                      # Diagonal FOV in radians. See below for conversion.
 
         self.far_clip = 0.0
@@ -1056,12 +1070,12 @@ class M2Camera:
         self.target_position = M2Track(M2SplineKey << vec3D)    # How the target moves. Should be 3*3 floats.
         self.target_position_base = (0.0, 0.0, 0.0)
         self.roll = M2Track(M2SplineKey << float32)             # The camera can have some roll-effect. Its 0 to 2*Pi.
-        if VERSION >= M2Versions.CATA:
+        if self.m2_version >= M2Versions.CATA:
             self.fov = M2Track(M2SplineKey << float32)          # Diagonal FOV in radians. float vfov = dfov / sqrt(1.0 + pow(aspect, 2.0));
 
     def read(self, f):
         self.type = int32.read(f)
-        if VERSION < M2Versions.CATA:
+        if self.m2_version < M2Versions.CATA:
             self.fov = float32.read(f)
         self.far_clip = float32.read(f)
         self.near_clip = float32.read(f)
@@ -1070,14 +1084,14 @@ class M2Camera:
         self.target_position.read(f)
         self.target_position_base = vec3D.read(f)
         self.roll.read(f)
-        if VERSION >= M2Versions.CATA:
+        if self.m2_version >= M2Versions.CATA:
             self.fov.read(f)
             
         return self
 
     def write(self, f):
         int32.write(f, self.type)
-        if VERSION < M2Versions.CATA:
+        if self.m2_version < M2Versions.CATA:
             float32.write(f, self.fov)
         float32.write(f, self.far_clip)
         float32.write(f, self.near_clip)
@@ -1086,15 +1100,15 @@ class M2Camera:
         self.target_position.write(f)
         vec3D.write(f, self.target_position_base)
         self.roll.write(f)
-        if VERSION >= M2Versions.CATA:
+        if self.m2_version >= M2Versions.CATA:
             self.fov.write(f)
 
         return self
 
     @staticmethod
     def size():
-        tracks = 60 if VERSION >= M2Versions.WOTLK else 84
-        return tracks + 40 if VERSION < M2Versions.CATA else tracks + 64
+        tracks = 60 if M2VersionsManager().m2_version >= M2Versions.WOTLK else 84
+        return tracks + 40 if M2VersionsManager().m2_version < M2Versions.CATA else tracks + 64
 
 
 ###### Attachments ######
@@ -1128,7 +1142,7 @@ class M2Attachment:
 
     @staticmethod
     def size():
-        return 40 if VERSION >= M2Versions.WOTLK else 48
+        return 40 if M2VersionsManager().m2_version >= M2Versions.WOTLK else 48
 
 
 ###### Events ######
@@ -1162,7 +1176,7 @@ class M2Event:
 
     @staticmethod
     def size():
-        return 36 if VERSION >= M2Versions.WOTLK else 44
+        return 36 if M2VersionsManager().m2_version >= M2Versions.WOTLK else 44
 
 
 #############################################################
@@ -1172,24 +1186,26 @@ class M2Event:
 class M2Header:
 
     def __init__(self):
-        self._size = 324 if VERSION <= M2Versions.TBC else 304
+        self.m2_version = M2VersionsManager().m2_version
+
+        self._size = 324 if self.m2_version <= M2Versions.TBC else 304
 
         self.magic = 'MD20'
-        self.version = VERSION
+        self.version = self.m2_version
         self.name = M2String()
         self.global_flags = 0
         self.global_sequences = M2Array(uint32)
         self.sequences = M2Array(M2Sequence)
         self.sequence_lookup = M2Array(uint16)
 
-        if VERSION <= M2Versions.TBC:
+        if self.m2_version <= M2Versions.TBC:
             self.playable_animation_lookup = M2Array(uint32)
 
         self.bones = M2Array(M2CompBone)
         self.key_bone_lookup = M2Array(int16)
         self.vertices = M2Array(M2Vertex)
 
-        if VERSION <= M2Versions.TBC:
+        if self.m2_version <= M2Versions.TBC:
             self.skin_profiles = M2Array(M2SkinProfile)
         else:
             self.num_skin_profiles = 1
@@ -1198,7 +1214,7 @@ class M2Header:
         self.textures = M2Array(M2Texture)
         self.texture_weights = M2Array(M2Track << fixed16)
 
-        if VERSION <= M2Versions.TBC:
+        if self.m2_version <= M2Versions.TBC:
             self.unknown = M2Array(uint16)
 
         self.texture_transforms = M2Array(M2TextureTransform)
@@ -1229,7 +1245,7 @@ class M2Header:
         self.ribbon_emitters = M2Array(M2Ribbon)
         self.particle_emitters = M2Array(M2Particle)
 
-        if VERSION >= M2Versions.WOTLK:
+        if self.m2_version >= M2Versions.WOTLK:
             self.texture_combiner_combos = M2Array(uint16)
             self._size += 8
 
@@ -1241,7 +1257,7 @@ class M2Header:
         self.sequences.read(f)
         self.sequence_lookup.read(f)
 
-        if VERSION <= M2Versions.TBC:
+        if self.m2_version <= M2Versions.TBC:
             self.playable_animation_lookup.read(f)
 
         self.bones.read(f)
@@ -1249,7 +1265,7 @@ class M2Header:
         self.key_bone_lookup.read(f)
         self.vertices.read(f)
 
-        if VERSION <= M2Versions.TBC:
+        if self.m2_version <= M2Versions.TBC:
             self.skin_profiles.read(f)
         else:
             self.num_skin_profiles = uint32.read(f)
@@ -1258,7 +1274,7 @@ class M2Header:
         self.textures.read(f)
         self.texture_weights.read(f)
         
-        if VERSION <= M2Versions.TBC:
+        if self.m2_version <= M2Versions.TBC:
             self.unknown.read(f)
 
         self.texture_transforms.read(f)
@@ -1289,7 +1305,7 @@ class M2Header:
         self.ribbon_emitters.read(f)
         self.particle_emitters.read(f)
 
-        if VERSION >= M2Versions.WOTLK and self.global_flags & M2GlobalFlags.UseTextureCombinerCombos:
+        if self.m2_version >= M2Versions.WOTLK and self.global_flags & M2GlobalFlags.UseTextureCombinerCombos:
             self.texture_combiner_combos.read(f)
 
         # assign bone names
@@ -1334,7 +1350,7 @@ class M2Header:
         self.sequences.write(f)
         self.sequence_lookup.write(f)
 
-        if VERSION <= M2Versions.TBC:
+        if self.m2_version <= M2Versions.TBC:
             self.playable_animation_lookup.write(f)
 
         self.bones.write(f)
@@ -1342,7 +1358,7 @@ class M2Header:
         self.key_bone_lookup.write(f)
         self.vertices.write(f)
 
-        if VERSION <= M2Versions.TBC:
+        if self.m2_version <= M2Versions.TBC:
             self.skin_profiles.write(f)
         else:
             uint32.write(f, self.num_skin_profiles)
@@ -1352,7 +1368,7 @@ class M2Header:
 
         self.texture_weights.write(f)
 
-        if VERSION <= M2Versions.TBC:
+        if self.m2_version <= M2Versions.TBC:
             self.unknown.write(f)
 
         self.texture_transforms.write(f)
@@ -1383,7 +1399,7 @@ class M2Header:
         self.ribbon_emitters.write(f)
         self.particle_emitters.write(f)
 
-        if VERSION >= M2Versions.WOTLK and self.global_flags & M2GlobalFlags.UseTextureCombinerCombos:
+        if self.m2_version >= M2Versions.WOTLK and self.global_flags & M2GlobalFlags.UseTextureCombinerCombos:
             self.texture_combiner_combos.write(f)
 
         return self

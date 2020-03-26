@@ -1,5 +1,5 @@
 from enum import IntEnum
-from .. import CLIENT_VERSION, WoWVersions
+from .. import WoWVersionManager, WoWVersions
 
 __reload_order_index__ = -1
 
@@ -83,7 +83,7 @@ class ADTTextureFlags(IntEnum):
 	unused0				= 0b1 << 1		# no non-zero values in 20490
 	unused1				= 0b1 << 2		# no non-zero values in 20490
 	unused2				= 0b1 << 3		# no non-zero values in 20490
-	if CLIENT_VERSION >= WoWVersions.MOP:
+	if WoWVersionManager().client_version >= WoWVersions.MOP:
 		texture_scale0	= 0b1 << 4
 		texture_scale1	= 0b1 << 5
 		texture_scale2	= 0b1 << 6
