@@ -10,7 +10,7 @@ __reload_order_index__ = 1
 class M2VersionsManager:
 
     def __init__(self):
-        self.m2_version = 0
+        self.m2_version = M2Versions.WOTLK
 
     def set_m2_version(self, version: int):
         self.m2_version = version
