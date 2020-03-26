@@ -26,6 +26,21 @@ class M2Versions:
     LEGION = 274
     BFA = 274  # TODO: verify
 
+    @classmethod
+    def from_expansion_number(cls, exp_num: int):
+
+        v_dict = {
+            0: cls.CLASSIC,
+            1: cls.TBC,
+            2: cls.WOTLK,
+            3: cls.CATA,
+            4: cls.WOD,
+            5: cls.LEGION,
+            6: cls.BFA
+        }
+
+        return v_dict[exp_num]
+
 
 #############################################################
 ######                WoW Common Types                 ######

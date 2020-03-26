@@ -350,8 +350,6 @@ class M2Sequence:
         if self.m2_version <= M2Versions.TBC:
             self.start_timestamp = uint32.read(f) #4
             self.end_timestamp = uint32.read(f) #4
-
-            self.size += 4
         else:
             self.duration = uint32.read(f)  #4
         
