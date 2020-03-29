@@ -174,6 +174,7 @@ class WMOFile:
             raise ReferenceError('\nError. Material must have a diffuse texture.')
 
         if diff_texture_2:
+
             if diff_texture_2 not in self._texture_lookup:
                 self._texture_lookup[diff_texture_2] = self.motx.add_string(diff_texture_2)
 

@@ -62,6 +62,7 @@ class MOTX:
         self.header = ChunkHeader(magic='XTOM')
         self.header.size = size
         self.string_table = bytearray()
+        self.string_table.append(0)
 
     def read(self, f):
         self.string_table = f.read(self.header.size)
@@ -152,6 +153,8 @@ class WMOMaterial:
         uint8.write(f, self.color3, 4)
         uint32.write(f, self.tex3_flags)
         uint32.write(f, self.runtime_data, 4)
+
+        print(self.texture1_ofs, self.texture2_ofs)
 
 
 class MOMT:
