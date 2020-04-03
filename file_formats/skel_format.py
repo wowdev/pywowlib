@@ -1,5 +1,5 @@
 from io import BytesIO
-from .wow_common_types import ChunkHeader
+from .wow_common_types import ChunkHeader, ContentChunk
 from .m2_format import *
 from .m2_chunks import AFID, BFID
 

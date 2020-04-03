@@ -341,27 +341,26 @@ class MD20(M2Header):
     pass
 
 
-class MD21(M2Header):
-    def __init__(self, size=0):
-        self.header = ChunkHeader(magic='MD21')
-        self.header.size = size
+class MD21(M2Header, ContentChunk):
+    def __init__(self):
         super().__init__()
 
     def read(self, f):
-        md20_raw = f.read(self.header.size)
+        ContentChunk.read(self, f)
+        md20_raw = f.read(self.size)
 
         with BytesIO(md20_raw) as f2:
             magic = f2.read(4)
             assert magic != 'MD20'
 
-            super().read(f2)
+            M2Header.read(self, f2)
 
     def write(self, f):
 
         with BytesIO() as f2:
-            super().write(f2)
+            M2Header.write(self, f2)
             md20_raw = f2.read()
-            self.header.size = len(md20_raw)
-            self.header.write(f)
+            self.size = len(md20_raw)
+            ContentChunk.write(self, f)
             f.write(md20_raw)
 

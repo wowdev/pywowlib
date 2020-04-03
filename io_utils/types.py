@@ -89,6 +89,9 @@ class GenericType:
     def __repr__(self):
         return "<GenericType({}, {})>".format(self.format, self.size_)
 
+    def size(self):
+        return self.size_
+
 
 class Array(metaclass=Template):
     __slots__ = ('type', 'length', 'values')
