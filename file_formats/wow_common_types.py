@@ -315,9 +315,10 @@ class ChunkHeader:
         return self
 
 
-class ContentChunk:
-    def __init__(self, magic):
-        self.magic = magic
+class ContentChunk:  # for inheriting only
+
+    def __init__(self):
+        self.magic = self.__class__.__name__
         self.size = 0
 
     def read(self, f):
@@ -330,20 +331,22 @@ class ContentChunk:
 
 class ArrayChunk(ContentChunk):
     item = None
+    data = "content"
 
     def __init__(self):
-        super().__init__(self.__class__.__name__)
-        self.content = []
+        super().__init__()
+        setattr(self, self.data, [])
 
     def read(self, f):
         super().read(f)
-        self.content = [self.item.read(f) for _ in range(self.size // self.item.size())]
+        setattr(self, self.data, [self.item.read(f) for _ in range(self.size // self.item.size())])
 
     def write(self, f):
-        self.size = len(self.content) * self.item.size()
+        content = getattr(self, self.data)
+        self.size = len(content) * self.item.size()
         super().write(f)
 
-        for var in self.content:
+        for var in content:
             var.write(f)
 
 
