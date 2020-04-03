@@ -12,8 +12,8 @@ from .file_formats.wow_common_types import M2Versions
 class M2File:
     def __init__(self, version, filepath=None):
         self.version = M2Versions.from_expansion_number(version)
-        self.is_chunked = self.version >= M2Versions.LEGION
-        self.root = MD21() if self.is_chunked else MD20()
+        self.is_chunked = False
+        self.root = None
         self.filepath = filepath
         self.skins = [M2SkinProfile()]
 
@@ -50,69 +50,57 @@ class M2File:
 
     def read(self):
         self.skins = []
+
         with open(self.filepath, 'rb') as f:
+            magic = f.read(4).decode('utf-8')[::-1]
 
-            while True:
-                size = None
+            if magic == 'MD20':
+                self.root = MD20().read(f)
+            else:
+                self.root = MD21().read(f)
 
-                try:
-                    magic = f.read(4).decode('utf-8')
+                while True:
+                    try:
+                        magic = f.read(4).decode('utf-8')[::-1]
 
-                    if magic == 'MD20':
-                        self.is_chunked = False
+                    except EOFError:
+                        break
 
-                    else:
-                        size = uint32.read(f)
+                    except struct.error:
+                        break
 
-                except EOFError:
-                    break
+                    except UnicodeDecodeError:
+                        print('\nAttempted reading non-chunked data.')
+                        break
 
-                except struct.error:
-                    break
+                    # getting the correct chunk parsing class
+                    chunk = getattr(m2_chunks, magic, None)
 
-                except UnicodeDecodeError:
-                    print('\nAttempted reading non-chunked data.')
-                    break
+                    # skipping unknown chunks
+                    if chunk is None:
+                        print("\nEncountered unknown chunk \"{}\"".format(magic))
+                        f.seek(ContentChunk().read(f).size, 1)
+                        continue
 
-                # getting the correct chunk parsing class
-                chunk = getattr(m2_chunks, magic, None)
+                    read_chunk = (chunk() if magic != 'SFID' else chunk(n_views=self.root.num_skin_profiles)).read(f)
 
-                # skipping unknown chunks
-                if self.is_chunked and chunk is None:
-                    print("\nEncountered unknown chunk \"{}\"".format(magic))
-                    f.seek(size, 1)
-                    continue
-
-                if not self.is_chunked:
-                    header = chunk()
-                    header.read(f)
-                    self.root = header
-
-                else:
-                    read_chunk = chunk(size=size) if magic != 'SFID' else chunk(size=size,
-                                                                                n_views=self.root.num_skin_profiles)
-                    read_chunk.read(f)
-
-                    if magic != 'MD21':
-                        setattr(self, magic.lower(), read_chunk)
-                    else:
-                        self.root = read_chunk
-
+                # parse additional files
                 if self.version >= M2Versions.WOTLK:
                     # load skins
-
                     raw_path = os.path.splitext(self.filepath)[0]
+
                     for i in range(self.root.num_skin_profiles):
                         with open("{}{}.skin".format(raw_path, str(i).zfill(2)), 'rb') as skin_file:
                             self.skins.append(M2SkinProfile().read(skin_file))
 
                     track_cache = M2TrackCache()
+
                     # load anim files
                     for i, sequence in enumerate(self.root.sequences):
-
                         # handle alias animations
                         real_anim = sequence
                         a_idx = i
+
                         while real_anim.flags & 0x40 and real_anim.alias_next != a_idx:
                             a_idx = real_anim.alias_next
                             real_anim = self.root.sequences[real_anim.alias_next]
@@ -141,10 +129,6 @@ class M2File:
                                     frame_values.read(anim_file, ignore_header=True)
                 else:
                     self.skins = self.root.skin_profiles
-
-                # do not attempt reading raw data as chunked for nonn-chunked files
-                if not self.is_chunked:
-                    break
 
     def write(self, filepath):
         with open(filepath, 'wb') as f:

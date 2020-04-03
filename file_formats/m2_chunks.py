@@ -222,7 +222,7 @@ class PSBC(ContentChunk):
 
 
 class PEDC(ContentChunk):
-    def __init__(self, size=0):
+    def __init__(self):
         super().__init__()
         self.content = M2Array(M2TrackBase)
 

@@ -323,10 +323,12 @@ class ContentChunk:  # for inheriting only
 
     def read(self, f):
         self.size = uint32.read(f)
+        return self
 
     def write(self, f):
         f.write(self.magic[:4].encode('ascii'))
         uint32.write(f, self.size)
+        return self
 
 
 class ArrayChunk(ContentChunk):
@@ -340,6 +342,7 @@ class ArrayChunk(ContentChunk):
     def read(self, f):
         super().read(f)
         setattr(self, self.data, [self.item.read(f) for _ in range(self.size // self.item.size())])
+        return self
 
     def write(self, f):
         content = getattr(self, self.data)
@@ -348,6 +351,8 @@ class ArrayChunk(ContentChunk):
 
         for var in content:
             var.write(f)
+
+        return self
 
 
 class StringBlock:
