@@ -2,6 +2,7 @@ import os
 import struct
 
 from itertools import chain
+
 from .file_formats import m2_chunks
 from .file_formats.m2_format import *
 from .file_formats.m2_chunks import *
@@ -10,9 +11,9 @@ from .file_formats.wow_common_types import M2Versions
 
 
 class M2File:
-    def __init__(self, version, filepath=None):
+    def __init__(self, version, filepath=None, is_local_file=True, gamedata=None):
         self.version = M2Versions.from_expansion_number(version)
-        self.is_chunked = False
+        self.is_local_file = is_local_file
         self.root = None
         self.filepath = filepath
         self.skins = [M2SkinProfile()]
@@ -37,8 +38,6 @@ class M2File:
                 self.ldv1 = LDV1()  #
                 self.rpid = RPID()
                 self.gpid = GPID()
-                self.wfv1 = WFV1()  #
-                self.wfv2 = WFV2()  #
 
             # everything gets handled as of 03.04.20
 
@@ -82,7 +81,12 @@ class M2File:
                         f.seek(ContentChunk().read(f).size, 1)
                         continue
 
-                    read_chunk = (chunk() if magic != 'SFID' else chunk(n_views=self.root.num_skin_profiles)).read(f)
+                    if magic != 'SFID':
+                        getattr(self, magic).read(f)
+
+                    else:
+                        self.sfid = SFID(n_views=self.root.num_skin_profiles).read(f)
+
 
                 # parse additional files
                 if self.version >= M2Versions.WOTLK:
