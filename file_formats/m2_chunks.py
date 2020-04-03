@@ -1,7 +1,7 @@
 from io import BytesIO
-from .wow_common_types import ChunkHeader, MVER
+from .wow_common_types import ChunkHeader, MVER, M2Array, fixed16, ArrayChunk
 from ..io_utils.types import *
-from .m2_format import M2Header
+from .m2_format import M2Header, M2PartTrack, M2Track, M2Bounds, M2TrackBase
 
 #############################################################
 ######                 Legion Chunks                   ######
@@ -128,60 +128,142 @@ class TXAC:
                 int8.write(f, val)
 
 
+class ExtendedParticle:
+    size = 12
+
+    def __init__(self):
+        self.z_source = 0
+        self.unk1 = 0
+        self.unk2 = 0
+
+    def read(self, f):
+        self.z_source = uint32.read(f)
+        self.unk1 = uint32.read(f)
+        self.unk2 = uint32.read(f)
+
+    def write(self, f):
+        uint32.write(f, self.z_source)
+        uint32.write(f, self.unk1)
+        uint32.write(f, self.unk2)
+
+
 class EXPT:
     def __init__(self, size=0):
         self.header = ChunkHeader(magic='EXPT')
         self.header.size = size
-        self.extended_particle = []
+        self.extended_particles = []
 
-    def read(self, f):
-        self.extended_particle = []
-        for i in range(self.header.size // 12):
-            self.extended_particle.append(int8.read(f))
+    def read(self, f, n_particles):
+        self.header.read(f)
+        self.extended_particles = [ExtendedParticle() for _ in range(self.header.size // ExtendedParticle.size)]
+
+        for rec in self.extended_particles:
+            rec.read(f)
 
     def write(self, f):
-        self.header.size = len(self.extended_particle) * 12
-        for val in self.extended_particle:
-            int8.write(f, val)
+        self.header.size = len(self.extended_particles) * ExtendedParticle.size
+
+        for rec in self.extended_particles:
+            rec.write(f)
 
 
 class ExtendedParticle2:
     def __init__(self):
-        self.unk = vec3D
-        self.base = 0
-        self.vary = 0
+        self.z_source = 0
+        self.unk1 = 0
+        self.unk2 = 0
+        self.unk3 = M2PartTrack(fixed16)
 
     def read(self, f):
-        self.unk = vec3D.read(f)
-        self.base = uint16.read(f)
-        self.vary = uint32.read(f)
+        self.z_source = uint32.read(f)
+        self.unk1 = uint32.read(f)
+        self.unk2 = uint32.read(f)
+        self.unk3.read(f)
 
     def write(self, f):
-        vec3D.write(f, self.unk)
-        uint16.write(f, self.base)
-        uint16.write(f, self.vary)
+        uint32.write(f, self.z_source)
+        uint32.write(f, self.unk1)
+        uint32.write(f, self.unk2)
+        self.unk3.write(f)
+
+    @staticmethod
+    def size():
+        return uint32.size() * 3 + M2PartTrack.size()
 
 
 class EXP2:
     def __init__(self, size=0):
         self.header = ChunkHeader(magic='EXP2')
         self.header.size = size
-        self.extended_particle2 = []
+        self.content = M2Array(ExtendedParticle2)
 
     def read(self, f):
-        self.extended_particle2 = []
-        for _ in range(self.header.size // 16):
-            exp2 = ExtendedParticle2()
-            exp2.read(f)
-            self.extended_particle2.append(exp2)
+        self.content.read(f)
 
     def write(self, f):
-        self.header.size = len(self.extended_particle2) * 16
+        self.header.size = M2Array.size()
         self.header.write(f)
+        self.content.write(f)
 
-        for val in self.extended_particle2:
-            val.write(f)
 
+class PABC:
+    def __init__(self, size=0):
+        self.header = ChunkHeader(magic='PABC')
+        self.header.size = size
+        self.content = M2Array(uint16)
+
+    def read(self, f):
+        self.content.read(f)
+
+    def write(self, f):
+        self.header.size = M2Array.size()
+        self.header.write(f)
+        self.content.write(f)
+
+
+class PADC:
+    def __init__(self, size=0):
+        self.header = ChunkHeader(magic='PADC')
+        self.header.size = size
+        self.content = M2Array(M2Track << fixed16)
+
+    def read(self, f):
+        self.content.read(f)
+
+    def write(self, f):
+        self.header.size = M2Array.size()
+        self.header.write(f)
+        self.content.write(f)
+
+
+class PSBC:
+    def __init__(self, size=0):
+        self.header = ChunkHeader(magic='PSBC')
+        self.header.size = size
+        self.content = M2Array(M2Bounds)
+
+    def read(self, f):
+        self.content.read(f)
+
+    def write(self, f):
+        self.header.size = M2Array.size()
+        self.header.write(f)
+        self.content.write(f)
+
+
+class PEDC:
+    def __init__(self, size=0):
+        self.header = ChunkHeader(magic='PEDC')
+        self.header.size = size
+        self.content = M2Array(M2TrackBase)
+
+    def read(self, f):
+        self.content.read(f)
+
+    def write(self, f):
+        self.header.size = M2Array.size()
+        self.header.write(f)
+        self.content.write(f)
 
 class SKID:
     def __init__(self, size=8):
@@ -193,10 +275,13 @@ class SKID:
         self.skeleton_file_id = uint32.read(f)
 
     def write(self, f):
-        self.header.size = 4
+        self.header.size = uint32.size()
         self.header.write(f)
         uint32.write(f, self.skeleton_file_id)
 
+
+class TXID(ArrayChunk):
+    item = uint32
 
 #############################################################
 ######                 BfA Chunks                      ######

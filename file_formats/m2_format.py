@@ -197,6 +197,28 @@ class M2Track(M2TrackBase, metaclass=Template):
         return 20 if M2VersionsManager().m2_version >= M2Versions.WOTLK else 28
 
 
+class M2PartTrack:
+    def __init__(self, type_):
+        self.times = M2Array(fixed16)
+        self.values = M2Array(type_)
+
+    def read(self, f):
+        self.times.read(f)
+        self.values.read(f)
+
+        return self
+
+    def write(self, f):
+        self.times.write(f)
+        self.values.write(f)
+
+        return self
+
+    @staticmethod
+    def size():
+        return M2Array.size() * 2
+
+
 class FBlock:
 
     def __init__(self, type_):

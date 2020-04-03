@@ -12,9 +12,8 @@ from .file_formats.wow_common_types import M2Versions
 class M2File:
     def __init__(self, version, filepath=None):
         self.version = M2Versions.from_expansion_number(version)
-
-        self.root = MD21() if self.version >= M2Versions.LEGION else MD20()
         self.is_chunked = self.version >= M2Versions.LEGION
+        self.root = MD21() if self.is_chunked else MD20()
         self.filepath = filepath
         self.skins = [M2SkinProfile()]
 
@@ -25,14 +24,23 @@ class M2File:
             self.afid = AFID()
             self.bfid = BFID()
             self.txac = TXAC()
+            self.expt = EXPT()  #
+            self.exp2 = EXP2()  #
+            self.pabc = PABC()  #
+            self.padc = PADC()  #
+            self.psbc = PSBC()  #
+            self.pedc = PEDC()  #
             self.skid = SKID()
 
             if self.version >= M2Versions.BFA:
                 self.txid = TXID()
+                self.ldv1 = LDV1()  #
                 self.rpid = RPID()
                 self.gpid = GPID()
+                self.wfv1 = WFV1()  #
+                self.wfv2 = WFV2()  #
 
-            # TODO: unknown chunks
+            # everything gets handled as of 03.04.20
 
         else:
             self.root = MD20()

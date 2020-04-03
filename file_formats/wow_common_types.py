@@ -203,7 +203,6 @@ class MemoryManager:
 
 
 class M2Array(metaclass=Template):
-
     def __init__(self, type_):
         self.n_elements = 0
         self.ofs_elements = 0
@@ -293,7 +292,7 @@ class M2Array(metaclass=Template):
 
     @staticmethod
     def size():
-        return 8
+        return uint32.size() * 2
 
 
 class ChunkHeader:
@@ -314,6 +313,38 @@ class ChunkHeader:
         f.write(pack('I', self.size))
 
         return self
+
+
+class ContentChunk:
+    def __init__(self, magic):
+        self.magic = magic
+        self.size = 0
+
+    def read(self, f):
+        self.size = uint32.read(f)
+
+    def write(self, f):
+        f.write(self.magic[:4].encode('ascii'))
+        uint32.write(f, self.size)
+
+
+class ArrayChunk(ContentChunk):
+    item = None
+
+    def __init__(self):
+        super().__init__(self.__class__.__name__)
+        self.content = []
+
+    def read(self, f):
+        super().read(f)
+        self.content = [self.item.read(f) for _ in range(self.size // self.item.size())]
+
+    def write(self, f):
+        self.size = len(self.content) * self.item.size()
+        super().write(f)
+
+        for var in self.content:
+            var.write(f)
 
 
 class StringBlock:
