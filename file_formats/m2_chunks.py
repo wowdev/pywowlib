@@ -1,5 +1,5 @@
 from io import BytesIO
-from .wow_common_types import ChunkHeader, MVER, M2Array, fixed16, ContentChunk, ArrayChunk
+from .wow_common_types import MVER, M2Array, fixed16, ContentChunk, ArrayChunk
 from ..io_utils.types import *
 from .m2_format import M2Header, M2PartTrack, M2Track, M2Bounds, M2TrackBase
 

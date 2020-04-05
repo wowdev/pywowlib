@@ -6,12 +6,11 @@ from .wow_common_types import *
 # WMO ROOT
 ###########################
 
-class MOHD:
+class MOHD(ContentChunk):
     """ WMO Root header """
 
-    def __init__(self, size=64):
-        self.header = ChunkHeader(magic='DHOM')
-        self.header.size = size
+    def __init__(self):
+        super().__init__()
         self.n_materials = 0
         self.n_groups = 0
         self.n_portals = 0
@@ -26,6 +25,7 @@ class MOHD:
         self.flags = 0
 
     def read(self, f):
+        super().read(f)
         self.n_materials = uint32.read(f)
         self.n_groups = uint32.read(f)
         self.n_portals = uint32.read(f)
@@ -39,8 +39,11 @@ class MOHD:
         self.bounding_box_corner2 = vec3D.read(f)
         self.flags = uint32.read(f)
 
+        return self
+
     def write(self, f):
-        self.header.write(f)
+        self.size = 64
+        super().write(f)
         uint32.write(f, self.n_materials)
         uint32.write(f, self.n_groups)
         uint32.write(f, self.n_portals)
@@ -54,24 +57,30 @@ class MOHD:
         vec3D.write(f, self.bounding_box_corner2)
         uint32.write(f, self.flags)
 
+        return self
 
-class MOTX:
+
+class MOTX(ContentChunk):
     """ Texture names """
 
-    def __init__(self, size=0):
-        self.header = ChunkHeader(magic='XTOM')
-        self.header.size = size
+    def __init__(self):
+        super().__init__()
         self.string_table = bytearray()
         self.string_table.append(0)
 
     def read(self, f):
-        self.string_table = f.read(self.header.size)
+        super().read(f)
+        self.string_table = f.read(self.size)
+
+        return self
 
     def write(self, f):
-        self.header.size = len(self.string_table)
-        self.header.write(f)
+        self.size = len(self.string_table)
+        super().write(f)
 
         f.write(self.string_table)
+
+        return self
 
     def add_string(self, s : str):
         padding = len(self.string_table) % 4
@@ -139,6 +148,8 @@ class WMOMaterial:
         self.tex3_flags = uint32.read(f)
         self.runtime_data = uint32.read(f, 4)
 
+        return self
+
     def write(self, f):
         uint32.write(f, self.flags)
         uint32.write(f, self.shader)
@@ -154,51 +165,42 @@ class WMOMaterial:
         uint32.write(f, self.tex3_flags)
         uint32.write(f, self.runtime_data, 4)
 
-        print(self.texture1_ofs, self.texture2_ofs)
+        return self
+
+    @staticmethod
+    def size():
+        return 64
 
 
-class MOMT:
+class MOMT(ArrayChunk):
     """ Materials """
 
+    item = WMOMaterial
+    data = "materials"
     materials: List[WMOMaterial]
 
-    def __init__(self, size=0):
-        self.header = ChunkHeader(magic='TMOM')
-        self.header.size = size
-        self.materials = []
 
-    def read(self, f):
-        self.materials = []
-        for i in range(self.header.size // 64):
-            mat = WMOMaterial()
-            mat.read(f)
-            self.materials.append(mat)
-
-    def write(self, f):
-        self.header.size = len(self.materials) * 64
-        self.header.write(f)
-
-        for mat in self.materials:
-            mat.write(f)
-
-
-class MOGN:
+class MOGN(ContentChunk):
     """ Group names """
 
-    def __init__(self, size=0):
-        self.header = ChunkHeader(magic='NGOM')
-        self.header.size = size
+    def __init__(self):
+        super().__init__()
         self.string_table = bytearray(b'\x00\x00')
 
     def read(self, f):
-        self.string_table = f.read(self.header.size)
+        super().read(f)
+        self.string_table = f.read(self.size)
+
+        return self
 
     def write(self, f):
 
-        self.header.size = len(self.string_table)
-        self.header.write(f)
+        self.size = len(self.string_table)
+        super().write(f)
 
         f.write(self.string_table)
+
+        return self
 
     def add_string(self, s):
         ofs = len(self.string_table)
@@ -229,85 +231,61 @@ class GroupInfo:
         self.bounding_box_corner2 = vec3D.read(f)
         self.name_ofs = uint32.read(f)
 
+        return self
+
     def write(self, f):
         uint32.write(f, self.flags)
         vec3D.write(f, self.bounding_box_corner1)
         vec3D.write(f, self.bounding_box_corner2)
         uint32.write(f, self.name_ofs)
 
+        return self
 
-class MOGI:
+    @staticmethod
+    def size():
+        return 32
+
+
+class MOGI(ArrayChunk):
     """ Group informations """
 
+    item = GroupInfo
+    data = "infos"
     infos: List[GroupInfo]
 
-    def __init__(self, size=0):
-        self.header = ChunkHeader(magic='IGOM')
-        self.header.size = size
-        self.infos = []
 
-    def read(self, f):
-        count = self.header.size // 32
-
-        self.infos = []
-        for i in range(count):
-            info = GroupInfo()
-            info.read(f)
-            self.infos.append(info)
-
-    def write(self, f):
-        self.header.size = len(self.infos) * 32
-        self.header.write(f)
-
-        for info in self.infos:
-            info.write(f)
-
-
-class MOSB:
+class MOSB(ContentChunk):
     """ Skybox """
     def __init__(self, size=0):
-        self.header = ChunkHeader(magic='BSOM')
-        self.header.size = size
+        super().__init__()
+        self.size = size
         self.skybox = ''
 
     def read(self, f):
-        self.skybox = f.read(self.header.size).decode('ascii')
+        super().read(f)
+        self.skybox = f.read(self.size).decode('ascii')
+
+        return self
 
     def write(self, f):
 
         if not self.skybox:
             self.skybox = '\x00\x00\x00'
 
-        self.header.size = len(self.skybox) + 1
-        self.header.write(f)
+        self.size = len(self.skybox) + 1
+        super().write(f)
 
         f.write(self.skybox.encode('ascii') + b'\x00')
 
+        return self
 
-class MOPV:
+
+class MOPV(ArrayChunk):
     """ Portal vertices """
 
+    item = vec3D
+    data = 'portal_vertices'
     portal_vertices: List[Tuple[float, float, float]]
-
-    def __init__(self, size=0):
-        self.header = ChunkHeader(magic='VPOM')
-        self.header.size = size
-        self.portal_vertices = []
-
-    def read(self, f):
-        count = self.header.size // 12
-        self.portal_vertices = []
-
-        # 12 = sizeof(float) * 3
-        for i in range(count):
-            self.portal_vertices.append(vec3D.read(f))
-
-    def write(self, f):
-        self.header.size = len(self.portal_vertices) * 12
-        self.header.write(f)
-
-        for v in self.portal_vertices:
-            vec3D.write(f, v)
 
 
 class PortalInfo:
@@ -323,38 +301,27 @@ class PortalInfo:
         self.normal = vec3D.read(f)
         self.unknown = float32.read(f)
 
+        return self
+
     def write(self, f):
         uint16.write(f, self.start_vertex)
         uint16.write(f, self.n_vertices)
         vec3D.write(f, self.normal)
         float32.write(f, self.unknown)
 
+        return self
+
+    @staticmethod
+    def size():
+        return 20
+
 
 # portal infos
-class MOPT:
+class MOPT(ArrayChunk):
 
+    item = PortalInfo
+    data = 'infos'
     infos: List[PortalInfo]
-
-    def __init__(self, size=0):
-        self.header = ChunkHeader(magic='TPOM')
-        self.header.size = size
-        self.infos = []
-
-    def read(self, f):
-        self.infos = []
-
-        # 20 = sizeof(PortalInfo)
-        for i in range(self.header.size // 20):
-            info = PortalInfo()
-            info.read(f)
-            self.infos.append(info)
-
-    def write(self, f):
-        self.header.size = len(self.infos) * 20
-        self.header.write(f)
-
-        for info in self.infos:
-            info.write(f)
 
 
 class PortalRelation:
@@ -370,61 +337,35 @@ class PortalRelation:
         self.side = int16.read(f)
         self.padding = uint16.read(f)
 
+        return self
+
     def write(self, f):
         uint16.write(f, self.portal_index)
         uint16.write(f, self.group_index)
         int16.write(f, self.side)
         uint16.write(f, self.padding)
 
+        return self
 
-class MOPR:
+    @staticmethod
+    def size():
+        return 8
+
+
+class MOPR(ArrayChunk):
     """ Portal relations """
 
+    item = PortalRelation
+    data = 'relations'
     relations: List[PortalRelation]
 
-    def __init__(self, size=0):
-        self.header = ChunkHeader(magic='RPOM')
-        self.header.size = size
-        self.relations = []
 
-    def read(self, f):
-        self.relations = []
-
-        for i in range(self.header.size // 8):
-            relation = PortalRelation()
-            relation.read(f)
-            self.relations.append(relation)
-
-    def write(self, f):
-        self.header.size = len(self.relations) * 8
-        self.header.write(f)
-
-        for relation in self.relations:
-            relation.write(f)
-
-
-class MOVV:
+class MOVV(ArrayChunk):
     """ Visible vertices """
 
+    item = vec3D
+    data = 'visible_vertices'
     visible_vertices: List[Tuple[float, float, float]]
-
-    def __init__(self, size=0):
-        self.header = ChunkHeader(magic='VVOM')
-        self.header.size = size
-        self.visible_vertices = []
-
-    def read(self, f):
-        self.visible_vertices = []
-
-        for i in range(self.header.size // 12):
-            self.visible_vertices.append(vec3D.read(f))
-
-    def write(self, f):
-        self.header.size = len(self.visible_vertices) * 12
-        self.header.write(f)
-
-        for v in self.visible_vertices:
-            vec3D.write(f, v)
 
 
 class VisibleBatch:
@@ -436,37 +377,25 @@ class VisibleBatch:
         self.start_vertex = uint16.read(f)
         self.n_vertices = uint16.read(f)
 
+        return self
+
     def write(self, f):
         uint16.write(f, self.start_vertex)
         uint16.write(f, self.n_vertices)
 
+        return self
 
-class MOVB:
+    @staticmethod
+    def size():
+        return 4
+
+
+class MOVB(ArrayChunk):
     """ Visible batches """
 
+    item = VisibleBatch
+    data = 'batches'
     batches: List[VisibleBatch]
-
-    def __init__(self, size=0):
-        self.header = ChunkHeader(magic='BVOM')
-        self.header.size = size
-        self.batches = []
-
-    def read(self, f):
-        count = self.header.size // 4
-
-        self.batches = []
-
-        for i in range(count):
-            batch = VisibleBatch()
-            batch.read(f)
-            self.batches.append(batch)
-
-    def write(self, f):
-        self.header.size = len(self.batches) * 4
-        self.header.write(f)
-
-        for batch in self.batches:
-            batch.write(f)
 
 
 class Light:
@@ -500,6 +429,8 @@ class Light:
         self.unknown3 = float32.read(f)
         self.unknown4 = float32.read(f)
 
+        return self
+
     def write(self, f):
         uint8.write(f, self.light_type)
         uint8.write(f, self.type)
@@ -515,33 +446,19 @@ class Light:
         float32.write(f, self.unknown3)
         float32.write(f, self.unknown4)
 
+        return self
 
-class MOLT:
+    @staticmethod
+    def size():
+        return 48
+
+
+class MOLT(ArrayChunk):
     """ Lights """
 
+    item = Light
+    data = 'lights'
     lights: List[Light]
-
-    def __init__(self, size=0):
-        self.header = ChunkHeader(magic='TLOM')
-        self.header.size = size
-        self.lights = []
-
-    def read(self, f):
-        # 48 = sizeof(Light)
-        count = self.header.size // 48
-
-        self.lights = []
-        for i in range(count):
-            light = Light()
-            light.read(f)
-            self.lights.append(light)
-
-    def write(self, f):
-        self.header.size = len(self.lights) * 48
-        self.header.write(f)
-
-        for light in self.lights:
-            light.write(f)
 
 
 class DoodadSet:
@@ -557,58 +474,49 @@ class DoodadSet:
         self.n_doodads = uint32.read(f)
         self.padding = uint32.read(f)
 
+        return self
+
     def write(self, f):
         f.write(self.name.ljust(20, '\0').encode('ascii'))
         uint32.write(f, self.start_doodad)
         uint32.write(f, self.n_doodads)
         uint32.write(f, self.padding)
 
+        return self
+
+    @staticmethod
+    def size():
+        return 32
 
 
-class MODS:
+class MODS(ArrayChunk):
     """ Doodad sets """
 
+    item = DoodadSet
+    data = 'sets'
     sets: List[DoodadSet]
 
-    def __init__(self, size=0):
-        self.header = ChunkHeader(magic='SDOM')
-        self.header.size = size
-        self.sets = []
 
-    def read(self, f):
-        count = self.header.size // 32
-
-        self.sets = []
-
-        for i in range(count):
-            d_set = DoodadSet()
-            d_set.read(f)
-            self.sets.append(d_set)
-
-    def write(self, f):
-        self.header.size = len(self.sets) * 32
-
-        self.header.write(f)
-        for set in self.sets:
-            set.write(f)
-
-
-class MODN:
+class MODN(ContentChunk):
     """ Doodad names """
 
-    def __init__(self, size=0):
-        self.header = ChunkHeader(magic='NDOM')
-        self.header.size = size
+    def __init__(self):
+        super().__init__()
         self.string_table = bytearray()
 
     def read(self, f):
-        self.string_table = f.read(self.header.size)
+        super().read(f)
+        self.string_table = f.read(self.size)
+
+        return self
 
     def write(self, f):
-        self.header.size = len(self.string_table)
+        self.size = len(self.string_table)
 
-        self.header.write(f)
+        super().write(f)
         f.write(self.string_table)
+
+        return self
 
     def add_string(self, s):
         padding = len(self.string_table) % 4
@@ -662,6 +570,8 @@ class DoodadDefinition:
         self.scale = float32.read(f)
         self.color = uint8.read(f, 4)
 
+        return self
+
     def write(self, f):
         weird_thing = ((self.flags & 0xFF) << 24) | (self.name_ofs & 0xFFFFFF)
         uint32.write(f, weird_thing)
@@ -670,32 +580,20 @@ class DoodadDefinition:
         float32.write(f, self.scale)
         uint8.write(f, self.color, 4)
 
+        return self
 
-class MODD:
+
+    @staticmethod
+    def size():
+        return 40
+
+
+class MODD(ArrayChunk):
     """ Doodad definition """
 
+    item = DoodadDefinition
+    data = 'definitions'
     definitions: List[DoodadDefinition]
-
-    def __init__(self, size=0):
-        self.header = ChunkHeader(magic='DDOM')
-        self.header.size = size
-        self.definitions = []
-
-    def read(self, f):
-        count = self.header.size // 40
-
-        self.definitions = []
-        for i in range(count):
-            defi = DoodadDefinition()
-            defi.read(f)
-            self.definitions.append(defi)
-
-    def write(self, f):
-        self.header.size = len(self.definitions) * 40
-        self.header.write(f)
-
-        for defi in self.definitions:
-            defi.write(f)
 
 
 class Fog:
@@ -723,6 +621,8 @@ class Fog:
         self.start_factor2 = float32.read(f)
         self.color2 = uint8.read(f, 4)
 
+        return self
+
     def write(self, f):
         uint32.write(f, self.flags)
         vec3D.write(f, self.position)
@@ -735,56 +635,27 @@ class Fog:
         float32.write(f, self.start_factor2)
         uint8.write(f, self.color2, 4)
 
+        return self
 
-class MFOG:
+    @staticmethod
+    def size():
+        return 48
+
+
+class MFOG(ArrayChunk):
     """ Fogs """
 
+    item = Fog
+    data = 'fogs'
     fogs: List[Fog]
 
-    def __init__(self, size=0):
-        self.header = ChunkHeader(magic='GOFM')
-        self.header.size = size
-        self.fogs = []
 
-    def read(self, f):
-        count = self.header.size // 48
-
-        self.fogs = []
-        for i in range(count):
-            fog = Fog()
-            fog.read(f)
-            self.fogs.append(fog)
-
-    def write(self, f):
-        self.header.size = len(self.fogs) * 48
-        self.header.write(f)
-
-        for fog in self.fogs:
-            fog.write(f)
-
-
-class MCVP:
+class MCVP(ArrayChunk):
     """ Convex volume plane, used only for transport objects """
 
+    item = quat
+    data = 'convex_volume_planes'
     convex_volume_planes: List[Tuple[float, float, float, float]]
-
-    def __init__(self, size=0):
-        self.header = ChunkHeader(magic='PVCM')
-        self.header.size = size
-        self.convex_volume_planes = []
-
-    def read(self, f):
-        count = self.header.size // 16
-
-        for i in range(0, count):
-            self.convex_volume_planes.append(unpack('ffff', f.read(16)))
-
-    def write(self, f):
-        self.header.size = len(self.convex_volume_planes) * 16
-        self.header.write(f)
-
-        for i in self.convex_volume_planes:
-            float32.write(f, self.convex_volume_planes[i], 4)
 
 
 #############################################################
@@ -792,13 +663,12 @@ class MCVP:
 #############################################################
 
 
-class GFID:
+class GFID(ContentChunk):
 
     group_file_data_ids: List[List[int]]
 
-    def __init__(self, size=0, use_lods=False, n_groups=0, n_lods=0):
-        self.header = ChunkHeader(magic='DIFG')
-        self.header.size = size
+    def __init__(self, use_lods=False, n_groups=0, n_lods=0):
+        super().__init__()
         self.group_file_data_ids = [[]] if not use_lods else [[] for _ in range(n_lods)]
 
         self.n_groups = n_groups
@@ -806,42 +676,31 @@ class GFID:
         self.use_lods = use_lods
 
     def read(self, f):
+        super().read(f)
         self.group_file_data_ids = [[]] if not self.use_lods else [[] for _ in range(self.n_lods)]
 
         for i in range(self.n_groups):
             for _ in range(self.n_groups):
                 self.group_file_data_ids[i].append(uint32.read(f))
 
+        return self
+
     def write(self, f):
-        self.header.size = len(self.group_file_data_ids) * self.n_groups * 4
-        self.header.write(f)
+        self.size = len(self.group_file_data_ids) * self.n_groups * 4
+        super().write(f)
 
         for lod_level in self.group_file_data_ids:
             for val in lod_level:
                 uint32.write(f, val)
 
+        return self
 
-class MOUV:
 
+class MOUV(ArrayChunk):
+
+    item = vec2D
+    data = 'map_object_uv'
     map_object_uv: List[Tuple[float, float]]
-
-    def __init__(self, size=0):
-        self.header = ChunkHeader(magic='VUOM')
-        self.header.size = size
-        self.map_object_uv = []
-
-    def read(self, f):
-        self.map_object_uv = []
-
-        for _ in range(self.header.size // 8):
-            self.map_object_uv.append(vec2D.read(f, 2))
-
-    def write(self, f):
-        self.header.size = len(self.map_object_uv) * 8
-        self.header.write(f)
-
-        for val in self.map_object_uv:
-            vec2D.write(f, val, 2)
 
 
 #############################################################
@@ -851,40 +710,28 @@ class MOUV:
 ######                >= 8.1 only!                     ######
 
 
-class MOSI:
-    def __init__(self, size=4):
-        self.header = ChunkHeader(magic='ISOM')
-        self.header.size = size
+class MOSI(ContentChunk):
+
+    def __init__(self):
+        super().__init__()
         self.skybox_file_id = 0
 
     def read(self, f):
+        super().read(f)
         self.skybox_file_id = uint32.read(f)
 
+        return self
+
     def write(self, f):
-        self.header.size = 4
-        self.header.write(f)
+        self.size = 4
+        super().write(f)
         uint32.write(f, self.skybox_file_id)
 
+        return self
 
-class MODI:
 
+class MODI(ArrayChunk):
+
+    item = uint32
+    data = 'doodad_file_ids'
     doodad_file_ids: List[int]
-
-    def __init__(self, size):
-        self.header = ChunkHeader(magic='IDOM')
-        self.header.size = size
-        self.doodad_file_ids = []
-
-    def read(self, f):
-        self.doodad_file_ids = []
-
-        for i in range(len(self.doodad_file_ids)):
-            self.doodad_file_ids.append(uint32.read(f))
-
-    def write(self, f):
-        self.header.size = len(self.doodad_file_ids) * 4
-        self.header.write(f)
-
-        for val in self.doodad_file_ids:
-            uint32.write(f, val)
-

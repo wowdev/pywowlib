@@ -1,3 +1,4 @@
+from typing import List, Tuple
 from .wow_common_types import *
 
 
@@ -23,10 +24,9 @@ class MOGPFlags:
 
 
 # contain WMO group header
-class MOGP:
-    def __init__(self, size=0):
-        self.header = ChunkHeader(magic='PGOM')
-        self.header.size = size
+class MOGP(ContentChunk):
+    def __init__(self):
+        super().__init__()
         self.group_name_ofs = 0
         self.desc_group_name_ofs = 0
         self.flags = 0
@@ -45,6 +45,7 @@ class MOGP:
         self.unknown2 = 0
 
     def read(self, f):
+        super().read(f)
         self.group_name_ofs = uint32.read(f)
         self.desc_group_name_ofs = uint32.read(f)
         self.flags = uint32.read(f)
@@ -62,8 +63,11 @@ class MOGP:
         self.unknown1 = uint32.read(f)
         self.unknown2 = uint32.read(f)
 
+        return self
+
     def write(self, f):
-        self.header.write(f)
+        self.size = 64
+        super().write(f)
 
         uint32.write(f, self.group_name_ofs)
         uint32.write(f, self.desc_group_name_ofs)
@@ -82,6 +86,8 @@ class MOGP:
         uint32.write(f, self.unknown1)
         uint32.write(f, self.unknown2)
 
+        return self
+
 
 class TriangleMaterial:
     """ Material information """
@@ -94,136 +100,57 @@ class TriangleMaterial:
         self.flags = uint8.read(f)
         self.material_id = uint8.read(f)
 
+        return self
+
     def write(self, f):
         uint8.write(f, self.flags)
         uint8.write(f, self.material_id)
 
+        return self
 
-class MOPY:
+    @staticmethod
+    def size():
+        return 2
+
+
+class MOPY(ArrayChunk):
     """ Contains list of triangle materials. One for each triangle """
 
-    def __init__(self, size=0):
-        self.header = ChunkHeader(magic='YPOM')
-        self.header.size = size
-        self.triangle_materials = []
-
-    def read(self, f):
-        count = self.header.size // 2
-
-        self.triangle_materials = []
-
-        for i in range(count):
-            tri = TriangleMaterial()
-            tri.read(f)
-            self.triangle_materials.append(tri)
-
-    def write(self, f):
-        self.header.size = len(self.triangle_materials) * 2
-        self.header.write(f)
-
-        for tri in self.triangle_materials:
-            tri.write(f)
+    item = TriangleMaterial
+    data = 'triangle_materials'
+    triangle_materials: List[TriangleMaterial]
 
 
-class MOVI:
+class MOVI(ArrayChunk):
     """ Triangle Indices """
 
-    def __init__(self, size=0):
-        self.header = ChunkHeader(magic='IVOM')
-        self.header.size = size
-        self.indices = []
-
-    def read(self, f):
-        # 2 = sizeof(unsigned short)
-        count = self.header.size // 2
-
-        self.indices = []
-
-        for i in range(count):
-            self.indices.append(uint16.read(f))
-
-    def write(self, f):
-        self.header.size = len(self.indices) * 2
-        self.header.write(f)
-
-        for i in self.indices:
-            uint16.write(f, i)
+    item = uint16
+    data = 'indices'
+    indices: List[int]
 
 
-class MOVT:
+class MOVT(ArrayChunk):
     """ Vertices """
 
-    def __init__(self, size=0):
-        self.header = ChunkHeader(magic='TVOM')
-        self.header.size = size
-        self.vertices = []
-
-    def read(self, f):
-
-        # 4 * 3 = sizeof(float) * 3
-        count = self.header.size // (4 * 3)
-
-        self.vertices = []
-
-        for i in range(count):
-            self.vertices.append(vec3D.read(f))
-
-    def write(self, f):
-        self.header.size = len(self.vertices) * 12
-        self.header.write(f)
-
-        for v in self.vertices:
-            vec3D.write(f, v)
+    item = vec3D
+    data = 'vertices'
+    vertices: List[Tuple[float, float, float]]
 
 
-class MONR:
+class MONR(ArrayChunk):
     """ Normals """
 
-    def __init__(self, size=0):
-        self.header = ChunkHeader(magic='RNOM')
-        self.header.size = size
-        self.normals = []
-
-    def read(self, f):
-        # 4 * 3 = sizeof(float) * 3
-        count = self.header.size // (4 * 3)
-
-        self.normals = []
-
-        for i in range(count):
-            self.normals.append(vec3D.read(f))
-
-    def write(self, f):
-        self.header.size = len(self.normals) * 12
-        self.header.write(f)
-
-        for n in self.normals:
-            vec3D.write(f, n)
+    item = vec3D
+    data = 'normals'
+    normals: List[Tuple[float, float, float]]
 
 
-class MOTV:
+class MOTV(ArrayChunk):
     """ Texture coordinates """
 
-    def __init__(self, size=0):
-        self.header = ChunkHeader(magic='VTOM')
-        self.header.size = size
-        self.tex_coords = []
-
-    def read(self, f):
-        # 4 * 2 = sizeof(float) * 2
-        count = self.header.size // (4 * 2)
-
-        self.tex_coords = []
-
-        for i in range(count):
-            self.tex_coords.append(float32.read(f, 2))
-
-    def write(self, f):
-        self.header.size = len(self.tex_coords) * 8
-        self.header.write(f)
-
-        for tc in self.tex_coords:
-            float32.write(f, tc, 2)
+    item = float32, float32
+    data = 'tex_coords'
+    tex_coords: List[Tuple[float, float]]
 
 
 class Batch:
@@ -245,6 +172,8 @@ class Batch:
         self.unknown = uint8.read(f)
         self.material_id = uint8.read(f)
 
+        return self
+
     def write(self, f):
         int16.write(f, self.bounding_box, 6)
         uint32.write(f, self.start_triangle)
@@ -254,81 +183,35 @@ class Batch:
         uint8.write(f, self.unknown)
         uint8.write(f, self.material_id)
 
+        return self
 
-class MOBA:
+    @staticmethod
+    def size():
+        return 24
+
+
+class MOBA(ArrayChunk):
     """ Batches """
 
-    def __init__(self, size=0):
-        self.header = ChunkHeader(magic='ABOM')
-        self.header.size = size
-        self.batches = []
-
-    def read(self, f):
-        count = self.header.size // 24
-
-        self.batches = []
-
-        for i in range(count):
-            batch = Batch()
-            batch.read(f)
-            self.batches.append(batch)
-
-    def write(self, f):
-        self.header.size = len(self.batches) * 24
-        self.header.write(f)
-
-        for b in self.batches:
-            b.write(f)
+    item = Batch
+    data = 'batches'
+    batches: List[Batch]
 
 
-class MOLR:
+class MOLR(ArrayChunk):
     """ Lights """
 
-    def __init__(self, size=0):
-        self.header = ChunkHeader(magic='RLOM')
-        self.header.size = size
-        self.light_refs = []
-
-    def read(self, f):
-        # 2 = sizeof(short)
-        count = self.header.size // 2
-
-        self.light_refs = []
-
-        for i in range(count):
-            self.light_refs.append(int16.read(f))
-
-    def write(self, f):
-        self.header.size = len(self.light_refs) * 2
-
-        self.header.write(f)
-        for lr in self.light_refs:
-            int16.write(f, lr)
+    item = int16
+    data = 'light_refs'
+    light_refs: List[int]
 
 
-class MODR:
+class MODR(ArrayChunk):
     """ Doodads """
 
-    def __init__(self, size=0):
-        self.header = ChunkHeader(magic='RDOM')
-        self.header.size = size
-        self.doodad_refs = []
-
-    def read(self, f):
-        # 2 = sizeof(short)
-        count = self.header.size // 2
-
-        self.doodad_refs = []
-
-        for i in range(count):
-            self.doodad_refs.append(int16.read(f))
-
-    def write(self, f):
-        self.header.size = len(self.doodad_refs) * 2
-        self.header.write(f)
-
-        for dr in self.doodad_refs:
-            int16.write(f, dr)
+    item = int16
+    data = 'doodad_refs'
+    doodad_refs: List[int]
 
 
 class BSPPlaneType:
@@ -353,6 +236,8 @@ class BSPNode:
         self.first_face = uint32.read(f)
         self.dist = float32.read(f)
 
+        return self
+
     def write(self, f):
         int16.write(f, self.plane_type)
         int16.write(f, self.children, 2)
@@ -360,78 +245,35 @@ class BSPNode:
         uint32.write(f, self.first_face)
         float32.write(f, self.dist)
 
+        return self
 
-class MOBN:
+
+    @staticmethod
+    def size():
+        return 16
+
+
+class MOBN(ArrayChunk):
     """ Collision geometry """
 
-    def __init__(self, size=0):
-        self.header = ChunkHeader(magic='NBOM')
-        self.header.size = size
-        self.nodes = []
-
-    def read(self, f):
-        count = self.header.size // 0x10
-
-        self.nodes = []
-
-        for i in range(count):
-            node = BSPNode()
-            node.read(f)
-            self.nodes.append(node)
-
-    def write(self, f):
-        self.header.size = len(self.nodes) * 0x10
-
-        self.header.write(f)
-        for node in self.nodes:
-            node.write(f)
+    item = BSPNode
+    data = 'nodes'
+    nodes: List[BSPNode]
 
 
-class MOBR:
-    def __init__(self, size=0):
-        self.header = ChunkHeader(magic='RBOM')
-        self.header.size = size
-        self.faces = []
+class MOBR(ArrayChunk):
 
-    def read(self, f):
-        count = self.header.size // 2
-
-        self.faces = []
-
-        for i in range(count):
-            self.faces.append(uint16.read(f))
-
-    def write(self, f):
-        self.header.size = len(self.faces) * 2
-        self.header.write(f)
-
-        for face in self.faces:
-            uint16.write(f, face)
+    item = uint16
+    data = 'faces'
+    faces: List[uint16]
 
 
-class MOCV:
+class MOCV(ArrayChunk):
     """ Vertex colors """
 
-    def __init__(self, size=0):
-        self.header = ChunkHeader(magic='VCOM')
-        self.header.size = size
-        self.vert_colors = []
-
-    def read(self, f):
-        # 4 = sizeof(unsigned char) * 4
-        count = self.header.size // 4
-
-        self.vert_colors = []
-
-        for i in range(count):
-            self.vert_colors.append(uint8.read(f, 4))
-
-    def write(self, f):
-        self.header.size = len(self.vert_colors) * 4
-        self.header.write(f)
-
-        for vc in self.vert_colors:
-            uint8.write(f, vc, 4)
+    item = uint8, uint8, uint8, uint8
+    data = 'vert_colors'
+    vert_colors: List[Tuple[int, int, int, int]]
 
 
 class LiquidVertex:
@@ -464,6 +306,8 @@ class LiquidVertex:
 
         self.height = float32.read(f)
 
+        return self
+
     def write(self, f):
         if self.is_water:
             uint8.write(f, self.flow1)
@@ -476,13 +320,14 @@ class LiquidVertex:
 
         float32.write(f, self.height)
 
+        return self
 
-class MLIQ:
+
+class MLIQ(ContentChunk):
     """ Liquid """
 
-    def __init__(self, size=0):
-        self.header = ChunkHeader(magic='QILM')
-        self.header.size = size
+    def __init__(self):
+        super().__init__()
         self.x_verts = 0
         self.y_verts = 0
         self.x_tiles = 0
@@ -494,6 +339,7 @@ class MLIQ:
         self.is_water = True
 
     def read(self, f):
+        super().read(f)
         self.x_verts = uint32.read(f)
         self.y_verts = uint32.read(f)
         self.x_tiles = uint32.read(f)
@@ -517,9 +363,11 @@ class MLIQ:
         for i in range(self.x_tiles * self.y_tiles):
             self.tile_flags.append(uint8.read(f))
 
+        return self
+
     def write(self, f):
-        self.header.size = 30 + self.x_verts * self.y_verts * 8 + self.x_tiles * self.y_tiles
-        self.header.write(f)
+        self.size = 30 + self.x_verts * self.y_verts * 8 + self.x_tiles * self.y_tiles
+        super().write(f)
 
         uint32.write(f, self.x_verts)
         uint32.write(f, self.y_verts)
@@ -535,6 +383,8 @@ class MLIQ:
         for tile_flag in self.tile_flags:
             uint8.write(f, tile_flag)
 
+        return self
+
 
 #############################################################
 ######                 Legion Chunks                   ######
@@ -544,17 +394,17 @@ class MLIQ:
 class MOPB:
     def __init__(self, size):
         self.header = ChunkHeader(magic='BPOM')
-        self.header.size = size
+        self.size = size
         self.map_objects_prepass_batches = []
 
     def read(self, f):
         self.map_objects_prepass_batches = []
-        for i in range(self.header.size // 24):
+        for i in range(self.size // 24):
             self.map_objects_prepass_batches.append(char.read(f))
 
     def write(self, f):
-        self.header.size = len(self.map_objects_prepass_batches) * 24
-        self.header.write(f)
+        self.size = len(self.map_objects_prepass_batches) * 24
+        super().write(f)
 
         for val in self.map_objects_prepass_batches:
             char.write(f, val)
@@ -563,21 +413,22 @@ class MOPB:
 class MOLS:
     def __init__(self, size):
         self.header = ChunkHeader(magic='SLOM')
-        self.header.size = size
+        self.size = size
         self.map_object_spot_lights = []
 
     def read(self, f):
         self.map_object_spot_lights = []
-        for i in range(self.header.size // 56):
+        for i in range(self.size // 56):
             self.map_object_spot_lights.append(char.read(f))
 
     def write(self, f):
-        self.header.size = len(self.map_object_spot_lights) * 56
-        self.header.write(f)
+        self.size = len(self.map_object_spot_lights) * 56
+        super().write(f)
 
         for val in self.map_object_spot_lights:
             char.write(f, val)
 '''
+
 
 class MapObjectPointLight:
     def __init__(self):
@@ -602,6 +453,8 @@ class MapObjectPointLight:
         self.unk5 = uint32.read(f)
         self.unk6 = uint32.read(f)
 
+        return self
+
     def write(self, f):
         uint32.write(f, self.unk)
         self.color.write(f)
@@ -613,49 +466,47 @@ class MapObjectPointLight:
         uint32.write(f, self.unk5)
         uint32.write(f, self.unk6)
 
+        return self
 
-class MOLP:
-    def __init__(self, size=0):
-        self.header = ChunkHeader(magic='PLOM')
-        self.header.size = size
-        self.map_object_point_lights = []
+    @staticmethod
+    def size():
+        return 44
 
-    def read(self, f):
-        for _ in range(self.header.size // 44):
-            mopl = MapObjectPointLight()
-            mopl.read(f)
-            self.map_object_point_lights.append(mopl)
 
-    def write(self, f):
-        self.header.size = len(self.map_object_point_lights) * 44
-        self.header.write(f)
+class MOLP(ArrayChunk):
 
-        for val in self.map_object_point_lights:
-            val.write(f)
+    item = MapObjectPointLight
+    data = 'map_object_point_lights'
+    vert_map_object_point_lightscolors: List[MapObjectPointLight]
 
 
 #############################################################
 ######                 Cata Chunks                     ######
 #############################################################
 
-class MORB:
+class MORB(ContentChunk):
     def __init__(self, size=8):
-        self.header = ChunkHeader(magic='BROM')
-        self.header.size = size
+        super().__init__()
         self.start_index = 0
         self.index_count = 0
 
     def read(self, f):
+        super().read(f)
         self.start_index = uint32.read(f)
         self.index_count = uint16.read(f)
         f.skip(2)
 
+        return self
+
+
     def write(self, f):
-        self.header.size = 8
-        self.header.write(f)
+        self.size = 8
+        super().write(f)
         uint32.write(f, self.start_index)
         uint16.write(f, self.index_count)
         uint16.write(f, 0)
+
+        return self
 
 
 '''
@@ -664,7 +515,7 @@ class MOTA:
 
     def __init__(self, size, moba_count=0, accumulated_num_indices=0):  # TODO: check wiki
         self.header = ChunkHeader(magic='ATOM')
-        self.header.size = size
+        self.size = size
         self.first_index = []
 
         self.moba_count = moba_count
@@ -680,8 +531,8 @@ class MOTA:
             self.first_index.append(uint16.read(f))
 
     def write(self, f):
-        self.header.size = len(self.first_index) * 2
-        self.header.write(f)
+        self.size = len(self.first_index) * 2
+        super().write(f)
 
         for val in self.first_index:
             uint16.write(f, val)
@@ -690,61 +541,50 @@ class MOTA:
 class MOBS:
     def __init__(self, size):
         self.header = ChunkHeader(magic='SBOM')
-        self.header.size = size
+        self.size = size
         self.map_object_shadow_batches = []
 
     def read(self, f):
         self.map_object_shadow_batches = []
-        for i in range(self.header.size // 24):
+        for i in range(self.size // 24):
             self.map_object_shadow_batches.append(int8.read(f))
 
     def write(self, f):
-        self.header.size = len(self.map_object_shadow_batches) * 24
-        self.header.write(f)
+        self.size = len(self.map_object_shadow_batches) * 24
+        super().write(f)
 
         for val in self.map_object_shadow_batches:
             int8.write(f, val)
 
 '''
 
+
 #############################################################
 ######                 WoD Chunks                     ######
 #############################################################
 
-class MDAL:
-    def __init__(self, size=4):
-        self.header = ChunkHeader(magic='LADM')
-        self.header.size = size
+class MDAL(ContentChunk):
+    def __init__(self):
+        super().__init__()
         self.mdal = (0, 0, 0, 0)
 
     def read(self, f):
+        super().read(f)
         self.mdal = uint8.read(f, 4)
 
+        return self
+
     def write(self, f):
-        self.header.size = 4
-        self.header.write(f)
+        self.size = 4
+        super().write(f)
 
         uint8.write(f, self.mdal, 4)
 
+        return self
 
-class MOPL:
-    def __init__(self, size=0):
-        self.header = ChunkHeader(magic='LPOM')
-        self.header.size = size
-        self.terrain_cutting_planes = []
 
-    def read(self, f):
-        for _ in range(self.header.size // 16):
-            self.terrain_cutting_planes.append(C4Plane().read(f))
+class MOPL(ArrayChunk):
 
-    def write(self, f):
-        n_planes = len(self.terrain_cutting_planes)
-
-        if n_planes > 32:
-            raise OverflowError("\nMax. number of cutting planes is 32.")
-
-        self.header.size = len(self.terrain_cutting_planes) * 16
-        self.header.write(f)
-
-        for val in self.terrain_cutting_planes:
-            val.write(f)
+    item = C4Plane
+    data = 'terrain_cutting_planes'
+    terrain_cutting_planes: List[C4Plane]

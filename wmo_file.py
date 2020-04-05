@@ -1,13 +1,10 @@
 import os
 import struct
 
-from typing import Iterable
-
 from .file_formats import wmo_format_root
 from .file_formats.wmo_format_root import *
 from .file_formats import wmo_format_group
 from .file_formats.wmo_format_group import *
-from .io_utils.types import uint32
 
 
 class WMOFile:
@@ -65,8 +62,8 @@ class WMOFile:
 
             while True:
                 try:
-                    magic = f.read(4).decode('utf-8')
-                    size = uint32.read(f)
+                    magic = f.read(4).decode('utf-8')[::-1]
+
                 except EOFError:
                     break
 
@@ -77,23 +74,28 @@ class WMOFile:
                     print('\nAttempted reading non-chunked data.')
                     break
 
-                magic_reversed = magic[::-1].upper()
+                if not magic:
+                    break
 
-                if magic_reversed == 'MOHD':
+                if magic == 'MOHD':
                     is_root = True
 
                 # getting the correct chunk parsing class
-                chunk = getattr(wmo_format_root, magic_reversed, None)
+                chunk = getattr(wmo_format_root, magic, None)
 
                 # skipping unknown chunks
                 if chunk is None:
-                    print("\nEncountered unknown chunk \"{}\"".format(magic_reversed))
-                    f.seek(size, 1)
+                    print("\nEncountered unknown chunk \"{}\"".format(magic))
+                    f.seek(ContentChunk().read(f).size, 1)
                     continue
 
-                read_chunk = chunk(size=size)
-                read_chunk.read(f)
-                setattr(self, magic_reversed.lower(), read_chunk)
+                chunk = getattr(self, magic.lower(), None)
+
+                if chunk:
+                    chunk.read(f)
+
+                else:
+                    setattr(self, magic.lower(), chunk().read(f))
 
             # attempt automatically finding a root file if user tries to import the group
             if is_root:
@@ -298,7 +300,6 @@ class WMOFile:
 
         self.mfog.fogs.append(fog)
 
-
     def get_global_bounding_box(self):
         """ Calculate bounding box of an entire scene """
         corner1 = self.mogi.infos[0].bounding_box_corner1
@@ -358,8 +359,8 @@ class WMOGroupFile:
 
             while True:
                 try:
-                    magic = f.read(4).decode('utf-8')
-                    size = uint32.read(f)
+                    magic = f.read(4).decode('utf-8')[::-1]
+
                 except EOFError:
                     break
 
@@ -370,36 +371,41 @@ class WMOGroupFile:
                     print('\nAttempted reading non-chunked data.')
                     break
 
-                magic_reversed = magic[::-1]
-                magic_reversed_upper = magic_reversed.upper()
+                if not magic:
+                    break
 
                 # getting the correct chunk parsing class
-                chunk = getattr(wmo_format_group, magic_reversed_upper, None)
+                chunk = getattr(wmo_format_group, magic, None)
 
                 # skipping unknown chunks
                 if chunk is None:
-                    print("\nEncountered unknown chunk \"{}\"".format(magic_reversed_upper))
-                    f.seek(size, 1)
+                    print("\nEncountered unknown chunk \"{}\"".format(magic))
+                    f.seek(ContentChunk().read(f).size, 1)
                     continue
 
-                read_chunk = chunk(size=size)
-                read_chunk.read(f)
+                low_magic = magic.lower()
+                local_chunk = getattr(self, low_magic, None)
 
-                # handle duplicate chunk reading
-                field_name = magic_reversed.lower()
-                if isinstance(read_chunk, MOTV):
-                    if is_motv_processed:
-                        field_name += '2'
-                    else:
-                        is_motv_processed = True
+                if local_chunk and not ((low_magic == 'MOCV' and is_mocv_processed) or (low_magic == 'MOTV' and is_motv_processed)):
+                    local_chunk.read(f)
 
-                if isinstance(read_chunk, MOCV):
-                    if is_mocv_processed:
-                        field_name += '2'
-                    else:
-                        is_mocv_processed = True
+                else:
+                    local_chunk = chunk().read(f)
 
-                setattr(self, field_name, read_chunk)
+                    # handle duplicate chunk reading
+                    if isinstance(local_chunk, MOTV):
+                        if is_motv_processed:
+                            low_magic += '2'
+                        else:
+                            is_motv_processed = True
+
+                    elif isinstance(local_chunk, MOCV):
+                        if is_mocv_processed:
+                            low_magic += '2'
+                        else:
+                            is_mocv_processed = True
+
+                    setattr(self, low_magic, local_chunk)
 
     def write(self):
 

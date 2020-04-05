@@ -1,5 +1,6 @@
 from ..io_utils.types import *
 from io import SEEK_CUR
+from collections import Iterable
 
 __reload_order_index__ = 1
 
@@ -109,6 +110,10 @@ class C4Plane:
         float32.write(f, self.distance)
 
         return self
+
+    @staticmethod
+    def size():
+        return 16
 
 
 class CRange:
@@ -295,26 +300,6 @@ class M2Array(metaclass=Template):
         return uint32.size() * 2
 
 
-class ChunkHeader:
-    size = 8    # Oops, duplicate name. It resolves fine, though.
-
-    def __init__(self, magic='', size=0):
-        self.magic = magic
-        self.size = size
-
-    def read(self, f):
-        self.magic = f.read(4)[0:4].decode('ascii')
-        self.size = unpack("I", f.read(4))[0]
-
-        return self
-
-    def write(self, f):
-        f.write(self.magic[:4].encode('ascii'))
-        f.write(pack('I', self.size))
-
-        return self
-
-
 class ContentChunk:  # for inheriting only
 
     def __init__(self):
@@ -322,11 +307,12 @@ class ContentChunk:  # for inheriting only
         self.size = 0
 
     def read(self, f):
+        print(self.magic)
         self.size = uint32.read(f)
         return self
 
     def write(self, f):
-        f.write(self.magic[:4].encode('ascii'))
+        f.write(self.magic[::-1].encode('ascii'))
         uint32.write(f, self.size)
         return self
 
@@ -341,16 +327,42 @@ class ArrayChunk(ContentChunk):
 
     def read(self, f):
         super().read(f)
-        setattr(self, self.data, [self.item.read(f) for _ in range(self.size // self.item.size())])
+
+        print(self.data)
+
+        size = 0
+
+        if isinstance(self.item, Iterable):
+            for var in self.item:
+                size += var.size()
+
+            setattr(self, self.data, [tuple([var().read(f) for var in self.item]) for _ in range(self.size // size)])
+
+        else:
+            setattr(self, self.data, [self.item().read(f) for _ in range(self.size // self.item.size())])
+
         return self
 
     def write(self, f):
         content = getattr(self, self.data)
-        self.size = len(content) * self.item.size()
-        super().write(f)
 
-        for var in content:
-            var.write(f)
+        if isinstance(self.item, Iterable):
+            for var in self.item:
+                self.size += var.size()
+
+            super().write(f)
+
+            for struct in content:
+                for var in struct:
+                    var.write(f)
+
+        else:
+            self.size = len(content) * self.item.size()
+
+            super().write(f)
+
+            for var in content:
+                var.write(f)
 
         return self
 
@@ -405,6 +417,7 @@ class StringBlock:
         return len(self.strings)
 
 
+'''
 class StringBlockChunk:
     magic = ""
 
@@ -425,21 +438,28 @@ class StringBlockChunk:
         self.filenames.write(f)
 
         return self
+        
+'''
 
 
-class MVER:
+class MVER(ContentChunk):
     """ Version of the file. Actually meaningless. """
 
-    def __init__(self, version=0, size=4):
-        self.header = ChunkHeader(magic='REVM')
-        self.header.size = size
+    def __init__(self, version=0):
+        super().__init__()
+        self.size = 4
         self.version = version
 
     def read(self, f):
-        self.version = unpack("I", f.read(4))[0]
+        super().read(f)
+        self.version = uint32.read(f)
+
+        return self
 
     def write(self, f):
-        self.header.write(f)
-        f.write(pack('I', self.version))
+        super().write(f)
+        uint32.write(self.version)
+
+        return self
 
 

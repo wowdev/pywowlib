@@ -84,7 +84,7 @@ class GenericType:
             f.write(pack(str(n) + self.format, *value))
 
     def __call__(self, *args, **kwargs):
-        return self.default_value
+        return self
 
     def __repr__(self):
         return "<GenericType({}, {})>".format(self.format, self.size_)

@@ -81,7 +81,7 @@ class M2File:
                         continue
 
                     if magic != 'SFID':
-                        getattr(self, magic).read(f)
+                        getattr(self, magic.lower()).read(f)
 
                     else:
                         self.sfid = SFID(n_views=self.root.num_skin_profiles).read(f)
