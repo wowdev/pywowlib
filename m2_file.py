@@ -11,9 +11,8 @@ from .file_formats.wow_common_types import M2Versions
 
 
 class M2File:
-    def __init__(self, version, filepath=None, is_local_file=True, gamedata=None):
+    def __init__(self, version, filepath=None):
         self.version = M2Versions.from_expansion_number(version)
-        self.is_local_file = is_local_file
         self.root = None
         self.filepath = filepath
         self.skins = [M2SkinProfile()]
