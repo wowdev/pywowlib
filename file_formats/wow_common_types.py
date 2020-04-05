@@ -307,7 +307,6 @@ class ContentChunk:  # for inheriting only
         self.size = 0
 
     def read(self, f):
-        print(self.magic)
         self.size = uint32.read(f)
         return self
 
@@ -327,8 +326,6 @@ class ArrayChunk(ContentChunk):
 
     def read(self, f):
         super().read(f)
-
-        print(self.data)
 
         size = 0
 
