@@ -447,7 +447,7 @@ class WMOGroupFile:
 
             # get file size
             f.seek(0, 2)
-            self.mogp.header.size = f.tell() - 20
+            self.mogp.size = f.tell() - 20
 
             # write header
             f.seek(0xC)
