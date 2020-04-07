@@ -316,7 +316,15 @@ class ContentChunk:  # for inheriting only
         return self
 
 
-class ArrayChunk(ContentChunk):
+class M2ContentChunk(ContentChunk):  # for inheriting only, M2 files do not have reversed headers
+
+    def write(self, f):
+        f.write(self.magic[::-1].encode('ascii'))
+        uint32.write(f, self.size)
+        return self
+
+
+class ArrayChunkBase:
     item = None
     data = "content"
 
@@ -344,14 +352,23 @@ class ArrayChunk(ContentChunk):
         content = getattr(self, self.data)
 
         if isinstance(self.item, Iterable):
-            for var in self.item:
+
+            is_generic_type_map = [False] * len(self.item)
+
+            for i, var in enumerate(self.item):
                 self.size += var.size()
+                is_generic_type_map[i] = isinstance(var, GenericType)
 
             super().write(f)
 
             for struct in content:
-                for var in struct:
-                    var.write(f)
+                for i, var in enumerate(struct):
+
+                    if is_generic_type_map[i]:
+                        self.item[i].write(f, var)
+
+                    else:
+                        var.write(f)
 
         else:
             self.size = len(content) * self.item.size()
@@ -359,9 +376,24 @@ class ArrayChunk(ContentChunk):
             super().write(f)
 
             for var in content:
-                var.write(f)
+
+                if isinstance(self.item, GenericType):
+
+                    self.item.write(f, var)
+
+                else:
+                    var.write(f)
+
 
         return self
+
+
+class ArrayChunk(ArrayChunkBase, ContentChunk):
+    pass
+
+
+class M2ArrayChunk(ArrayChunkBase, M2ContentChunk):
+    pass
 
 
 class StringBlock:
@@ -455,7 +487,7 @@ class MVER(ContentChunk):
 
     def write(self, f):
         super().write(f)
-        uint32.write(self.version)
+        uint32.write(f, self.version)
 
         return self
 

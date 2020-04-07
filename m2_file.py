@@ -59,7 +59,7 @@ class M2File:
 
                 while True:
                     try:
-                        magic = f.read(4).decode('utf-8')[::-1]
+                        magic = f.read(4).decode('utf-8')
 
                     except EOFError:
                         break
@@ -85,7 +85,6 @@ class M2File:
 
                     else:
                         self.sfid = SFID(n_views=self.root.num_skin_profiles).read(f)
-
 
                 # parse additional files
                 if self.version >= M2Versions.WOTLK:
