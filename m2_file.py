@@ -77,7 +77,7 @@ class M2File:
                     # skipping unknown chunks
                     if chunk is None:
                         print("\nEncountered unknown chunk \"{}\"".format(magic))
-                        f.seek(ContentChunk().read(f).size, 1)
+                        f.seek(M2ContentChunk().read(f).size, 1)
                         continue
 
                     if magic != 'SFID':

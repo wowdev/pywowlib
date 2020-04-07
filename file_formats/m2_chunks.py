@@ -1,5 +1,5 @@
 from io import BytesIO
-from .wow_common_types import MVER, M2Array, fixed16, ContentChunk, ArrayChunk
+from .wow_common_types import MVER, M2Array, fixed16, M2ContentChunk, M2ArrayChunk
 from ..io_utils.types import *
 from .m2_format import M2Header, M2PartTrack, M2Track, M2Bounds, M2TrackBase
 
@@ -7,7 +7,7 @@ from .m2_format import M2Header, M2PartTrack, M2Track, M2Bounds, M2TrackBase
 ######                 Legion Chunks                   ######
 #############################################################
 
-class PFID(ContentChunk):
+class PFID(M2ContentChunk):
 
     def __init__(self):
         super().__init__()
@@ -23,7 +23,7 @@ class PFID(ContentChunk):
         uint32.write(f, self.phys_file_id)
 
 
-class SFID(ContentChunk):
+class SFID(M2ContentChunk):
     def __init__(self, n_views=0):
         super().__init__()
         self.skin_file_data_ids = []
@@ -75,13 +75,13 @@ class AnimFileID:
         return 8
 
 
-class AFID(ArrayChunk):
+class AFID(M2ArrayChunk):
     """ Animation File ID """
     item = AnimFileID
     data = "anim_file_ids"
 
 
-class BFID(ArrayChunk):
+class BFID(M2ArrayChunk):
     """ Bone file data IDs """
     item = uint32
     data = "bone_file_data_ids"
@@ -101,7 +101,7 @@ class TextureAC:
         int8.write(self.unk2, f)
 
 
-class TXAC(ArrayChunk):
+class TXAC(M2ArrayChunk):
     """ Texture AC """
     item = TextureAC
     data = "texture_ac"
@@ -130,7 +130,7 @@ class ExtendedParticle:
         return 12
 
 
-class EXPT(ArrayChunk):
+class EXPT(M2ArrayChunk):
     "Extended Particle "
 
     item = ExtendedParticle
@@ -161,7 +161,7 @@ class ExtendedParticle2:
         return uint32.size() * 3 + M2PartTrack.size()
 
 
-class EXP2(ContentChunk):
+class EXP2(M2ContentChunk):
     def __init__(self):
         super().__init__()
         self.content = M2Array(ExtendedParticle2)
@@ -176,7 +176,7 @@ class EXP2(ContentChunk):
         self.content.write(f)
 
 
-class PABC(ContentChunk):
+class PABC(M2ContentChunk):
     def __init__(self):
         super().__init__()
         self.content = M2Array(uint16)
@@ -191,7 +191,7 @@ class PABC(ContentChunk):
         self.content.write(f)
 
 
-class PADC(ContentChunk):
+class PADC(M2ContentChunk):
     def __init__(self):
         super().__init__()
         self.content = M2Array(M2Track << fixed16)
@@ -206,7 +206,7 @@ class PADC(ContentChunk):
         self.content.write(f)
 
 
-class PSBC(ContentChunk):
+class PSBC(M2ContentChunk):
     def __init__(self):
         super().__init__()
         self.content = M2Array(M2Bounds)
@@ -221,7 +221,7 @@ class PSBC(ContentChunk):
         self.content.write(f)
 
 
-class PEDC(ContentChunk):
+class PEDC(M2ContentChunk):
     def __init__(self):
         super().__init__()
         self.content = M2Array(M2TrackBase)
@@ -236,7 +236,7 @@ class PEDC(ContentChunk):
         self.content.write(f)
 
 
-class SKID(ContentChunk):
+class SKID(M2ContentChunk):
     def __init__(self):
         super().__init__()
         self.skeleton_file_id = 0
@@ -256,25 +256,25 @@ class SKID(ContentChunk):
 #############################################################
 
 
-class TXID(ArrayChunk):
+class TXID(M2ArrayChunk):
     """ Texture File Data ID """
     item = uint32
     data = "texture_ids"
 
 
-class RPID(ArrayChunk):
+class RPID(M2ArrayChunk):
     """ Recursive Particle File Data ID """
     item = uint32
     data = "recursive_particle_models"
 
 
-class GPID(ArrayChunk):
+class GPID(M2ArrayChunk):
     """ Geometry Particle Data ID """
     item = uint32
     data = "geometry_particle_models"
 
 
-class LDV1(ContentChunk):
+class LDV1(M2ContentChunk):
 
     def __init__(self):
         super().__init__()
@@ -317,7 +317,7 @@ class PGD1Entry:
         return 2
 
 
-class PGD1(ContentChunk):
+class PGD1(M2ContentChunk):
 
     def __init__(self):
         super().__init__()
@@ -341,12 +341,12 @@ class MD20(M2Header):
     pass
 
 
-class MD21(M2Header, ContentChunk):
+class MD21(M2Header, M2ContentChunk):
     def __init__(self):
         super().__init__()
 
     def read(self, f):
-        ContentChunk.read(self, f)
+        M2ContentChunk.read(self, f)
         md20_raw = f.read(self.size)
 
         with BytesIO(md20_raw) as f2:
@@ -361,6 +361,6 @@ class MD21(M2Header, ContentChunk):
             M2Header.write(self, f2)
             md20_raw = f2.read()
             self.size = len(md20_raw)
-            ContentChunk.write(self, f)
+            M2ContentChunk.write(self, f)
             f.write(md20_raw)
 

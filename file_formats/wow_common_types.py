@@ -319,12 +319,12 @@ class ContentChunk:  # for inheriting only
 class M2ContentChunk(ContentChunk):  # for inheriting only, M2 files do not have reversed headers
 
     def write(self, f):
-        f.write(self.magic[::-1].encode('ascii'))
+        f.write(self.magic.encode('ascii'))
         uint32.write(f, self.size)
         return self
 
 
-class ArrayChunkBase:
+class ArrayChunkBase:  # for internal use only
     item = None
     data = "content"
 
@@ -359,6 +359,7 @@ class ArrayChunkBase:
                 self.size += var.size()
                 is_generic_type_map[i] = isinstance(var, GenericType)
 
+            self.size *= len(content)
             super().write(f)
 
             for struct in content:
@@ -384,15 +385,14 @@ class ArrayChunkBase:
                 else:
                     var.write(f)
 
-
         return self
 
 
-class ArrayChunk(ArrayChunkBase, ContentChunk):
+class ArrayChunk(ArrayChunkBase, ContentChunk):  # for inheriting only
     pass
 
 
-class M2ArrayChunk(ArrayChunkBase, M2ContentChunk):
+class M2ArrayChunk(ArrayChunkBase, M2ContentChunk):  # for inheriting only
     pass
 
 
