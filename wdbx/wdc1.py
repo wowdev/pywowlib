@@ -81,7 +81,7 @@ class WDC1Header:
 
 
 class FieldStructure:
-
+    size = int16.size() + uint16.size()
     __slots__ = ('size', 'offset')
 
     def __init__(self):
@@ -89,13 +89,13 @@ class FieldStructure:
         self.offset = 0
 
     def read(self, f):
-        self.size = uint16.read(f)
+        self.size = int16.read(f)
         self.offset = uint16.read(f)
 
         return self
 
     def write(self, f):
-        uint16.write(f, self.size)
+        int16.write(f, self.size)
         uint16.write(f, self.offset)
 
         return self
@@ -119,6 +119,8 @@ class OffsetMapEntry:
 
 
 class FieldStorageInfo:
+    size = uint16.size() * 2 + uint32.size() * 2 + uint32.size() * 3
+
     def __init__(self):
         self.field_offset_bits = 0
         self.field_size_bits = 0
@@ -189,6 +191,24 @@ class FieldStorageInfo:
             uint32.write(f, self.unk_or_unused2)
             uint32.write(f, self.unk_or_unused3)
 
+        return self
+
+
+class CopyTableEntry:
+    size = uint32.size() * 2
+
+    def __init__(self):
+        self.id_of_new_row = 0
+        self.id_of_copied_row = 0
+
+    def read(self, f):
+        self.id_of_new_row = uint32.read(f)
+        self.id_of_copied_row = uint32.read(f)
+        return self
+
+    def write(self, f):
+        uint32.write(f, self.id_of_new_row)
+        uint32.write(f, self.id_of_copied_row)
         return self
 
 
@@ -263,6 +283,8 @@ class WDC1:
         self.variable_record_data = None
         self.offset_map = []
 
+        self.id_list = []
+
         self.copy_table = {}
         self.field_info = []
         self.pallet_data = None
@@ -271,7 +293,6 @@ class WDC1:
         self.relationship_map = RelationshipMapping()
 
         # deserialized records
-        self.records = OrderedDict()
 
     def read(self, f):
         self.header.read(f)
@@ -285,17 +306,19 @@ class WDC1:
         # offset map records
         # since they are variable length, they are pointed to by an array of 6-byte offset + size pairs.
         else:
-            self.variable_record_data = f.read(self.header.offset_map_offset - self.header.size
-                                               - (4 * self.header.total_field_count))
+            self.variable_record_data = f.read(self.header.offset_map_offset - WDC1Header.size
+                                               - (FieldStructure.size * self.header.total_field_count))
 
             self.offset_map = [OffsetMapEntry().read(f) for _ in range(self.header.max_id - self.header.min_id + 1)]
 
         self.id_list = [uint32.read(f) for _ in range(self.header.id_list_size // 4)]
 
         if self.header.copy_table_size > 0:
-            self.copy_table = {uint32.read(f): uint32.read(f) for _ in range(self.header.copy_table_size // 8)}
+            self.copy_table = {uint32.read(f): uint32.read(f) for _ in range(self.header.copy_table_size
+                                                                             // CopyTableEntry.size)}
 
-        self.field_info = [FieldStorageInfo().read(f) for _ in range(self.header.field_storage_info_size // 24)]
+        self.field_info = [FieldStorageInfo().read(f) for _ in range(self.header.field_storage_info_size
+                                                                     // FieldStorageInfo.size)]
         self.pallet_data = f.read(self.header.pallet_data_size)
         self.common_data = f.read(self.header.common_data_size)
 
@@ -305,17 +328,8 @@ class WDC1:
     def deserialize(self, table_name, build):
         definition = DBDefinition(table_name, build)
 
-        for raw_record in self.record_data:
-            self.records
-
-
-
-
-
-
-
-
-
-
-
-
+        '''
+        
+        
+        
+        '''
