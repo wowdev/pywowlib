@@ -53,7 +53,7 @@ class GenericType:
     def __init__(self, format, size, default_value=0):
         self.format = format
         self.size_ = size
-        self.default_value = 0
+        self.default_value = default_value
 
     def read(self, f, n=1):
         if type(n) is not int:

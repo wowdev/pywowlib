@@ -3,6 +3,7 @@ import struct
 
 from itertools import chain
 
+from .enums.m2_enums import M2TextureTypes
 from .file_formats import m2_chunks
 from .file_formats.m2_format import *
 from .file_formats.m2_chunks import *
@@ -10,33 +11,45 @@ from .file_formats.skin_format import M2SkinProfile, M2SkinSubmesh, M2SkinTextur
 from .file_formats.wow_common_types import M2Versions
 
 
+class M2Dependencies:
+
+    def __init__(self):
+        self.textures = []
+        self.skins = []
+        self.anims = []
+        self.skel = []
+        self.bones = []
+        self.lod_skins = []
+
+
 class M2File:
     def __init__(self, version, filepath=None):
         self.version = M2Versions.from_expansion_number(version)
         self.root = None
         self.filepath = filepath
+        self.dependencies = M2Dependencies()
         self.skins = [M2SkinProfile()]
 
         if self.version >= M2Versions.LEGION:
             self.root = MD21()
-            self.pfid = PFID()
-            self.sfid = SFID()
-            self.afid = AFID()
-            self.bfid = BFID()
-            self.txac = TXAC()
-            self.expt = EXPT()  #
-            self.exp2 = EXP2()  #
-            self.pabc = PABC()  #
-            self.padc = PADC()  #
-            self.psbc = PSBC()  #
-            self.pedc = PEDC()  #
-            self.skid = SKID()
+            self.pfid = None
+            self.sfid = None
+            self.afid = None
+            self.bfid = None
+            self.txac = None
+            self.expt = None
+            self.exp2 = None
+            self.pabc = None
+            self.padc = None
+            self.psbc = None
+            self.pedc = None
+            self.skid = None
 
             if self.version >= M2Versions.BFA:
-                self.txid = TXID()
-                self.ldv1 = LDV1()  #
-                self.rpid = RPID()
-                self.gpid = GPID()
+                self.txid = None
+                self.ldv1 = None
+                self.rpid = None
+                self.gpid = None
 
             # everything gets handled as of 03.04.20
 
@@ -50,7 +63,7 @@ class M2File:
         self.skins = []
 
         with open(self.filepath, 'rb') as f:
-            magic = f.read(4).decode('utf-8')[::-1]
+            magic = f.read(4).decode('utf-8')
 
             if magic == 'MD20':
                 self.root = MD20().read(f)
@@ -81,10 +94,94 @@ class M2File:
                         continue
 
                     if magic != 'SFID':
-                        getattr(self, magic.lower()).read(f)
+                        setattr(self, magic.lower(), chunk().read(f))
 
                     else:
                         self.sfid = SFID(n_views=self.root.num_skin_profiles).read(f)
+
+
+    def find_model_dependencies(self) -> M2Dependencies:
+
+        raw_path = os.path.splitext(self.filepath)[0]
+
+        # find skins
+        if self.sfid:
+            self.dependencies.skins = [fdid for fdid in self.sfid.skin_file_data_ids]
+            self.dependencies.lod_skins = [fdid for fdid in self.sfid.lod_skin_file_data_ids]
+
+        elif self.version >= M2Versions.WOTLK:
+
+            if self.version >= M2Versions.WOD:
+                self.dependencies.lod_skins = ["{}{}.skin".format(raw_path, str(i + 1).zfill(2))  for i in range(2)]
+                self.dependencies.skins = ["{}{}.skin".format(raw_path, str(i).zfill(2)) for i in range(self.root.num_skin_profiles)]
+
+        # find textures
+        for i, texture in enumerate(self.root.textures):
+
+            if texture.type != M2TextureTypes.NONE:
+                continue
+
+            if texture.filename.value:
+                self.dependencies.textures.append(texture.filename.value)
+
+            elif i < len(self.txid.texture_ids) and self.txid.texture_ids[i] > 0:
+                self.dependencies.textures.append(self.txid.texture_ids[i])
+
+        # find .skel
+        if self.skid:
+            self.dependencies.skel.append(self.skid.skeleton_file_id)
+
+        # find bones
+        if self.bfid:
+            self.dependencies.bones = [fdid for fdid in self.bfid.bone_file_data_ids]
+
+        elif self.version >= M2Versions.WOD:
+
+            for sequence in self.root.sequences:
+
+                if sequence.id == 808:
+                    self.dependencies.bones.append("{}_{}.bone".format(raw_path, str(sequence.variation_index).zfill(2)))
+
+        # TODO: find phys
+
+        # find anims
+
+        anim_paths_map = {}
+        for i, sequence in enumerate(self.root.sequences):
+            # handle alias animations
+            real_anim = sequence
+            a_idx = i
+
+            while real_anim.flags & 0x40 and real_anim.alias_next != a_idx:
+                a_idx = real_anim.alias_next
+                real_anim = self.root.sequences[real_anim.alias_next]
+
+            if not sequence.flags & 0x20:
+                anim_paths_map[real_anim.id, sequence.variation_index] \
+                    = "{}{}-{}.anim".format(os.path.splitext(self.filepath)[0]
+                                            , str(real_anim.id).zfill(4)
+                                            , str(sequence.variation_index).zfill(2))
+
+
+        if self.afid:
+
+          for record in self.afid.anim_file_ids:
+
+            if not record.file_id:
+                continue
+
+            anim_paths_map[record.anim_id, record.sub_anim_id] = record.file_id
+
+
+        self.dependencies.anims = list(anim_paths_map.values())
+
+        return self.dependencies
+
+    def
+
+
+
+        '''
 
                 # parse additional files
                 if self.version >= M2Versions.WOTLK:
@@ -131,6 +228,9 @@ class M2File:
                                     frame_values.read(anim_file, ignore_header=True)
                 else:
                     self.skins = self.root.skin_profiles
+                    
+                    
+        '''
 
     def write(self, filepath):
         with open(filepath, 'wb') as f:

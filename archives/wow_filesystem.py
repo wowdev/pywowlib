@@ -89,7 +89,7 @@ class WoWFileData:
         for filename in filenames:
             self.extract_file(dir, filename)
 
-    def extract_textures_as_png(self, dir, filenames):
+    def extract_textures_as_png(self, dir, filenames, ):
         """ Read the latest version of the texture files from loaded archives and directories and
         extract them to current working directory as PNG images. """
 
