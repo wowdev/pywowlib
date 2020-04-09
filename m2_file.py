@@ -177,9 +177,6 @@ class M2File:
 
         return self.dependencies
 
-    def
-
-
 
         '''
 
