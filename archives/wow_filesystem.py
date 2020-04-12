@@ -18,12 +18,12 @@ class WoWFileData:
         self.files = self.init_mpq_storage(self.wow_path, project_path) if WoWVersionManager().client_version < WoWVersions.WOD \
                      else self.init_casc_storage(self.wow_path, project_path)
 
-        self.db_files_client = DBFilesClient(self)
-        self.db_files_client.init_tables()
+        #self.db_files_client = DBFilesClient(self)
+        #self.db_files_client.init_tables()
 
         if WoWVersionManager().client_version >= WoWVersions.WOD:
             with open(os.path.join(os.path.dirname(__file__), 'listfile.csv'), newline='') as f:
-                self.listfile = {row[0] : row[1] for row in csv.reader(f, delimiter=';')}
+                self.listfile = {int(row[0]): row[1] for row in csv.reader(f, delimiter=';')}
 
     def __del__(self):
         print("\nUnloaded game data.")
@@ -143,12 +143,10 @@ class WoWFileData:
     def guess_filepath(self, identifier: int, file_format: str, host_file: str = "") -> str:
         """ Tries to get the filepath from listfile or makes a new one"""
 
-        for fdid, path in self.listfile.items():
-            if fdid == identifier:
-                filepath = path
-                break
+        filepath = self.listfile.get(identifier)
 
-        else:
+        if not filepath:
+
             if host_file:
                 host_dir = os.path.dirname(host_file)
                 host_basename = os.path.splitext(os.path.basename(host_file))[0]

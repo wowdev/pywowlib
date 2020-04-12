@@ -99,7 +99,6 @@ class M2File:
                     else:
                         self.sfid = SFID(n_views=self.root.num_skin_profiles).read(f)
 
-
     def find_model_dependencies(self) -> M2Dependencies:
 
         raw_path = os.path.splitext(self.filepath)[0]
@@ -162,16 +161,14 @@ class M2File:
                                             , str(real_anim.id).zfill(4)
                                             , str(sequence.variation_index).zfill(2))
 
-
         if self.afid:
 
-          for record in self.afid.anim_file_ids:
+            for record in self.afid.anim_file_ids:
 
-            if not record.file_id:
-                continue
+                if not record.file_id:
+                    continue
 
-            anim_paths_map[record.anim_id, record.sub_anim_id] = record.file_id
-
+                anim_paths_map[record.anim_id, record.sub_anim_id] = record.file_id
 
         self.dependencies.anims = list(anim_paths_map.values())
 
