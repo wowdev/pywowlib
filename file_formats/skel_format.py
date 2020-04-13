@@ -23,7 +23,7 @@ class SKL1(M2ContentChunk):
             self.unk2 = [uint8.read(f2) for _ in range(4)]
 
     def write(self, f):
-        self.size = len(self.unk2) + self.unk1 * 4 + self.name.n_elements * char.size_() + self._size
+        self.size = len(self.unk2) + self.unk1 * 4 + self.name.n_elements * char.size() + self._size
         super().write(f)
 
         with BytesIO() as f2:

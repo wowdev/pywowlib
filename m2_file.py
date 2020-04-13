@@ -175,6 +175,10 @@ class M2File:
         return self.dependencies
 
 
+    def read_additional_files(self):
+
+
+
         '''
 
                 # parse additional files

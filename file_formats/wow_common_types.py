@@ -1,5 +1,5 @@
 from ..io_utils.types import *
-from io import SEEK_CUR
+from io import SEEK_CUR, BytesIO
 from collections import Iterable
 
 __reload_order_index__ = 1
@@ -321,6 +321,30 @@ class M2ContentChunk(ContentChunk):  # for inheriting only, M2 files do not have
     def write(self, f):
         f.write(self.magic.encode('ascii'))
         uint32.write(f, self.size)
+        return self
+
+
+class M2RawChunk(M2ContentChunk):
+
+    def __init__(self):
+        super().__init__()
+        self.raw_data = BytesIO()
+
+    def read(self, f):
+        super().read(f)
+        self.raw_data.write(f.read(self.size))
+
+        return self
+
+    def write(self, f):
+
+        self.raw_data.seek(0, 2)
+        self.size = self.raw_data.tell()
+        self.raw_data.seek(0)
+        super().write(f)
+
+        f.write(self.raw_data.read())
+
         return self
 
 
