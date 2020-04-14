@@ -3,6 +3,7 @@ from .wow_common_types import MVER, M2Array, fixed16, M2ContentChunk, M2ArrayChu
 from ..io_utils.types import *
 from .m2_format import M2Header, M2PartTrack, M2Track, M2Bounds, M2TrackBase
 
+
 #############################################################
 ######                 Legion Chunks                   ######
 #############################################################
@@ -65,10 +66,14 @@ class AnimFileID:
         self.sub_anim_id = uint16.read(f)
         self.file_id = uint32.read(f)
 
+        return self
+
     def write(self, f):
         uint16.write(f, self.anim_id)
         uint16.write(f, self.sub_anim_id)
         uint32.write(f, self.file_id)
+
+        return self
 
     @staticmethod
     def size():
@@ -99,6 +104,10 @@ class TextureAC:
     def write(self, f):
         int8.write(self.unk1, f)
         int8.write(self.unk2, f)
+
+    @staticmethod
+    def size():
+        return 2
 
 
 class TXAC(M2ArrayChunk):
@@ -194,7 +203,7 @@ class PABC(M2ContentChunk):
 class PADC(M2ContentChunk):
     def __init__(self):
         super().__init__()
-        self.content = M2Array(M2Track << fixed16)
+        self.content = M2Array(M2Track << (fixed16, PADC))
 
     def read(self, f):
         super().read(f)
@@ -355,6 +364,8 @@ class MD21(M2Header, M2ContentChunk):
 
             M2Header.read(self, f2)
 
+        return self
+
     def write(self, f):
 
         with BytesIO() as f2:
@@ -363,4 +374,6 @@ class MD21(M2Header, M2ContentChunk):
             self.size = len(md20_raw)
             M2ContentChunk.write(self, f)
             f.write(md20_raw)
+
+        return self
 

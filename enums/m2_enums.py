@@ -1,4 +1,10 @@
+import csv
+import os
+
+from bidict import bidict
+
 from enum import IntEnum, Enum
+from ..io_utils.types import singleton
 
 __reload_order_index__ = -1
 
@@ -10,6 +16,9 @@ class M2GlobalFlags(IntEnum):
     LoadPhysData = 0x20
     UNK = 0x80
     CameraRelated = 0x100
+    NewParticleRecord = 0x200
+    TextureTransformsUseBoneSequences = 0x800
+    ChunkedAnimFiles = 0x200000
 
 
 class M2ParticleFlags(IntEnum):
@@ -190,7 +199,7 @@ class M2KeyBones(Enum):
                 return field.name
 
         print("\nUnknown keybone ID: {}".format(keybone_id))
-        return "UNK_Keybone"
+        return "UNK_Keybone_{}".format(keybone_id)
 
 
 class M2AttachmentTypes(Enum):
@@ -417,6 +426,26 @@ class M2EventTokens(Enum):
                 return field.name
 
         return None
+
+@singleton
+class M2SequenceNames:
+
+    def __init__(self):
+
+        self.cur_iter = -1
+
+        with open(os.path.join(os.path.dirname(__file__), 'animation_data.csv'), newline='') as f:
+            self.anim_name_map = bidict({int(row[0]): row[1] for row in csv.reader(f, delimiter=';')})
+
+    def get_sequence_name(self, seq_id: int):
+        return self.anim_name_map.get(seq_id)
+
+    def get_sequence_id(self, seq_name: str):
+        return self.anim_name_map.inverse(seq_name)
+
+    def items(self):
+        return self.anim_name_map.items()
+
 
 
 

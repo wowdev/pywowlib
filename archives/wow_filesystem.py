@@ -3,7 +3,7 @@ import os
 import time
 import csv
 
-from typing import Union, List
+from typing import Union, List, Dict
 
 from .. import WoWVersionManager, WoWVersions
 from .mpq import MPQFile
@@ -51,32 +51,65 @@ class WoWFileData:
 
         return None, None
 
-    def read_file(self, identifier: Union[str, int]):
+    def read_file(self, identifier: Union[str, int], local_dir: str = ""):
         """ Read the latest version of the file from loaded archives and directories. """
 
-        storage, type_ = self.has_file(identifier)
-        if storage:
-            if type_:
-                if WoWVersionManager().client_version < WoWVersions.WOD:
-                    file = storage.open(identifier).read()
+        if WoWVersionManager().client_version < WoWVersions.WOD:
+
+            if local_dir:
+
+                local_path = os.path.join(local_dir, identifier)
+                if os.path.isfile(local_path):
+                    return open(local_path, 'rb').read()
+
+            storage, is_archive = self.has_file(identifier)
+
+            if storage:
+
+                if is_archive:
+                    return storage.open(identifier).read()
+
                 else:
+                    return open(os.path.join(storage, identifier), "rb").read()
+
+        else:
+
+            if local_dir:
+
+                filepath = self.guess_filepath(identifier) if isinstance(identifier, int) else identifier
+
+                if filepath:
+                    local_path = os.path.join(local_dir, filepath)
+                    if os.path.isfile(local_path):
+                        return open(local_path, 'rb').read()
+
+            storage, is_archive = self.has_file(identifier)
+
+            if storage:
+
+                if is_archive:
                     open_flag = FileOpenFlags.CASC_OPEN_BY_FILEID \
                         if isinstance(identifier, int) else FileOpenFlags.CASC_OPEN_BY_NAME
 
                     with storage.read_file(identifier, open_flag) as casc_file:
                         file = casc_file.data
-            else:
-                file = open(os.path.join(storage, identifier), "rb").read()
 
-        else:
-            raise KeyError("\nRequested file \"{}\" was not found in WoW filesystem.".format(identifier))
+                    return file
 
-        return file
+                else:
+                    return open(os.path.join(storage, identifier), "rb").read()
 
-    def extract_file(self, dir: str, identifier: Union[str, int], host_file: str="", file_format: str="") -> str:
+        raise KeyError("\nRequested file \"{}\" was not found in WoW filesystem.".format(identifier))
+
+    def extract_file(  self
+                     , dir: str
+                     , identifier: Union[str, int]
+                     , host_file: str = ""
+                     , file_format: str = ""
+                     , local_dir: str = "") -> str:
         """ Extract the latest version of the file from loaded archives to provided working directory. """
 
-        file = self.read_file(identifier)
+        file = self.read_file(identifier, local_dir)
         filepath = None
 
         if isinstance(identifier, str):
@@ -101,17 +134,27 @@ class WoWFileData:
 
         return filepath
 
-    def extract_files(self, dir: str, identifiers: List[Union[str, int]], host_file: str="", file_format: str="") -> List[str]:
+    def extract_files(  self
+                      , dir: str
+                      , identifiers: List[Union[str, int]]
+                      , host_file: str = ""
+                      , file_format: str = ""
+                      , local_dir: str = "") -> List[str]:
+
         """ Extract the latest version of the files from loaded archives to provided working directory. """
 
-        return [self.extract_file(dir, identifier, host_file, file_format) for identifier in identifiers]
+        return [self.extract_file(dir, identifier, host_file, file_format, local_dir) for identifier in identifiers]
 
-    def extract_textures_as_png(self, dir: str, identifiers, host_file: str="") -> List[str]:
+    def extract_textures_as_png(  self
+                                , dir: str
+                                , identifiers
+                                , host_file: str = ""
+                                , local_dir: str = "") -> Dict[Union[int, str], str]:
         """ Read the latest version of the texture files from loaded archives and directories and
         extract them to current working directory as PNG images. """
 
         pairs = []
-        filepaths = []
+        filepaths = {}
 
         for identifier in identifiers:
 
@@ -121,7 +164,7 @@ class WoWFileData:
 
                 filepath = self.guess_filepath(identifier, 'blp', host_file)
 
-            filepaths.append(filepath)
+            filepaths[identifier] = filepath
 
             if os.name != 'nt':
                 filename_ = filepath.replace('\\', '/')
@@ -132,7 +175,7 @@ class WoWFileData:
 
             if not os.path.exists(os.path.splitext(abs_path)[0] + ".png"):
                 try:
-                    pairs.append((self.read_file(identifier), filepath.replace('\\', '/').encode('utf-8')))
+                    pairs.append((self.read_file(identifier, local_dir), filepath.replace('\\', '/').encode('utf-8')))
                 except KeyError as e:
                     print(e)
         if pairs:
@@ -140,7 +183,7 @@ class WoWFileData:
 
         return filepaths
 
-    def guess_filepath(self, identifier: int, file_format: str, host_file: str = "") -> str:
+    def guess_filepath(self, identifier: int, file_format: str = "", host_file: str = "") -> str:
         """ Tries to get the filepath from listfile or makes a new one"""
 
         filepath = self.listfile.get(identifier)

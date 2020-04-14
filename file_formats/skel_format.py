@@ -1,3 +1,6 @@
+import os
+import sys
+
 from io import BytesIO
 from .wow_common_types import M2ContentChunk
 from .m2_format import *
@@ -9,7 +12,7 @@ class SKL1(M2ContentChunk):
 
     def __init__(self):
         super().__init__()
-        self.unk1 = 0
+        self.unk1 = 0x100
         self.name = M2Array(char)
         self.unk2 = []
 
@@ -162,3 +165,55 @@ class SKPD(M2ContentChunk):
 
         for val in self.unk2:
             uint8.write(f, val)
+
+
+class SkelFile:
+
+    def __init__(self, root_basepath: str, shared: bool = True):
+        self.root_basepath = os.path.splitext(root_basepath)[0]
+
+        self.skl1 = SKL1()
+        self.ska1 = SKA1()
+        self.skb1 = SKB1()
+        self.sks1 = SKS1()
+        self.skpd, self.afid, self.bfid = (SKPD(), AFID(), BFID()) if not shared else (None, None, None)
+
+    def read(self, f):
+        magic = f.read(4).decode('utf-8')
+
+        chunk = getattr(sys.modules[self.__class__.__module__], magic)
+
+        if not chunk:
+            raise Exception('\n\nEncountered unknown chunk \"{}\"'.format(magic))
+
+        magic_lower = magic.lower()
+
+        local_chunk = getattr(self, magic_lower)
+
+        if not local_chunk:
+            setattr(self, magic_lower, chunk().read(f))
+        else:
+            local_chunk.read(f)
+
+        return self
+
+    def write(self, f):
+
+        self.skl1.write(f)
+        self.ska1.write(f)
+        self.skb1.write(f)
+        self.sks1.write(f)
+
+        if self.skpd:
+            self.skpd.write(f)
+
+        if self.afid:
+            self.afid.write(f)
+
+        if self.bfid:
+            self.bfid.write(f)
+
+        return self
+
+
+

@@ -35,9 +35,10 @@ class M2Versions:
             1: cls.TBC,
             2: cls.WOTLK,
             3: cls.CATA,
-            4: cls.WOD,
-            5: cls.LEGION,
-            6: cls.BFA
+            4: cls.MOP,
+            5: cls.WOD,
+            6: cls.LEGION,
+            7: cls.BFA
         }
 
         return v_dict[exp_num]

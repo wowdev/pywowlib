@@ -1,13 +1,17 @@
 import os
 import struct
 
+from typing import List
 from itertools import chain
+from collections import deque
 
 from .enums.m2_enums import M2TextureTypes
 from .file_formats import m2_chunks
 from .file_formats.m2_format import *
 from .file_formats.m2_chunks import *
 from .file_formats.skin_format import M2SkinProfile, M2SkinSubmesh, M2SkinTextureUnit
+from .file_formats.skel_format import SkelFile
+from .file_formats.anim_format import AnimFile
 from .file_formats.wow_common_types import M2Versions
 
 
@@ -17,7 +21,6 @@ class M2Dependencies:
         self.textures = []
         self.skins = []
         self.anims = []
-        self.skel = []
         self.bones = []
         self.lod_skins = []
 
@@ -27,8 +30,11 @@ class M2File:
         self.version = M2Versions.from_expansion_number(version)
         self.root = None
         self.filepath = filepath
+        self.raw_path = os.path.splitext(filepath)[0]
         self.dependencies = M2Dependencies()
         self.skins = [M2SkinProfile()]
+        self.skels = deque()
+        self.texture_path_map = {}
 
         if self.version >= M2Versions.LEGION:
             self.root = MD21()
@@ -84,6 +90,9 @@ class M2File:
                         print('\nAttempted reading non-chunked data.')
                         break
 
+                    if not magic:
+                        break
+
                     # getting the correct chunk parsing class
                     chunk = getattr(m2_chunks, magic, None)
 
@@ -99,9 +108,51 @@ class M2File:
                     else:
                         self.sfid = SFID(n_views=self.root.num_skin_profiles).read(f)
 
-    def find_model_dependencies(self) -> M2Dependencies:
+    def find_main_skel(self) -> int:
 
-        raw_path = os.path.splitext(self.filepath)[0]
+        if self.skid:
+            return self.skid.skeleton_file_id
+
+        return 0
+
+    def read_skel(self, path: str) -> int:
+
+        skel = SkelFile(path)
+
+        with open(path, 'rb') as f:
+            skel.read(f)
+
+        self.skels.appendleft(skel)
+
+        if skel.skpd:
+            return skel.skpd.parent_skel_file_id
+
+        return 0
+
+    def process_skels(self):
+
+        for skel in self.skels:
+
+            if skel.skl1:
+                self.root.name = skel.skl1.name
+
+            if skel.ska1:
+                self.root.attachments = skel.ska1.attachments
+                self.root.attachment_lookup_table = skel.ska1.attachment_lookup_table
+
+            if skel.skb1:
+                self.root.bones = skel.skb1.bones
+                self.root.key_bone_lookup = skel.skb1.key_bone_lookup
+
+            if skel.sks1:
+                self.root.global_sequences = skel.sks1.global_loops
+                self.root.sequences = skel.sks1.sequences
+                self.root.sequence_lookup = skel.sks1.sequence_lookups
+
+            if skel.afid:
+                self.afid.anim_file_ids = skel.afid.anim_file_ids
+
+    def find_model_dependencies(self) -> M2Dependencies:
 
         # find skins
         if self.sfid:
@@ -111,8 +162,10 @@ class M2File:
         elif self.version >= M2Versions.WOTLK:
 
             if self.version >= M2Versions.WOD:
-                self.dependencies.lod_skins = ["{}{}.skin".format(raw_path, str(i + 1).zfill(2))  for i in range(2)]
-                self.dependencies.skins = ["{}{}.skin".format(raw_path, str(i).zfill(2)) for i in range(self.root.num_skin_profiles)]
+                self.dependencies.lod_skins = ["{}{}.skin".format(
+                    self.raw_path, str(i + 1).zfill(2))  for i in range(2)]
+                self.dependencies.skins = ["{}{}.skin".format(
+                    self.raw_path, str(i).zfill(2)) for i in range(self.root.num_skin_profiles)]
 
         # find textures
         for i, texture in enumerate(self.root.textures):
@@ -124,11 +177,9 @@ class M2File:
                 self.dependencies.textures.append(texture.filename.value)
 
             elif i < len(self.txid.texture_ids) and self.txid.texture_ids[i] > 0:
-                self.dependencies.textures.append(self.txid.texture_ids[i])
 
-        # find .skel
-        if self.skid:
-            self.dependencies.skel.append(self.skid.skeleton_file_id)
+                texture.txid = self.txid.texture_ids[i]
+                self.dependencies.textures.append(texture.txid)
 
         # find bones
         if self.bfid:
@@ -139,12 +190,12 @@ class M2File:
             for sequence in self.root.sequences:
 
                 if sequence.id == 808:
-                    self.dependencies.bones.append("{}_{}.bone".format(raw_path, str(sequence.variation_index).zfill(2)))
+                    self.dependencies.bones.append("{}_{}.bone".format(
+                        self.raw_path, str(sequence.variation_index).zfill(2)))
 
         # TODO: find phys
 
         # find anims
-
         anim_paths_map = {}
         for i, sequence in enumerate(self.root.sequences):
             # handle alias animations
@@ -155,9 +206,9 @@ class M2File:
                 a_idx = real_anim.alias_next
                 real_anim = self.root.sequences[real_anim.alias_next]
 
-            if not sequence.flags & 0x20:
+            if not sequence.flags & 0x130:
                 anim_paths_map[real_anim.id, sequence.variation_index] \
-                    = "{}{}-{}.anim".format(os.path.splitext(self.filepath)[0]
+                    = "{}{}-{}.anim".format(self.raw_path if not self.skels else self.skels[0].root_basepath
                                             , str(real_anim.id).zfill(4)
                                             , str(sequence.variation_index).zfill(2))
 
@@ -174,15 +225,31 @@ class M2File:
 
         return self.dependencies
 
+    @staticmethod
+    def process_anim_file(raw_data : BytesIO, tracks: List[M2Track], real_seq_index: int):
+
+        for track in tracks:
+            if track.global_sequence < 0 and track.timestamps.n_elements > real_seq_index:
+                frames = track.timestamps[real_seq_index]
+                values = track.values[real_seq_index]
+
+                timestamps = track.timestamps[real_seq_index]
+                timestamps.ofs_elements = frames.ofs_elements
+                timestamps.n_elements = frames.n_elements
+                timestamps.read(raw_data, ignore_header=True)
+
+                frame_values = track.values[real_seq_index]
+                frame_values.ofs_elements = values.ofs_elements
+                frame_values.n_elements = values.n_elements
+                frame_values.read(raw_data, ignore_header=True)
 
     def read_additional_files(self):
 
         if self.version >= M2Versions.WOTLK:
             # load skins
-            raw_path = os.path.splitext(self.filepath)[0]
 
             for i in range(self.root.num_skin_profiles):
-                with open("{}{}.skin".format(raw_path, str(i).zfill(2)), 'rb') as skin_file:
+                with open("{}{}.skin".format(self.raw_path, str(i).zfill(2)), 'rb') as skin_file:
                     self.skins.append(M2SkinProfile().read(skin_file))
 
             # load anim files
@@ -197,85 +264,42 @@ class M2File:
                     real_anim = self.root.sequences[real_anim.alias_next]
 
                 if not sequence.flags & 0x130:
-                    anim_path = "{}{}-{}.anim".format(os.path.splitext(self.filepath)[0],
+
+                    anim_path = "{}{}-{}.anim".format(self.raw_path if not self.skels else self.skels[0].root_basepath,
                                                       str(real_anim.id).zfill(4),
                                                       str(sequence.variation_index).zfill(2))
 
-                    # TODO: implement game-data loading
-                    anim_file = open(anim_path, 'rb')
+                    anim_file = AnimFile(split=bool(self.skels)
+                                         , old=bool(self.skels)
+                                               or self.root.global_flags & M2GlobalFlags.ChunkedAnimFiles)
 
-                    for track in track_cache.m2_tracks:
-                        if track.global_sequence < 0 and track.timestamps.n_elements > a_idx:
-                            frames = track.timestamps[a_idx]
-                            values = track.values[a_idx]
+                    with open(anim_path, 'rb') as f:
+                        anim_file.read(f)
 
-                            timestamps = track.timestamps[i]
-                            timestamps.ofs_elements = frames.ofs_elements
-                            timestamps.n_elements = frames.n_elements
-                            timestamps.read(anim_file, ignore_header=True)
+                    if anim_file.old or not anim_file.split:
 
-                            frame_values = track.values[i]
-                            frame_values.ofs_elements = values.ofs_elements
-                            frame_values.n_elements = values.n_elements
-                            frame_values.read(anim_file, ignore_header=True)
+                        if anim_file.old:
+                            raw_data = anim_file.raw_data
+                        else:
+                            raw_data = anim_file.afm2.raw_data
+
+                        for creator, tracks in track_cache.m2_tracks.items():
+
+                            M2File.process_anim_file(raw_data, tracks, a_idx)
+
+                    else:
+
+                        for creator, tracks in track_cache.m2_tracks.items():
+
+                            if creator is M2CompBone:
+                                M2File.process_anim_file(anim_file.afsb.raw_data, tracks, a_idx)
+                            elif creator is M2Attachment:
+                                M2File.process_anim_file(anim_file.afsa.raw_data, tracks, a_idx)
+                            else:
+                                M2File.process_anim_file(anim_file.afm2.raw_data, tracks, a_idx)
 
         else:
             self.skins = self.root.skin_profiles
-
-
-
-
-
-        '''
-
-                # parse additional files
-                if self.version >= M2Versions.WOTLK:
-                    # load skins
-                    raw_path = os.path.splitext(self.filepath)[0]
-
-                    for i in range(self.root.num_skin_profiles):
-                        with open("{}{}.skin".format(raw_path, str(i).zfill(2)), 'rb') as skin_file:
-                            self.skins.append(M2SkinProfile().read(skin_file))
-
-                    track_cache = M2TrackCache()
-
-                    # load anim files
-                    for i, sequence in enumerate(self.root.sequences):
-                        # handle alias animations
-                        real_anim = sequence
-                        a_idx = i
-
-                        while real_anim.flags & 0x40 and real_anim.alias_next != a_idx:
-                            a_idx = real_anim.alias_next
-                            real_anim = self.root.sequences[real_anim.alias_next]
-
-                        if not sequence.flags & 0x130:
-                            anim_path = "{}{}-{}.anim".format(os.path.splitext(self.filepath)[0],
-                                                              str(real_anim.id).zfill(4),
-                                                              str(sequence.variation_index).zfill(2))
-
-                            # TODO: implement game-data loading
-                            anim_file = open(anim_path, 'rb')
-
-                            for track in track_cache.m2_tracks:
-                                if track.global_sequence < 0 and track.timestamps.n_elements > a_idx:
-                                    frames = track.timestamps[a_idx]
-                                    values = track.values[a_idx]
-
-                                    timestamps = track.timestamps[i]
-                                    timestamps.ofs_elements = frames.ofs_elements
-                                    timestamps.n_elements = frames.n_elements
-                                    timestamps.read(anim_file, ignore_header=True)
-
-                                    frame_values = track.values[i]
-                                    frame_values.ofs_elements = values.ofs_elements
-                                    frame_values.n_elements = values.n_elements
-                                    frame_values.read(anim_file, ignore_header=True)
-                else:
-                    self.skins = self.root.skin_profiles
-                    
-                    
-        '''
 
     def write(self, filepath):
         with open(filepath, 'wb') as f:
