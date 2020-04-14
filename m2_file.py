@@ -177,6 +177,53 @@ class M2File:
 
     def read_additional_files(self):
 
+        if self.version >= M2Versions.WOTLK:
+            # load skins
+            raw_path = os.path.splitext(self.filepath)[0]
+
+            for i in range(self.root.num_skin_profiles):
+                with open("{}{}.skin".format(raw_path, str(i).zfill(2)), 'rb') as skin_file:
+                    self.skins.append(M2SkinProfile().read(skin_file))
+
+            # load anim files
+            track_cache = M2TrackCache()
+            for i, sequence in enumerate(self.root.sequences):
+                # handle alias animations
+                real_anim = sequence
+                a_idx = i
+
+                while real_anim.flags & 0x40 and real_anim.alias_next != a_idx:
+                    a_idx = real_anim.alias_next
+                    real_anim = self.root.sequences[real_anim.alias_next]
+
+                if not sequence.flags & 0x130:
+                    anim_path = "{}{}-{}.anim".format(os.path.splitext(self.filepath)[0],
+                                                      str(real_anim.id).zfill(4),
+                                                      str(sequence.variation_index).zfill(2))
+
+                    # TODO: implement game-data loading
+                    anim_file = open(anim_path, 'rb')
+
+                    for track in track_cache.m2_tracks:
+                        if track.global_sequence < 0 and track.timestamps.n_elements > a_idx:
+                            frames = track.timestamps[a_idx]
+                            values = track.values[a_idx]
+
+                            timestamps = track.timestamps[i]
+                            timestamps.ofs_elements = frames.ofs_elements
+                            timestamps.n_elements = frames.n_elements
+                            timestamps.read(anim_file, ignore_header=True)
+
+                            frame_values = track.values[i]
+                            frame_values.ofs_elements = values.ofs_elements
+                            frame_values.n_elements = values.n_elements
+                            frame_values.read(anim_file, ignore_header=True)
+
+        else:
+            self.skins = self.root.skin_profiles
+
+
+
 
 
         '''
