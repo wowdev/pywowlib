@@ -88,7 +88,7 @@ class M2SkinTextureUnit:
     def read(self, f):
         self.flags = uint8.read(f)
         self.priority_plane = int8.read(f)
-        self.shader_id = uint16.read(f)
+        self.shader_id = int16.read(f)
         self.skin_section_index = uint16.read(f)
         self.geoset_index = uint16.read(f)
         self.color_index = int16.read(f)
@@ -105,7 +105,7 @@ class M2SkinTextureUnit:
     def write(self, f):
         uint8.write(f, self.flags)
         int8.write(f, self.priority_plane)
-        uint16.write(f, self.shader_id)
+        int16.write(f, self.shader_id)
         uint16.write(f, self.skin_section_index)
         uint16.write(f, self.geoset_index)
         int16.write(f, self.color_index)

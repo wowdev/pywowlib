@@ -1,3 +1,5 @@
+from collections import OrderedDict
+
 from .wow_common_types import CAaBox, CRange, M2Array, M2Versions, fixed16, fixed_point, MemoryManager, M2VersionsManager
 from ..io_utils.types import *
 from .skin_format import M2SkinProfile
@@ -10,13 +12,13 @@ __reload_order_index__ = 2
 @singleton
 class M2TrackCache:
     def __init__(self):
-        self.m2_tracks = {}
+        self.m2_tracks = OrderedDict()
 
     def add_track(self, track, creator):
         self.m2_tracks.setdefault(creator, []).append(track)
 
     def purge(self):
-        self.m2_tracks = {}
+        self.m2_tracks.clear()
 
 
 #############################################################
@@ -181,6 +183,7 @@ class M2Track(M2TrackBase, metaclass=Template):
         self.values = M2Array(type_) if self.m2_version < M2Versions.WOTLK else M2Array(M2Array << type_)
 
     def read(self, f):
+
         super(M2Track, self).read(f)
         self.values.read(f)
 

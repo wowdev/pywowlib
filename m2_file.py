@@ -229,18 +229,13 @@ class M2File:
     def process_anim_file(raw_data : BytesIO, tracks: List[M2Track], real_seq_index: int):
 
         for track in tracks:
+
             if track.global_sequence < 0 and track.timestamps.n_elements > real_seq_index:
-                frames = track.timestamps[real_seq_index]
-                values = track.values[real_seq_index]
 
                 timestamps = track.timestamps[real_seq_index]
-                timestamps.ofs_elements = frames.ofs_elements
-                timestamps.n_elements = frames.n_elements
                 timestamps.read(raw_data, ignore_header=True)
 
                 frame_values = track.values[real_seq_index]
-                frame_values.ofs_elements = values.ofs_elements
-                frame_values.n_elements = values.n_elements
                 frame_values.read(raw_data, ignore_header=True)
 
     def read_additional_files(self):
@@ -270,8 +265,8 @@ class M2File:
                                                       str(sequence.variation_index).zfill(2))
 
                     anim_file = AnimFile(split=bool(self.skels)
-                                         , old=bool(self.skels)
-                                               or self.root.global_flags & M2GlobalFlags.ChunkedAnimFiles)
+                                         , old=not bool(self.skels)
+                                               and not self.root.global_flags & M2GlobalFlags.ChunkedAnimFiles)
 
                     with open(anim_path, 'rb') as f:
                         anim_file.read(f)
@@ -280,14 +275,18 @@ class M2File:
 
                         if anim_file.old:
                             raw_data = anim_file.raw_data
+                            print('old')
                         else:
                             raw_data = anim_file.afm2.raw_data
+                            print('chunked')
 
                         for creator, tracks in track_cache.m2_tracks.items():
 
                             M2File.process_anim_file(raw_data, tracks, a_idx)
 
                     else:
+
+                        print('chunked split')
 
                         for creator, tracks in track_cache.m2_tracks.items():
 

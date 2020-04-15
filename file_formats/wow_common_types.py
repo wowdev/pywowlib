@@ -215,7 +215,10 @@ class M2Array(metaclass=Template):
         self.type = type_
         self.values = []
 
+        self.is_read = False
+
     def read(self, f, ignore_header=False):
+
         if not ignore_header:
             self.n_elements = uint32.read(f)
             self.ofs_elements = uint32.read(f)
@@ -333,7 +336,9 @@ class M2RawChunk(M2ContentChunk):
 
     def read(self, f):
         super().read(f)
+
         self.raw_data.write(f.read(self.size))
+        self.raw_data.seek(0)
 
         return self
 

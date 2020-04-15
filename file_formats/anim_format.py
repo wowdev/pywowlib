@@ -34,6 +34,7 @@ class AnimFile:
 
         if self.old:
             self.raw_data.write(f.read())
+            self.raw_data.seek(0)
 
         else:
 
