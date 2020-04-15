@@ -153,6 +153,9 @@ class M2SkinMeshPartID(Enum):
 
 
 class M2KeyBones(Enum):
+
+    # official IDs (as of wotlk)
+
     ArmL = 0
     ArmR = 1
     ShoulderL = 2
@@ -188,6 +191,53 @@ class M2KeyBones(Enum):
     Wheel6 = 32
     Wheel7 = 33
     Wheel8 = 34
+
+    # Alastor's guessed IDs
+    Unk_35 = 35
+    CapeParent = 36
+    CapeChild1 = 37
+    CapeChild2 = 38
+    CapeChild3 = 39
+    CapeChild4 = 40
+    Unk_41 = 41
+    Unk_42 = 42
+    TabardParent = 43
+    TabardChild1 = 44
+    TabardChild2 = 45
+    Unk_46 = 46
+    Unk_47 = 47
+    UpperBodyParent = 48
+    NeckParent = 49
+    NeckChild1 = 50
+    LowerBodyParent = 51
+    Belly = 52
+    UpperBodyChild1 = 53
+    ModelOrigin = 54
+    LegR = 55
+    LegL = 56
+    KneeR = 57
+    KneeL = 58
+    FeetL = 59
+    FeetR = 60
+    ElbowR = 61
+    ElbowL = 62
+    Unk_ElbowL_Child = 63
+    WristR = 64
+    WristL = 65
+    Unk_WristR_Child1 = 66
+    Unk_WristL_Child1 = 67
+    Unk_WristL_Child2 = 68
+    Unk_WristR_Child2 = 69
+    KneeR_UpperRig = 70
+    KneeL_UpperRig = 71
+    Unk_ArmR = 72
+    Unk_ArmL = 73
+    ElbowR_UpperRig = 74
+    ElbowL_UpperRig = 75
+    ForearmR = 76
+    ForearmL = 77
+    WristR_UpperRig = 78
+    WristL_UpperRig = 79
 
     @classmethod
     def get_bone_name(cls, keybone_id, idx):

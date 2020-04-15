@@ -275,18 +275,14 @@ class M2File:
 
                         if anim_file.old:
                             raw_data = anim_file.raw_data
-                            print('old')
                         else:
                             raw_data = anim_file.afm2.raw_data
-                            print('chunked')
 
                         for creator, tracks in track_cache.m2_tracks.items():
 
                             M2File.process_anim_file(raw_data, tracks, a_idx)
 
                     else:
-
-                        print('chunked split')
 
                         for creator, tracks in track_cache.m2_tracks.items():
 
