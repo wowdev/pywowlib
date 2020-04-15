@@ -176,7 +176,7 @@ class M2File:
             if texture.filename.value:
                 self.dependencies.textures.append(texture.filename.value)
 
-            elif i < len(self.txid.texture_ids) and self.txid.texture_ids[i] > 0:
+            elif self.txid and i < len(self.txid.texture_ids) and self.txid.texture_ids[i] > 0:
 
                 texture.txid = self.txid.texture_ids[i]
                 self.dependencies.textures.append(texture.txid)
