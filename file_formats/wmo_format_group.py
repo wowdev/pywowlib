@@ -164,7 +164,7 @@ class Batch:
         self.material_id = 0
 
     def read(self, f):
-        self.bounding_box = int16.read(f, 6)
+        self.bounding_box = unt16.read(f, 6)
         self.start_triangle = uint32.read(f)
         self.n_triangles = uint16.read(f)
         self.start_vertex = uint16.read(f)
@@ -175,7 +175,7 @@ class Batch:
         return self
 
     def write(self, f):
-        int16.write(f, self.bounding_box, 6)
+        uint16.write(f, self.bounding_box, 6)
         uint32.write(f, self.start_triangle)
         uint16.write(f, self.n_triangles)
         uint16.write(f, self.start_vertex)
