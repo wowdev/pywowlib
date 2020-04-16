@@ -17,6 +17,13 @@ class M2VersionsManager:
         self.m2_version = version
 
 
+@singleton
+class M2ExternalSequenceCache:
+    def __init__(self, m2_header):
+        self.external_sequences = {i: sequence for i, sequence in enumerate(m2_header.sequences)
+                                   if not sequence.flags & 0x130}
+
+
 class M2Versions:
     CLASSIC = 256
     TBC = 263
@@ -217,16 +224,20 @@ class M2Array(metaclass=Template):
 
         self.is_read = False
 
-    def read(self, f, ignore_header=False):
+    def read(self, f, ignore_header=False, ignore_data=False, is_anim_data=False):
 
         if not ignore_header:
             self.n_elements = uint32.read(f)
             self.ofs_elements = uint32.read(f)
 
+        if ignore_data:
+            return self
+
         pos = f.tell()
 
-        try:
-            f.seek(self.ofs_elements)
+        f.seek(self.ofs_elements)
+
+        if not is_anim_data:
 
             type_t = type(self.type)
 
@@ -234,8 +245,10 @@ class M2Array(metaclass=Template):
                 self.values = [self.type.read(f) for _ in range(self.n_elements)]
             else:
                 self.values = [self.type().read(f) for _ in range(self.n_elements)]
-        except EOFError:
-            self.values = [self.type()]
+
+        else:
+            self.values = [self.type().read(f, ignore_data=bool(M2ExternalSequenceCache().external_sequences.get(i)))
+                           for i in range(self.n_elements)]
 
         f.seek(pos)
 

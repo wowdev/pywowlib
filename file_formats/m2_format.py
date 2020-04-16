@@ -1,6 +1,7 @@
 from collections import OrderedDict
 
-from .wow_common_types import CAaBox, CRange, M2Array, M2Versions, fixed16, fixed_point, MemoryManager, M2VersionsManager
+from .wow_common_types import CAaBox, CRange, M2Array, M2Versions, fixed16, fixed_point, MemoryManager, \
+    M2VersionsManager, M2ExternalSequenceCache
 from ..io_utils.types import *
 from .skin_format import M2SkinProfile
 from ..enums.m2_enums import M2KeyBones, M2GlobalFlags, M2AttachmentTypes, M2EventTokens
@@ -8,22 +9,6 @@ from ..enums.m2_enums import M2KeyBones, M2GlobalFlags, M2AttachmentTypes, M2Eve
 
 __reload_order_index__ = 2
 
-
-@singleton
-class M2TrackCache:
-    def __init__(self):
-        self.m2_tracks = OrderedDict()
-
-    def add_track(self, track, creator):
-        self.m2_tracks.setdefault(creator, []).append(track)
-
-    def purge(self):
-        self.m2_tracks.clear()
-
-
-#############################################################
-######                 M2 Common Types                 ######
-#############################################################
 
 class M2Bounds:
 
@@ -146,7 +131,7 @@ class M2TrackBase:
 
         if self.m2_version < M2Versions.WOTLK:
             self.interpolation_ranges.read(f)
-        self.timestamps.read(f)
+        self.timestamps.read(f, is_anim_data=True)
 
         return self
 
@@ -185,7 +170,7 @@ class M2Track(M2TrackBase, metaclass=Template):
     def read(self, f):
 
         super(M2Track, self).read(f)
-        self.values.read(f)
+        self.values.read(f, is_anim_data=True)
 
         M2TrackCache().add_track(self, self.creator)
 
@@ -834,8 +819,8 @@ class M2Particle:
         self.enabled_in = M2Track(uint8, M2Particle)            # (boolean) Appears to be used sparely now, probably there's a flag that links particles to animation sets where they are enabled.
 
         if self.m2_version >= M2Versions.CATA:
-            self.multi_texture_param0 = Array(Vector_2fp_6_9)
-            self.multi_texture_param1 = Array(Vector_2fp_6_9)
+            self.multi_texture_param0 = Array(Vector_2fp_6_9, 2)
+            self.multi_texture_param1 = Array(Vector_2fp_6_9, 2)
 
     def read(self, f):
         self.particle_id = uint32.read(f)
@@ -1291,6 +1276,8 @@ class M2Header:
         if self.m2_version <= M2Versions.TBC:
             self.playable_animation_lookup.read(f)
 
+        M2ExternalSequenceCache(self)
+
         self.bones.read(f)
 
         self.key_bone_lookup.read(f)
@@ -1434,6 +1421,24 @@ class M2Header:
             self.texture_combiner_combos.write(f)
 
         return self
+
+
+#############################################################
+######               M2 Parsing Helpers                ######
+#############################################################
+
+@singleton
+class M2TrackCache:
+    def __init__(self):
+        self.m2_tracks = OrderedDict()
+
+    def add_track(self, track, creator):
+        self.m2_tracks.setdefault(creator, []).append(track)
+
+    def purge(self):
+        self.m2_tracks.clear()
+
+
 
 
 
