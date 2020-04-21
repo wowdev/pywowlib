@@ -1,5 +1,6 @@
 import os
 import sys
+import struct
 
 from io import BytesIO
 from .wow_common_types import M2ContentChunk
@@ -13,7 +14,7 @@ class SKL1(M2ContentChunk):
     def __init__(self):
         super().__init__()
         self.unk1 = 0x100
-        self.name = M2Array(char)
+        self.name = M2String()
         self.unk2 = []
 
     def read(self, f):
@@ -24,6 +25,8 @@ class SKL1(M2ContentChunk):
             self.unk1 = uint32.read(f2)
             self.name.read(f2)
             self.unk2 = [uint8.read(f2) for _ in range(4)]
+
+        return self
 
     def write(self, f):
         self.size = len(self.unk2) + self.unk1 * 4 + self.name.n_elements * char.size() + self._size
@@ -40,6 +43,8 @@ class SKL1(M2ContentChunk):
             f2.seek(0)
 
         f.write(f2.read())
+
+        return self
 
 
 class SKA1(M2ContentChunk):
@@ -58,6 +63,8 @@ class SKA1(M2ContentChunk):
             self.attachments.read(f2)
             self.attachment_lookup_table.read(f2)
 
+        return self
+
     def write(self, f):
         self.size = self.attachments.n_elements * M2Attachment.size() \
                         + self.attachment_lookup_table.n_elements * 2 + self._size
@@ -70,6 +77,8 @@ class SKA1(M2ContentChunk):
             f2.seek(0)
 
         f.write(f2.read())
+
+        return self
 
 
 class SKB1(M2ContentChunk):
@@ -88,6 +97,8 @@ class SKB1(M2ContentChunk):
             self.bones.read(f2)
             self.key_bone_lookup.read(f2)
 
+        return self
+
     def write(self, f):
         self.size = self.bones.n_elements * M2Attachment.size() + self.key_bone_lookup.n_elements * 2 + self._size
         super().write(f)
@@ -99,6 +110,8 @@ class SKB1(M2ContentChunk):
             f2.seek(0)
 
         f.write(f2.read())
+
+        return self
 
 
 class SKS1(M2ContentChunk):
@@ -122,6 +135,8 @@ class SKS1(M2ContentChunk):
 
             self.unk = [uint8.read(f2) for _ in range(8)]
 
+        return self
+
     def write(self, f):
         self.size = len(self.unk) + self.global_loops.n_elements * 4 + self.sequences.n_elements * \
                     M2Sequence.size() + self.sequence_lookups.n_elements * 2 + self._size
@@ -138,6 +153,8 @@ class SKS1(M2ContentChunk):
             f2.seek(0)
 
         f.write(f2.read())
+
+        return self
 
 
 class SKPD(M2ContentChunk):
@@ -156,6 +173,8 @@ class SKPD(M2ContentChunk):
         self.unk1 = [uint8.read(f) for _ in range(8)]
         self.unk2 = [uint8.read(f) for _ in range(4)]
 
+        return self
+
     def write(self, f):
         self.size = len(self.unk1) + len(self.unk2) + self.parent_skel_file_id * 4
         super().write(f)
@@ -165,6 +184,8 @@ class SKPD(M2ContentChunk):
 
         for val in self.unk2:
             uint8.write(f, val)
+
+        return self
 
 
 class SkelFile:
@@ -179,21 +200,39 @@ class SkelFile:
         self.skpd, self.afid, self.bfid = (SKPD(), AFID(), BFID()) if not shared else (None, None, None)
 
     def read(self, f):
-        magic = f.read(4).decode('utf-8')
 
-        chunk = getattr(sys.modules[self.__class__.__module__], magic)
+        while True:
 
-        if not chunk:
-            raise Exception('\n\nEncountered unknown chunk \"{}\"'.format(magic))
+            try:
 
-        magic_lower = magic.lower()
+                magic = f.read(4).decode('utf-8')
 
-        local_chunk = getattr(self, magic_lower)
+            except EOFError:
+                break
 
-        if not local_chunk:
-            setattr(self, magic_lower, chunk().read(f))
-        else:
-            local_chunk.read(f)
+            except struct.error:
+                break
+
+            except UnicodeDecodeError:
+                print('\nAttempted reading non-chunked data.')
+                break
+
+            if not magic:
+                break
+
+            chunk = getattr(sys.modules[self.__class__.__module__], magic)
+
+            if not chunk:
+                raise Exception('\n\nEncountered unknown chunk \"{}\"'.format(magic))
+
+            magic_lower = magic.lower()
+
+            local_chunk = getattr(self, magic_lower)
+
+            if not local_chunk:
+                setattr(self, magic_lower, chunk().read(f))
+            else:
+                local_chunk.read(f)
 
         return self
 

@@ -1,4 +1,4 @@
-import sys
+import struct
 
 from io import BytesIO
 
@@ -38,21 +38,33 @@ class AnimFile:
 
         else:
 
-            magic = f.read(4).decode('utf-8')
+            while True:
 
-            chunk = getattr(sys.modules[self.__class__.__module__], magic)
+                try:
 
-            if not chunk:
-                raise Exception('\n\nEncountered unknown chunk \"{}\"'.format(magic))
+                    magic = f.read(4).decode('utf-8')
 
-            magic_lower = magic.lower()
+                except EOFError:
+                    break
 
-            local_chunk = getattr(self, magic_lower)
+                except struct.error:
+                    break
 
-            if not local_chunk:
-                setattr(self, magic_lower, chunk().read(f))
-            else:
-                local_chunk.read(f)
+                except UnicodeDecodeError:
+                    print('\nAttempted reading non-chunked data.')
+                    break
+
+                if not magic:
+                    break
+
+                magic_lower = magic.lower()
+
+                local_chunk = getattr(self, magic_lower)
+
+                if not local_chunk:
+                    setattr(self, magic_lower, chunk().read(f))
+                else:
+                    local_chunk.read(f)
 
         return self
 

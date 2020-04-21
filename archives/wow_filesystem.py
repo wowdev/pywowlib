@@ -51,12 +51,16 @@ class WoWFileData:
 
         return None, None
 
-    def read_file(self, identifier: Union[str, int], local_dir: str = ""):
+    def read_file(self, identifier: Union[str, int], local_dir: str = "", no_exc: bool = False) -> bytes:
         """ Read the latest version of the file from loaded archives and directories. """
 
         if WoWVersionManager().client_version < WoWVersions.WOD:
 
             if local_dir:
+                local_path = os.path.join(local_dir, os.path.basename(identifier))
+
+                if os.path.isfile(local_path):
+                    return open(local_path, 'rb').read()
 
                 local_path = os.path.join(local_dir, identifier)
                 if os.path.isfile(local_path):
@@ -79,7 +83,13 @@ class WoWFileData:
                 filepath = self.guess_filepath(identifier) if isinstance(identifier, int) else identifier
 
                 if filepath:
+                    local_path = os.path.join(local_dir, os.path.basename(filepath))
+
+                    if os.path.isfile(local_path):
+                        return open(local_path, 'rb').read()
+
                     local_path = os.path.join(local_dir, filepath)
+
                     if os.path.isfile(local_path):
                         return open(local_path, 'rb').read()
 
@@ -97,20 +107,26 @@ class WoWFileData:
                     return file
 
                 else:
+
                     return open(os.path.join(storage, identifier), "rb").read()
 
-        raise KeyError("\nRequested file \"{}\" was not found in WoW filesystem.".format(identifier))
+        error_msg = "Requested file \"{}\" was not found in WoW filesystem.".format(identifier)
+
+        if no_exc:
+            print(error_msg)
+        else:
+            raise KeyError(error_msg)
 
     def extract_file(  self
-                     , dir: str
+                     , dir_path: str
                      , identifier: Union[str, int]
                      , host_file: str = ""
                      , file_format: str = ""
-                     , local_dir: str = "") -> str:
+                     , local_dir: str = ""
+                     , no_exc: bool = False) -> str:
         """ Extract the latest version of the file from loaded archives to provided working directory. """
 
-        file = self.read_file(identifier, local_dir)
-        filepath = None
+        file = self.read_file(identifier, local_dir, no_exc)
 
         if isinstance(identifier, str):
             filepath = identifier
@@ -118,10 +134,19 @@ class WoWFileData:
             if os.name != 'nt':
                 filepath = filepath.replace('\\', '/')
 
-            abs_path = os.path.join(dir, filepath)
+        else:
+            filepath = self.guess_filepath(identifier, file_format, host_file)
+
+        if not file:
+            return filepath
+
+        wow_file_dir = os.path.dirname(filepath)
+
+        if wow_file_dir in dir_path:
+            abs_path = os.path.join(dir_path, os.path.basename(filepath))
 
         else:
-            abs_path = os.path.join(dir, self.guess_filepath(identifier, file_format, host_file))
+            abs_path = os.path.join(dir_path, filepath)
 
         local_dir = os.path.dirname(abs_path)
 
@@ -135,18 +160,20 @@ class WoWFileData:
         return filepath
 
     def extract_files(  self
-                      , dir: str
+                      , dir_path: str
                       , identifiers: List[Union[str, int]]
                       , host_file: str = ""
                       , file_format: str = ""
-                      , local_dir: str = "") -> List[str]:
+                      , local_dir: str = ""
+                      , no_exc: bool = False) -> List[str]:
 
         """ Extract the latest version of the files from loaded archives to provided working directory. """
 
-        return [self.extract_file(dir, identifier, host_file, file_format, local_dir) for identifier in identifiers]
+        return [self.extract_file(dir_path, identifier, host_file, file_format, local_dir, no_exc)
+                for identifier in identifiers]
 
     def extract_textures_as_png(  self
-                                , dir: str
+                                , dir_path: str
                                 , identifiers
                                 , host_file: str = ""
                                 , local_dir: str = "") -> Dict[Union[int, str], str]:
@@ -169,9 +196,23 @@ class WoWFileData:
             if os.name != 'nt':
                 filename_ = filepath.replace('\\', '/')
 
-                abs_path = os.path.join(dir, filename_)
+                wow_file_dir = os.path.dirname(filename_)
+
+                if wow_file_dir in dir_path:
+                    abs_path = os.path.join(dir_path, os.path.basename(filename_))
+
+                else:
+                    abs_path = os.path.join(dir_path, filename_)
+
             else:
-                abs_path = os.path.join(dir, filepath)
+
+                wow_file_dir = os.path.dirname(filepath)
+
+                if wow_file_dir in dir_path:
+                    abs_path = os.path.join(dir_path, os.path.basename(filepath))
+
+                else:
+                    abs_path = os.path.join(dir_path, filepath)
 
             if not os.path.exists(os.path.splitext(abs_path)[0] + ".png"):
                 try:
@@ -179,7 +220,7 @@ class WoWFileData:
                 except KeyError as e:
                     print(e)
         if pairs:
-            BLP2PNG().convert(pairs, dir.encode('utf-8'))
+            BLP2PNG().convert(pairs, dir_path.encode('utf-8'))
 
         return filepaths
 

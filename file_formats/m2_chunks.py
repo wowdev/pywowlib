@@ -18,10 +18,14 @@ class PFID(M2ContentChunk):
         super().read(f)
         self.phys_file_id = uint32.read(f)
 
+        return self
+
     def write(self, f):
         self.size = 4
         super().write(f)
         uint32.write(f, self.phys_file_id)
+
+        return self
 
 
 class SFID(M2ContentChunk):
@@ -44,6 +48,8 @@ class SFID(M2ContentChunk):
         for i in range((self.size - self.n_views * 4) // 4):
             self.lod_skin_file_data_ids.append(uint32.read(f))
 
+        return self
+
     def write(self, f):
         self.size = len(self.skin_file_data_ids) * 4 + len(self.lod_skin_file_data_ids) * 4
         super().write(f)
@@ -53,6 +59,8 @@ class SFID(M2ContentChunk):
 
         for val in self.lod_skin_file_data_ids:
             uint32.write(f, val)
+
+        return self
 
 
 class AnimFileID:
@@ -179,10 +187,14 @@ class EXP2(M2ContentChunk):
         super().read(f)
         self.content.read(f)
 
+        return self
+
     def write(self, f):
         self.size = M2Array.size()
         super().write(f)
         self.content.write(f)
+
+        return self
 
 
 class PABC(M2ContentChunk):
@@ -194,10 +206,14 @@ class PABC(M2ContentChunk):
         super().read(f)
         self.content.read(f)
 
+        return self
+
     def write(self, f):
         self.size = M2Array.size()
         super().write(f)
         self.content.write(f)
+
+        return self
 
 
 class PADC(M2ContentChunk):
@@ -209,10 +225,14 @@ class PADC(M2ContentChunk):
         super().read(f)
         self.content.read(f)
 
+        return self
+
     def write(self, f):
         self.size = M2Array.size()
         super().write(f)
         self.content.write(f)
+
+        return self
 
 
 class PSBC(M2ContentChunk):
@@ -224,10 +244,14 @@ class PSBC(M2ContentChunk):
         super().read(f)
         self.content.read(f)
 
+        return self
+
     def write(self, f):
         self.size = M2Array.size()
         super().write(f)
         self.content.write(f)
+
+        return self
 
 
 class PEDC(M2ContentChunk):
@@ -239,10 +263,14 @@ class PEDC(M2ContentChunk):
         super().read(f)
         self.content.read(f)
 
+        return self
+
     def write(self, f):
         self.size = M2Array.size()
         super().write(f)
         self.content.write(f)
+
+        return self
 
 
 class SKID(M2ContentChunk):
@@ -254,10 +282,14 @@ class SKID(M2ContentChunk):
         super().read(f)
         self.skeleton_file_id = uint32.read(f)
 
+        return self
+
     def write(self, f):
         self.size = uint32.size()
         super().write(f)
         uint32.write(f, self.skeleton_file_id)
+
+        return self
 
 
 #############################################################
@@ -301,6 +333,8 @@ class LDV1(M2ContentChunk):
         self.particle_bone_lod = list(uint8.read(f, 4))
         self.unk4 = uint32.read(f)
 
+        return self
+
     def write(self, f):
         self.size = 16
         super().write(f)
@@ -308,6 +342,9 @@ class LDV1(M2ContentChunk):
         uint16.write(f, self.lod_count)
         float32.write(f, self.unk2_f)
         uint32.write(f, self.unk4)
+
+        return self
+
 
 
 class PGD1Entry:
@@ -336,10 +373,14 @@ class PGD1(M2ContentChunk):
         super().read(f)
         self.p_g_d_v1.read(f)
 
+        return self
+
     def write(self, f):
         self.size = self.p_g_d_v1.n_elements * PGD1Entry.size()
         super().write(f)
         self.p_g_d_v1.write(f)
+
+        return self
 
 
 #############################################################

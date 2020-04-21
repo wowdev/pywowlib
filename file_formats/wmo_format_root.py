@@ -582,7 +582,6 @@ class DoodadDefinition:
 
         return self
 
-
     @staticmethod
     def size():
         return 40

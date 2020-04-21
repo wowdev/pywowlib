@@ -432,7 +432,7 @@ class M2CompBone:
         # union
         self.u_dist_to_furth_desc = 0
         self.u_zratio_of_chain = 0
-        # uint32 | boneNameCRC",                                                                                  # these are for debugging only. their bone names match those in key bone lookup.
+        self.bone_name_crc = 0                                                                                 # these are for debugging only. their bone names match those in key bone lookup.
         # unionend
 
         self.translation = M2Track(vec3D, M2CompBone)
@@ -452,13 +452,16 @@ class M2CompBone:
         self.flags = uint32.read(f)
         self.parent_bone = int16.read(f)
         self.submesh_id = uint16.read(f)
-        self.u_dist_to_furth_desc = uint16.read(f)
-        self.u_zratio_of_chain = uint16.read(f)
+        self.bone_name_crc = uint32.read(f)
 
         self.translation.read(f)
         self.rotation.read(f)
         self.scale.read(f)
         self.pivot = vec3D.read(f)
+
+        if self.key_bone_id >= 35:
+
+            print(self.key_bone_id, ":", hex(self.bone_name_crc), ",")
 
         return self
 
@@ -467,8 +470,7 @@ class M2CompBone:
         uint32.write(f, self.flags)
         int16.write(f, self.parent_bone)
         uint16.write(f, self.submesh_id)
-        uint16.write(f, self.u_dist_to_furth_desc)
-        uint16.write(f, self.u_zratio_of_chain)
+        uint32.write(f, self.bone_name_crc)
         self.translation.write(f)
         self.rotation.write(f)
         self.scale.write(f)
@@ -488,7 +490,7 @@ class M2CompBone:
 
         b_type = bone_type_dict.get(self.index)
 
-        if b_type and not self.key_bone_id < 0:
+        if b_type and self.key_bone_id < 0:
             prefix, i, item = b_type
 
             if prefix in ('AT', 'ET'):
@@ -1215,6 +1217,7 @@ class M2Header:
             self.playable_animation_lookup = M2Array(uint32)
 
         self.bones = M2Array(M2CompBone)
+
         self.key_bone_lookup = M2Array(int16)
         self.vertices = M2Array(M2Vertex)
 
@@ -1326,35 +1329,6 @@ class M2Header:
         if self.m2_version >= M2Versions.WOTLK and self.global_flags & M2GlobalFlags.UseTextureCombinerCombos:
             self.texture_combiner_combos.read(f)
 
-        # assign bone names
-        bone_type_dict = {}
-
-        for i, attachment in enumerate(self.attachments):
-            if attachment.bone > 0:
-                bone_type_dict[attachment.bone] = ('AT', i, M2AttachmentTypes.get_attachment_name(
-                                                    self.attachment_lookup_table[attachment.id], i))
-
-        for i, event in enumerate(self.events):
-            if event.bone > 0:
-                bone_type_dict[event.bone] = ('ET', i, M2EventTokens.get_event_name(event.identifier))
-
-        for i, light in enumerate(self.lights):
-            if light.bone > 0:
-                bone_type_dict[light.bone] = ('LT', i, light)
-
-        for i, ribbon_emitter in enumerate(self.ribbon_emitters):
-            if ribbon_emitter.bone_index > 0:
-                bone_type_dict[ribbon_emitter.bone_index] = ('RB', i, ribbon_emitter)
-
-        for i, particle_emitter in enumerate(self.particle_emitters):
-            if particle_emitter.bone > 0:
-                bone_type_dict[particle_emitter.bone] = ('PT', i, particle_emitter)
-
-        for i, bone in enumerate(self.bones):
-            bone.index = i
-            bone.build_relations(self.bones)
-            bone.load_bone_name(bone_type_dict)
-
         return self
 
     def write(self, f):
@@ -1421,6 +1395,36 @@ class M2Header:
             self.texture_combiner_combos.write(f)
 
         return self
+
+    def assign_bone_names(self):
+        # assign bone names # TODO: rewrite this crap
+        bone_type_dict = {}
+
+        for i, attachment in enumerate(self.attachments):
+            if attachment.bone > 0:
+                bone_type_dict[attachment.bone] = ('AT', i, M2AttachmentTypes.get_attachment_name(
+                    self.attachment_lookup_table[attachment.id], i))
+
+        for i, event in enumerate(self.events):
+            if event.bone > 0:
+                bone_type_dict[event.bone] = ('ET', i, M2EventTokens.get_event_name(event.identifier))
+
+        for i, light in enumerate(self.lights):
+            if light.bone > 0:
+                bone_type_dict[light.bone] = ('LT', i, light)
+
+        for i, ribbon_emitter in enumerate(self.ribbon_emitters):
+            if ribbon_emitter.bone_index > 0:
+                bone_type_dict[ribbon_emitter.bone_index] = ('RB', i, ribbon_emitter)
+
+        for i, particle_emitter in enumerate(self.particle_emitters):
+            if particle_emitter.bone > 0:
+                bone_type_dict[particle_emitter.bone] = ('PT', i, particle_emitter)
+
+        for i, bone in enumerate(self.bones):
+            bone.index = i
+            bone.build_relations(self.bones)
+            bone.load_bone_name(bone_type_dict)
 
 
 #############################################################

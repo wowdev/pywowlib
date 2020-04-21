@@ -150,6 +150,10 @@ class M2File:
                 self.root.sequence_lookup = skel.sks1.sequence_lookups
 
             if skel.afid:
+
+                if not self.afid:
+                    self.afid = AFID()
+
                 self.afid.anim_file_ids = skel.afid.anim_file_ids
 
     def find_model_dependencies(self) -> M2Dependencies:
@@ -268,8 +272,12 @@ class M2File:
                                          , old=not bool(self.skels)
                                                and not self.root.global_flags & M2GlobalFlags.ChunkedAnimFiles)
 
-                    with open(anim_path, 'rb') as f:
-                        anim_file.read(f)
+                    try:
+                        with open(anim_path, 'rb') as f:
+                            anim_file.read(f)
+                    except FileNotFoundError:
+                        print("Warning: .anim file \"{}\" not found.".format(anim_path))
+                        continue
 
                     if anim_file.old or not anim_file.split:
 

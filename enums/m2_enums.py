@@ -118,7 +118,7 @@ class M2CompBoneFlags(IntEnum):
 
 class M2SkinMeshPartID(Enum):
     Skin = range(0, 1)
-    Hair = range(1, 22)
+    Hair = range(1, 35)
     Facial1 = range(101, 109)
     Facial2 = range(201, 207)
     Facial3 = range(301, 312)
@@ -126,21 +126,26 @@ class M2SkinMeshPartID(Enum):
     Boots = range(501, 506)
     Unknown = range(601, 615)
     Ears = range(701, 703)
-    Wristbands = range(801, 804)
-    Kneepads = range(901, 904)
+    Wristbands = range(801, 805)
+    Kneepads = range(901, 905)
     Chest = range(1001, 1005)
     Pants = range(1101, 1105)
-    Tabard = range(1201, 1203)
+    Tabard = range(1201, 1204)
     Legs = range(1301, 1303)
     Unknown2 = range(1401, 1415)
     Cloak = range(1501, 1511)
     Unknown3 = range(1601, 1615)
     Eyeglows = range(1701, 1704)
-    Belt = range(1801, 1803)
+    Belt = range(1801, 1804)
     Tail = range(1901, 1915)
     Feet = range(2001, 2003)
-    # Legion +
+    # Legion/BFA +
+    Head = range(2101, 2102)
+    Torso = range(2201, 2203)
     Hands = range(2301, 2302)
+    Shoulders = range(2601, 2603)
+    Helmet = range(2702, 2703)
+    Unknown4 = range(2801, 2802)
 
     @classmethod
     def get_mesh_part_name(cls, mesh_part_id):
@@ -149,7 +154,7 @@ class M2SkinMeshPartID(Enum):
                 return field.name
 
         print("\nUnknown mesh ID: {}".format(mesh_part_id))
-        return None
+        return 'Unknown'
 
 
 class M2KeyBones(Enum):
@@ -299,16 +304,18 @@ class M2AttachmentTypes(Enum):
     VehicleSeat5 = 43
     VehicleSeat6 = 44
     VehicleSeat7 = 45
-    VehicleSeat8 = 47
-    LeftFoot = 48
-    RightFoot = 49
-    ShieldNoGlove = 50
-    SpineLow = 51
-    AlteredShoulderR = 52
-    AlteredShoulderL = 53
-    BeltBuckle = 54
-    SheathCrossbow = 55
-    HeadTop = 56
+    VehicleSeat8 = 46
+    LeftFoot = 47
+    RightFoot = 48
+    ShieldNoGlove = 49
+    SpineLow = 50
+    AlteredShoulderR = 51
+    AlteredShoulderL = 52
+    BeltBuckle = 53
+    SheathCrossbow = 54
+    HeadTop = 55
+    Backpack = 57
+    Unknown = 58
 
     @classmethod
     def get_attachment_name(cls, attachment_id, idx):
@@ -468,6 +475,8 @@ class M2EventTokens(Enum):
     Unknown4 = 'WHEE'                                           # Data: 601+, Used on wheels at vehicles.
     Unknown5 = 'BOTT'                                           # seen in well_vortex01.m2
     Unknown6 = 'TOP'                                            # seen in well_vortex01.m2
+    Unknown7 = '$BWA'
+    Unknown8 = '$BWS'
 
     @classmethod
     def get_event_name(cls, event_token):
@@ -495,14 +504,6 @@ class M2SequenceNames:
 
     def items(self):
         return self.anim_name_map.items()
-
-
-
-
-
-
-
-
 
 
 
