@@ -28,7 +28,7 @@ class M2Dependencies:
 class M2File:
     def __init__(self, version, filepath=None):
         self.version = M2Versions.from_expansion_number(version)
-        self.root = None
+        self.root = MD21() if self.version >= M2Versions.LEGION else MD20()
         self.filepath = filepath
         self.raw_path = os.path.splitext(filepath)[0]
         self.dependencies = M2Dependencies()
@@ -36,31 +36,18 @@ class M2File:
         self.skels = deque()
         self.texture_path_map = {}
 
-        if self.version >= M2Versions.LEGION:
-            self.root = MD21()
-            self.pfid = None
-            self.sfid = None
-            self.afid = None
-            self.bfid = None
-            self.txac = None
-            self.expt = None
-            self.exp2 = None
-            self.pabc = None
-            self.padc = None
-            self.psbc = None
-            self.pedc = None
-            self.skid = None
-
-            if self.version >= M2Versions.BFA:
-                self.txid = None
-                self.ldv1 = None
-                self.rpid = None
-                self.gpid = None
-
-            # everything gets handled as of 03.04.20
-
-        else:
-            self.root = MD20()
+        self.pfid = None
+        self.sfid = None
+        self.afid = None
+        self.bfid = None
+        self.txac = None
+        self.expt = None
+        self.exp2 = None
+        self.pabc = None
+        self.padc = None
+        self.psbc = None
+        self.pedc = None
+        self.skid = None
 
         if filepath:
             self.read()

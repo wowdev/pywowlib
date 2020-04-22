@@ -21,9 +21,8 @@ class WoWFileData:
         #self.db_files_client = DBFilesClient(self)
         #self.db_files_client.init_tables()
 
-        if WoWVersionManager().client_version >= WoWVersions.WOD:
-            with open(os.path.join(os.path.dirname(__file__), 'listfile.csv'), newline='') as f:
-                self.listfile = {int(row[0]): row[1] for row in csv.reader(f, delimiter=';')}
+        with open(os.path.join(os.path.dirname(__file__), 'listfile.csv'), newline='') as f:
+            self.listfile = {int(row[0]): row[1] for row in csv.reader(f, delimiter=';')}
 
     def __del__(self):
         print("\nUnloaded game data.")
