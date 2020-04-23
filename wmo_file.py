@@ -81,18 +81,18 @@ class WMOFile:
                     is_root = True
 
                 # getting the correct chunk parsing class
-                chunk = getattr(wmo_format_root, magic, None)
+                chunk = getattr(wmo_format_root, magic)
 
                 # skipping unknown chunks
-                if chunk is None:
+                if not chunk:
                     print("\nEncountered unknown chunk \"{}\"".format(magic))
                     f.seek(ContentChunk().read(f).size, 1)
                     continue
 
-                chunk = getattr(self, magic.lower(), None)
+                local_chunk = getattr(self, magic.lower(), None)
 
-                if chunk:
-                    chunk.read(f)
+                if local_chunk:
+                    local_chunk.read(f)
 
                 else:
                     setattr(self, magic.lower(), chunk().read(f))
@@ -386,24 +386,25 @@ class WMOGroupFile:
                 low_magic = magic.lower()
                 local_chunk = getattr(self, low_magic, None)
 
-                if local_chunk and not ((low_magic == 'MOCV' and is_mocv_processed) or (low_magic == 'MOTV' and is_motv_processed)):
+                is_mocv = magic == 'MOCV'
+                is_motv = magic == 'MOTV'
+
+                if local_chunk and not ((is_mocv and is_mocv_processed) or (is_motv and is_motv_processed)):
+
+                    if is_motv:
+                        is_motv_processed = True
+
+                    elif is_mocv:
+                        is_mocv_processed = True
+
                     local_chunk.read(f)
 
                 else:
                     local_chunk = chunk().read(f)
 
                     # handle duplicate chunk reading
-                    if isinstance(local_chunk, MOTV):
-                        if is_motv_processed:
-                            low_magic += '2'
-                        else:
-                            is_motv_processed = True
-
-                    elif isinstance(local_chunk, MOCV):
-                        if is_mocv_processed:
-                            low_magic += '2'
-                        else:
-                            is_mocv_processed = True
+                    if (is_mocv and is_mocv_processed) or (is_motv and is_motv_processed):
+                        low_magic += '2'
 
                     setattr(self, low_magic, local_chunk)
 
