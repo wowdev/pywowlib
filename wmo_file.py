@@ -348,8 +348,8 @@ class WMOGroupFile:
         self.mobr = MOBR()
         self.mocv = MOCV()
         self.mliq = MLIQ()
-        self.motv2 = MOTV()
-        self.mocv2 = MOCV()
+        self.motv2 = None
+        self.mocv2 = None
 
     def read(self):
         with open(self.filepath, 'rb') as f:
