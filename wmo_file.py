@@ -454,4 +454,8 @@ class WMOGroupFile:
             f.seek(0xC)
             self.mogp.write(f)
 
+    def add_blendmap_chunks(self):
+        self.motv2 = MOTV()
+        self.mocv2 = MOCV()
+
 
