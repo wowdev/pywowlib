@@ -81,10 +81,10 @@ class WMOFile:
                     is_root = True
 
                 # getting the correct chunk parsing class
-                chunk = getattr(wmo_format_root, magic)
+                chunk = getattr(wmo_format_root, magic, None)
 
                 # skipping unknown chunks
-                if not chunk:
+                if chunk is None:
                     print("\nEncountered unknown chunk \"{}\"".format(magic))
                     f.seek(ContentChunk().read(f).size, 1)
                     continue
