@@ -48,6 +48,7 @@ class M2File:
         self.psbc = None
         self.pedc = None
         self.skid = None
+        self.txid = None
 
         if filepath:
             self.read()
