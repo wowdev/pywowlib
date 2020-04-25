@@ -230,14 +230,25 @@ class M2File:
                 frame_values = track.values[real_seq_index]
                 frame_values.read(raw_data, ignore_header=True)
 
-    def read_additional_files(self):
+    def read_additional_files(self, fallback_dir=""):
+
+        if fallback_dir:
+            fallback_dir = os.path.join(fallback_dir, os.path.basename(self.raw_path))
 
         if self.version >= M2Versions.WOTLK:
             # load skins
 
             for i in range(self.root.num_skin_profiles):
-                with open("{}{}.skin".format(self.raw_path, str(i).zfill(2)), 'rb') as skin_file:
-                    self.skins.append(M2SkinProfile().read(skin_file))
+
+                try:
+                    with open("{}{}.skin".format(self.raw_path, str(i).zfill(2)), 'rb') as skin_file:
+                        self.skins.append(M2SkinProfile().read(skin_file))
+                except FileNotFoundError as e:
+                    if fallback_dir:
+                        with open("{}{}.skin".format(fallback_dir, str(i).zfill(2)), 'rb') as skin_file:
+                            self.skins.append(M2SkinProfile().read(skin_file))
+                    else:
+                        raise e
 
             # load anim files
             track_cache = M2TrackCache()
@@ -264,8 +275,24 @@ class M2File:
                         with open(anim_path, 'rb') as f:
                             anim_file.read(f)
                     except FileNotFoundError:
-                        print("Warning: .anim file \"{}\" not found.".format(anim_path))
-                        continue
+
+                        if fallback_dir:
+                            try:
+                                anim_path = "{}{}-{}.anim".format(
+                                    fallback_dir if not self.skels else self.skels[0].root_basepath,
+                                    str(real_anim.id).zfill(4),
+                                    str(sequence.variation_index).zfill(2))
+
+                                with open(anim_path, 'rb') as f:
+                                    anim_file.read(f)
+
+                            except FileNotFoundError:
+                                print("Warning: .anim file \"{}\" not found.".format(anim_path))
+                                continue
+                        else:
+
+                            print("Warning: .anim file \"{}\" not found.".format(anim_path))
+                            continue
 
                     if anim_file.old or not anim_file.split:
 
