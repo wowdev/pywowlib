@@ -43,6 +43,10 @@ class WoWFileData:
                         file = (identifier, FileOpenFlags.CASC_OPEN_BY_NAME) in storage
 
             else:
+
+                if isinstance(identifier, int):
+                    continue
+
                 abs_path = os.path.join(storage, identifier)
                 file = os.path.exists(abs_path) and os.path.isfile(abs_path)
 
@@ -239,6 +243,9 @@ class WoWFileData:
 
             else:
                 filepath = "{}.{}".format(identifier, file_format)
+
+        if os.name == 'nt':
+            return filepath.replace('/', '\\')
 
         return filepath
 
