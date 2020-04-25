@@ -333,7 +333,8 @@ class WoWFileData:
             if os.path.exists(os.path.join(wow_path, "Wow.exe")):
                 return True
 
-            if os.path.exists(os.path.join(os.path.join(wow_path, "_retail_"), "wow.exe")):
+            wow_path_raw = wow_path.split(':')[0]
+            if os.path.exists(os.path.join(os.path.join(wow_path_raw, "_retail_"), "wow.exe")):
                 return True
 
         return False
