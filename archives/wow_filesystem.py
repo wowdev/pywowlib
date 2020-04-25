@@ -138,8 +138,8 @@ class WoWFileData:
         if filepath:
             return filepath
 
-        filepath = os.path.join(dir_path, os.path.join(dir_path, identifier) \
-            if isinstance(identifier, str) else self.guess_filepath(identifier, file_format))
+        filepath = os.path.join(dir_path, identifier) \
+            if isinstance(identifier, str) else os.path.join(dir_path, self.guess_filepath(identifier, file_format))
 
         file_dir = os.path.dirname(filepath)
         if not os.path.exists(file_dir):
