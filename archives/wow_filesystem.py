@@ -329,8 +329,12 @@ class WoWFileData:
     @staticmethod
     def is_wow_path_valid(wow_path):
         """Check if a given path is a path to WoW client."""
-        if wow_path and os.path.exists(os.path.join(wow_path, "Wow.exe")):
-            return True
+        if wow_path:
+            if os.path.exists(os.path.join(wow_path, "Wow.exe")):
+                return True
+
+            if os.path.exists(os.path.join(os.path.join(wow_path, "_retail_"), "wow.exe")):
+                return True
 
         return False
 
