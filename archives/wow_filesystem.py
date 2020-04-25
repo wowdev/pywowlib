@@ -15,8 +15,9 @@ from ..blp import BLP2PNG
 class WoWFileData:
     def __init__(self, wow_path, project_path):
         self.wow_path = wow_path
-        self.files = self.init_mpq_storage(self.wow_path, project_path) if WoWVersionManager().client_version < WoWVersions.WOD \
-                     else self.init_casc_storage(self.wow_path, project_path)
+        self.files = self.init_mpq_storage(self.wow_path, project_path) \
+            if WoWVersionManager().client_version < WoWVersions.WOD else self.init_casc_storage(self.wow_path,
+                                                                                                project_path)
 
         #self.db_files_client = DBFilesClient(self)
         #self.db_files_client.init_tables()
@@ -332,13 +333,10 @@ class WoWFileData:
             if os.path.exists(os.path.join(wow_path, "Wow.exe")):
                 return True
 
-            product = ':'
-            for char in wow_path[::-1]:
-                if char == ':':
-                    break
-                product += char
+            if os.path.exists(os.path.join(os.path.join(wow_path, "_retail_"), "wow.exe")):
+                return True
 
-            if os.path.exists(os.path.join(os.path.join(wow_path.split(product)[0], "_retail_"), "wow.exe")):
+            if os.path.exists(os.path.join(os.path.join(wow_path, "_retail_"), "World of Warcraft.app")):
                 return True
 
         return False
