@@ -172,8 +172,7 @@ class WoWFileData:
 
             file, _ = self.read_file(identifier, dir_path, 'blp', True)
 
-            filepath = os.path.join(dir_path, os.path.join(dir_path, identifier)
-                if isinstance(identifier, str) else self.guess_filepath(identifier, 'blp'))
+            filepath = os.path.join(dir_path, identifier) if isinstance(identifier, str) else self.guess_filepath(identifier, 'blp'))
 
             if not os.path.exists(os.path.splitext(filepath)[0] + ".png"):
                 pairs.append((file, filepath.replace('\\', '/').encode('utf-8')))
