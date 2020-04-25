@@ -325,7 +325,6 @@ class WoWFileData:
 
         return dir_files + locale_dir_files
 
-
     @staticmethod
     def is_wow_path_valid(wow_path):
         """Check if a given path is a path to WoW client."""
@@ -333,8 +332,13 @@ class WoWFileData:
             if os.path.exists(os.path.join(wow_path, "Wow.exe")):
                 return True
 
-            wow_path_raw = wow_path.split(':')[0]
-            if os.path.exists(os.path.join(os.path.join(wow_path_raw, "_retail_"), "wow.exe")):
+            product = ':'
+            for char in wow_path[::-1]:
+                if char == ':':
+                    break
+                product += char
+
+            if os.path.exists(os.path.join(os.path.join(wow_path.split(product)[0], "_retail_"), "wow.exe")):
                 return True
 
         return False
