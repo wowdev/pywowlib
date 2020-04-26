@@ -198,25 +198,29 @@ class M2KeyBones(Enum):
     Wheel8 = 34
 
     # Alastor's guessed IDs
-    Unk_35 = 35
-    CapeParent = 36
-    CapeChild1 = 37
-    CapeChild2 = 38
-    CapeChild3 = 39
-    CapeChild4 = 40
-    Unk_41 = 41
-    Unk_42 = 42
-    TabardParent = 43
-    TabardChild1 = 44
-    TabardChild2 = 45
-    Unk_46 = 46
-    Unk_47 = 47
-    UpperBodyParent = 48
-    NeckParent = 49
-    NeckChild1 = 50
-    LowerBodyParent = 51
-    Belly = 52
-    UpperBodyChild1 = 53
+
+    # AnkleR_Twist = 25
+    # AnkleL_Twist = 20
+    # AnkleL = 32
+    AnkleR = 35
+    Cape1 = 36
+    Cape2 = 37
+    Cape3 = 38
+    Cape4 = 39
+    Cape5 = 40
+    Tail1 = 41
+    Tail2 = 42
+    TabardBack1 = 43
+    TabardBack2 = 44
+    TabardBack3 = 45
+    ToeL = 46
+    ToeR = 47
+    SpineTop = 48
+    Neck1 = 49
+    Neck2 = 50
+    Pelvis = 51
+    Belt = 52
+    Chest = 53
     ModelOrigin = 54
     LegR = 55
     LegL = 56
@@ -233,16 +237,27 @@ class M2KeyBones(Enum):
     Unk_WristL_Child1 = 67
     Unk_WristL_Child2 = 68
     Unk_WristR_Child2 = 69
-    KneeR_UpperRig = 70
-    KneeL_UpperRig = 71
-    Unk_ArmR = 72
-    Unk_ArmL = 73
-    ElbowR_UpperRig = 74
-    ElbowL_UpperRig = 75
+    ThighR = 70
+    ThighL = 71
+    ShoulderR_Twist = 72
+    ShoulderL_Twist = 73
+    ElbowR_Twist = 74
+    ElbowL_Twist = 75
     ForearmR = 76
     ForearmL = 77
-    WristR_UpperRig = 78
-    WristL_UpperRig = 79
+    WristR_Twist = 78
+    WristL_Twist = 79
+
+    '''
+    guesses based on humanmale_hd
+
+    TabardFront1 = Bone_4
+    TabardFront2 = Bone_10
+    TabardFront3 = Bone_17
+
+    ToeR = Bone_31
+    ToeL = Bone_32
+    '''
 
     @classmethod
     def get_bone_name(cls, keybone_id, idx):
@@ -504,8 +519,3 @@ class M2SequenceNames:
 
     def items(self):
         return self.anim_name_map.items()
-
-
-
-
-
