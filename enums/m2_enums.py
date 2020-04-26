@@ -198,14 +198,18 @@ class M2KeyBones(Enum):
     Wheel8 = 34
 
     # Alastor's guessed IDs
-    Unk_35 = 35
+
+    # AnkleR_Twist = 25
+    # AnkleL_Twist = 20
+    # AnkleL = 32
+    AnkleR = 35
     Cape1 = 36
     Cape2 = 37
     Cape3 = 38
     Cape4 = 39
     Cape5 = 40
-    Unk_41 = 41
-    Unk_42 = 42
+    Tail1 = 41
+    Tail2 = 42
     TabardBack1 = 43
     TabardBack2 = 44
     TabardBack3 = 45
@@ -250,9 +254,6 @@ class M2KeyBones(Enum):
     TabardFront1 = Bone_4
     TabardFront2 = Bone_10
     TabardFront3 = Bone_17
-
-    AnkleL = Bone_19
-    AnkleR = Bone_18
 
     ToeR = Bone_31
     ToeL = Bone_32
