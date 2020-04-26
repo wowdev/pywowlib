@@ -20,7 +20,7 @@ class M2Dependencies:
     def __init__(self):
         self.textures = []
         self.skins = []
-        self.anims = []
+        self.anims = {}
         self.bones = []
         self.lod_skins = []
 
@@ -189,23 +189,24 @@ class M2File:
 
         # find anims
         anim_paths_map = {}
-        for i, sequence in enumerate(self.root.sequences):
-            # handle alias animations
-            real_anim = sequence
-            a_idx = i
 
-            while real_anim.flags & 0x40 and real_anim.alias_next != a_idx:
-                a_idx = real_anim.alias_next
-                real_anim = self.root.sequences[real_anim.alias_next]
+        if not self.afid:
+            for i, sequence in enumerate(self.root.sequences):
+                # handle alias animations
+                real_anim = sequence
+                a_idx = i
 
-            if not sequence.flags & 0x130:
-                anim_paths_map[real_anim.id, sequence.variation_index] \
-                    = "{}{}-{}.anim".format(self.raw_path if not self.skels else self.skels[0].root_basepath
-                                            , str(real_anim.id).zfill(4)
-                                            , str(sequence.variation_index).zfill(2))
+                while real_anim.flags & 0x40 and real_anim.alias_next != a_idx:
+                    a_idx = real_anim.alias_next
+                    real_anim = self.root.sequences[real_anim.alias_next]
 
-        if self.afid:
+                if not sequence.flags & 0x130:
+                    anim_paths_map[real_anim.id, sequence.variation_index] \
+                        = "{}{}-{}.anim".format(self.raw_path if not self.skels else self.skels[0].root_basepath
+                                                , str(real_anim.id).zfill(4)
+                                                , str(sequence.variation_index).zfill(2))
 
+        else:
             for record in self.afid.anim_file_ids:
 
                 if not record.file_id:
@@ -213,7 +214,7 @@ class M2File:
 
                 anim_paths_map[record.anim_id, record.sub_anim_id] = record.file_id
 
-        self.dependencies.anims = list(anim_paths_map.values())
+        self.dependencies.anims = anim_paths_map
 
         return self.dependencies
 
@@ -230,10 +231,7 @@ class M2File:
                 frame_values = track.values[real_seq_index]
                 frame_values.read(raw_data, ignore_header=True)
 
-    def read_additional_files(self, fallback_dir=""):
-
-        if fallback_dir:
-            fallback_dir = os.path.join(fallback_dir, os.path.basename(self.raw_path))
+    def read_additional_files(self, skin_paths, anim_paths):
 
         if self.version >= M2Versions.WOTLK:
             # load skins
@@ -241,14 +239,11 @@ class M2File:
             for i in range(self.root.num_skin_profiles):
 
                 try:
-                    with open("{}{}.skin".format(self.raw_path, str(i).zfill(2)), 'rb') as skin_file:
+                    with open(skin_paths[i], 'rb') as skin_file:
                         self.skins.append(M2SkinProfile().read(skin_file))
-                except FileNotFoundError as e:
-                    if fallback_dir:
-                        with open("{}{}.skin".format(fallback_dir, str(i).zfill(2)), 'rb') as skin_file:
-                            self.skins.append(M2SkinProfile().read(skin_file))
-                    else:
-                        raise e
+                except FileNotFoundError:
+                    if i > 0:
+                        raise FileNotFoundError('Error: at least one .skin file is required to load a model.')
 
             # load anim files
             track_cache = M2TrackCache()
@@ -263,36 +258,17 @@ class M2File:
 
                 if not sequence.flags & 0x130:
 
-                    anim_path = "{}{}-{}.anim".format(self.raw_path if not self.skels else self.skels[0].root_basepath,
-                                                      str(real_anim.id).zfill(4),
-                                                      str(sequence.variation_index).zfill(2))
-
                     anim_file = AnimFile(split=bool(self.skels)
                                          , old=not bool(self.skels)
                                                and not self.root.global_flags & M2GlobalFlags.ChunkedAnimFiles)
 
+                    anim_path = anim_paths[real_anim.id, sequence.variation_index]
                     try:
                         with open(anim_path, 'rb') as f:
                             anim_file.read(f)
                     except FileNotFoundError:
-
-                        if fallback_dir:
-                            try:
-                                anim_path = "{}{}-{}.anim".format(
-                                    fallback_dir if not self.skels else self.skels[0].root_basepath,
-                                    str(real_anim.id).zfill(4),
-                                    str(sequence.variation_index).zfill(2))
-
-                                with open(anim_path, 'rb') as f:
-                                    anim_file.read(f)
-
-                            except FileNotFoundError:
-                                print("Warning: .anim file \"{}\" not found.".format(anim_path))
-                                continue
-                        else:
-
-                            print("Warning: .anim file \"{}\" not found.".format(anim_path))
-                            continue
+                        print("Warning: .anim file \"{}\" not found.".format(anim_path))
+                        continue
 
                     if anim_file.old or not anim_file.split:
 
