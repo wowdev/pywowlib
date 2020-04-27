@@ -36,6 +36,8 @@ class M2File:
         self.skels = deque()
         self.texture_path_map = {}
 
+        self.file_raw_data = None
+
         self.pfid = None
         self.sfid = None
         self.afid = None
@@ -57,6 +59,9 @@ class M2File:
         self.skins = []
 
         with open(self.filepath, 'rb') as f:
+            self.file_raw_data = f.read()
+            f.seek(0)
+
             magic = f.read(4).decode('utf-8')
 
             if magic == 'MD20':
@@ -108,6 +113,9 @@ class M2File:
         skel = SkelFile(path)
 
         with open(path, 'rb') as f:
+            self.skel_raw = f.read()
+            f.seek(0)
+
             skel.read(f)
 
         self.skels.appendleft(skel)
@@ -285,12 +293,12 @@ class M2File:
 
                         for creator, tracks in track_cache.m2_tracks.items():
 
-                            if creator is M2CompBone:
+                            if creator == M2CompBone:
                                 M2File.process_anim_file(anim_file.afsb.raw_data, tracks, a_idx)
-                            elif creator is M2Attachment:
+                            elif creator == M2Attachment:
                                 M2File.process_anim_file(anim_file.afsa.raw_data, tracks, a_idx)
                             else:
-                                M2File.process_anim_file(anim_file.afm2.raw_data, tracks, a_idx)
+                                M2File.process_anim_file(anim_file.afm2.raw_data, tracks, a_idx)  # what is in AFM2 then?
 
         else:
             self.skins = self.root.skin_profiles
