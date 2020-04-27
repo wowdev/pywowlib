@@ -36,8 +36,6 @@ class M2File:
         self.skels = deque()
         self.texture_path_map = {}
 
-        self.file_raw_data = None
-
         self.pfid = None
         self.sfid = None
         self.afid = None
@@ -59,9 +57,6 @@ class M2File:
         self.skins = []
 
         with open(self.filepath, 'rb') as f:
-            self.file_raw_data = f.read()
-            f.seek(0)
-
             magic = f.read(4).decode('utf-8')
 
             if magic == 'MD20':
@@ -113,9 +108,6 @@ class M2File:
         skel = SkelFile(path)
 
         with open(path, 'rb') as f:
-            self.skel_raw = f.read()
-            f.seek(0)
-
             skel.read(f)
 
         self.skels.appendleft(skel)
