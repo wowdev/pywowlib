@@ -267,7 +267,8 @@ class M2File:
                         with open(anim_path, 'rb') as f:
                             anim_file.read(f)
                     except FileNotFoundError:
-                        print("Warning: .anim file \"{}\" not found.".format(anim_path))
+                        print("Warning: .anim file \"{}\" not found."
+                              " Low-priority sequence will not import.".format(anim_path))
                         continue
 
                     if anim_file.old or not anim_file.split:

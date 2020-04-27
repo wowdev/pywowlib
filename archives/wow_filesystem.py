@@ -172,13 +172,16 @@ class WoWFileData:
 
             file, _ = self.read_file(identifier, dir_path, 'blp', True)
 
-            filepath = os.path.join(dir_path, identifier) \
-                if isinstance(identifier, str) else self.guess_filepath(identifier, 'blp')
+            identifier_os = identifier.replace('/', '\\') if os.name == 'nt' else identifier
 
-            if not os.path.exists(os.path.splitext(filepath)[0] + ".png"):
-                pairs.append((file, filepath.replace('\\', '/').encode('utf-8')))
+            filepath = identifier_os if isinstance(identifier, str) else self.guess_filepath(identifier, 'blp')
 
-            filepaths[identifier] = filepath
+            filepath_png_base = os.path.splitext(filepath)[0] + '.png'
+            filepath_png = os.path.join(dir_path, filepath_png_base)
+            if not os.path.exists(filepath_png):
+                pairs.append((file, filepath_png_base.replace('\\', '/').encode('utf-8')))
+
+            filepaths[identifier] = filepath_png
 
         if pairs:
             BLP2PNG().convert(pairs, dir_path.encode('utf-8'))
