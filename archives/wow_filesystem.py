@@ -177,9 +177,8 @@ class WoWFileData:
 
             file = result[0]
 
-            identifier_os = identifier.replace('/', '\\') if os.name == 'nt' else identifier
-
-            filepath = identifier_os if isinstance(identifier, str) else self.guess_filepath(identifier, 'blp')
+            filepath = (identifier.replace('/', '\\') if os.name == 'nt' else identifier) \
+                if isinstance(identifier, str) else self.guess_filepath(identifier, 'blp')
 
             filepath_png_base = os.path.splitext(filepath)[0] + '.png'
             filepath_png = os.path.join(dir_path, filepath_png_base)
