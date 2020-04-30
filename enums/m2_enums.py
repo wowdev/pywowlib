@@ -107,6 +107,9 @@ class M2BlendingModes(IntEnum):
 
 
 class M2CompBoneFlags(IntEnum):
+    ignore_parent_translate = 0x1,
+    ignore_parent_scale = 0x2,
+    ignore_parent_rotation = 0x4,
     spherical_billboard = 0x8,
     cylindrical_billboard_lock_x = 0x10,
     cylindrical_billboard_lock_y = 0x20,
