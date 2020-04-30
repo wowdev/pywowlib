@@ -170,7 +170,12 @@ class WoWFileData:
 
         for identifier in identifiers:
 
-            file, _ = self.read_file(identifier, dir_path, 'blp', True)
+            result = self.read_file(identifier, dir_path, 'blp', True)
+
+            if result is None:
+                continue
+
+            file = result[0]
 
             identifier_os = identifier.replace('/', '\\') if os.name == 'nt' else identifier
 
