@@ -77,7 +77,7 @@ class WMOFile:
                 if not magic:
                     break
 
-                if magic == 'MOHD':
+                if not is_root and magic == 'MOHD':
                     is_root = True
 
                 # getting the correct chunk parsing class
@@ -89,13 +89,18 @@ class WMOFile:
                     f.seek(ContentChunk().read(f).size, 1)
                     continue
 
-                local_chunk = getattr(self, magic.lower(), None)
+                magic_lower = magic.lower()
+                local_chunk = getattr(self, magic_lower, None)
 
                 if local_chunk:
                     local_chunk.read(f)
 
                 else:
-                    setattr(self, magic.lower(), chunk().read(f))
+                    setattr(self, magic_lower, chunk().read(f)) \
+                        if magic != 'GFID' else setattr(self, magic_lower,
+                                                        chunk(use_lods=self.mohd.flags & MOHDFlags.UseLod,
+                                                              n_groups=self.mohd.n_groups,
+                                                              n_lods=self.mohd.n_lods).read(f))
 
             # attempt automatically finding a root file if user tries to import the group
             if is_root:

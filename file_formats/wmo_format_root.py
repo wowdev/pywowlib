@@ -1,3 +1,4 @@
+from enum import IntFlag
 from typing import List, Tuple
 from .wow_common_types import *
 
@@ -37,7 +38,8 @@ class MOHD(ContentChunk):
         self.id = uint32.read(f)
         self.bounding_box_corner1 = vec3D.read(f)
         self.bounding_box_corner2 = vec3D.read(f)
-        self.flags = uint32.read(f)
+        self.flags = uint16.read(f)
+        self.n_lods = uint16.read(f)
 
         return self
 
@@ -55,9 +57,19 @@ class MOHD(ContentChunk):
         uint32.write(f, self.id)
         vec3D.write(f, self.bounding_box_corner1)
         vec3D.write(f, self.bounding_box_corner2)
-        uint32.write(f, self.flags)
+        uint16.write(f, self.flags)
+        uint16.write(f, self.n_lods)
 
         return self
+
+
+class MOHDFlags(IntFlag):
+    NoDistanceAttenuation = 0x1
+    UnifiedRenderPath = 0x2
+    UseLiquidTypeDBCId = 0x4
+    DoNotFixVertexColorAlpha = 0x8
+    UseLod = 0x10
+    UseDefaultMaxLod = 0x20
 
 
 class MOTX(ContentChunk):
@@ -668,19 +680,21 @@ class GFID(ContentChunk):
 
     def __init__(self, use_lods=False, n_groups=0, n_lods=0):
         super().__init__()
-        self.group_file_data_ids = [[]] if not use_lods else [[] for _ in range(n_lods)]
 
         self.n_groups = n_groups
         self.n_lods = n_lods
         self.use_lods = use_lods
 
+        self.group_file_data_ids = [[]] if not self.use_lods \
+            else ([[] for _ in range(self.n_lods)] if self.n_lods
+                  else [[] for _ in range(3)])
+
     def read(self, f):
         super().read(f)
-        self.group_file_data_ids = [[]] if not self.use_lods else [[] for _ in range(self.n_lods)]
 
-        for i in range(self.n_groups):
+        for lod_level in self.group_file_data_ids:
             for _ in range(self.n_groups):
-                self.group_file_data_ids[i].append(uint32.read(f))
+                lod_level.append(uint32.read(f))
 
         return self
 
