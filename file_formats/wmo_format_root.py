@@ -24,6 +24,7 @@ class MOHD(ContentChunk):
         self.bounding_box_corner1 = (0.0, 0.0, 0.0)
         self.bounding_box_corner2 = (0.0, 0.0, 0.0)
         self.flags = 0
+        self.n_lods = 0
 
     def read(self, f):
         super().read(f)
