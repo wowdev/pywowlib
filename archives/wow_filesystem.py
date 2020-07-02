@@ -314,9 +314,9 @@ class WoWFileData:
         print("\nProcessing available game resources of client: " + wow_path)
         start_time = time.time()
 
-        wow_path = os.path.join(wow_path, '')  # ensure the path has trailing slash
+        #wow_path = os.path.join(wow_path, '')  # ensure the path has trailing slash
 
-        casc = CASCHandler(wow_path, LocaleFlags.CASC_LOCALE_ENUS, False)
+        casc = CASCHandler(wow_path, LocaleFlags.CASC_LOCALE_ALL, False)
 
         print("\nDone initializing data packages.")
         print("Total loading time: ", time.strftime("%M minutes %S seconds", time.gmtime(time.time() - start_time)))
