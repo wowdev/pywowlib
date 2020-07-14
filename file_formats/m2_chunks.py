@@ -242,7 +242,7 @@ class PSBC(M2ContentChunk):
 
     def read(self, f):
         super().read(f)
-        self.content.read(f)
+        self.content.read(f, ignore_data=True)
 
         return self
 
@@ -261,7 +261,7 @@ class PEDC(M2ContentChunk):
 
     def read(self, f):
         super().read(f)
-        self.content.read(f)
+        self.content.read(f, ignore_data=True)
 
         return self
 

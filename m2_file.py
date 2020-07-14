@@ -170,8 +170,8 @@ class M2File:
 
             elif self.txid and i < len(self.txid.texture_ids) and self.txid.texture_ids[i] > 0:
 
-                texture.txid = self.txid.texture_ids[i]
-                self.dependencies.textures.append(texture.txid)
+                texture.fdid = self.txid.texture_ids[i]
+                self.dependencies.textures.append(texture.fdid)
 
         # find bones
         if self.bfid:
