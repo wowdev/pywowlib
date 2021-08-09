@@ -153,11 +153,13 @@ class M2File:
 
         elif self.version >= M2Versions.WOTLK:
 
-            if self.version >= M2Versions.WOD:
-                self.dependencies.lod_skins = ["{}{}.skin".format(
-                    self.raw_path, str(i + 1).zfill(2))  for i in range(2)]
-                self.dependencies.skins = ["{}{}.skin".format(
-                    self.raw_path, str(i).zfill(2)) for i in range(self.root.num_skin_profiles)]
+            # TODO : figure out if this is completely compatible with WOTLK
+            # if self.version >= M2Versions.WOD:
+            
+            self.dependencies.lod_skins = ["{}{}.skin".format(
+                self.raw_path, str(i + 1).zfill(2))  for i in range(2)]
+            self.dependencies.skins = ["{}{}.skin".format(
+                self.raw_path, str(i).zfill(2)) for i in range(self.root.num_skin_profiles)]
 
         # find textures
         for i, texture in enumerate(self.root.textures):
