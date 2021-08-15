@@ -79,7 +79,11 @@ class GenericType:
             if isinstance(value, Iterable):
                 f.write(pack(self.format, *value))
             else:
-                f.write(pack(self.format, value))
+                if len(self.format) > 1: # very bad fix
+                    for x in value:
+                        f.write(pack(self.format[0], x))
+                else:
+                    f.write(pack(self.format, value))
         else:
             f.write(pack(str(n) + self.format, *value))
 
