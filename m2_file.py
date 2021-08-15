@@ -30,7 +30,7 @@ class M2File:
         self.version = M2Versions.from_expansion_number(version)
         self.root = MD21() if self.version >= M2Versions.LEGION else MD20()
         self.filepath = filepath
-        self.raw_path = os.path.splitext(filepath)[0]
+        
         self.dependencies = M2Dependencies()
         self.skins = [M2SkinProfile()]
         self.skels = deque()
@@ -51,6 +51,7 @@ class M2File:
         self.txid = None
 
         if filepath:
+            self.raw_path = os.path.splitext(filepath)[0]
             self.read()
 
     def read(self):
