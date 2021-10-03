@@ -354,6 +354,9 @@ class M2File:
                 if max_influences < v_max_influences:
                     max_influences = v_max_influences
 
+        if max_influences == 0: # influences count must be at least 1
+            max_influences = 1
+        
         # localize bone indices
         unique_bone_ids = set(chain(*b_indices))
 
