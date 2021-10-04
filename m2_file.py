@@ -424,7 +424,8 @@ class M2File:
         skin = self.skins[0]
         tex_unit = M2SkinTextureUnit()
         tex_unit.skin_section_index = geoset_id
-        self.root.tex_unit_lookup_table.append(skin.texture_units.add(tex_unit))
+        # self.root.tex_unit_lookup_table.append(skin.texture_units.add(tex_unit))
+        skin.texture_units.add(tex_unit)
         tex_unit.geoset_index = geoset_id
         tex_unit.flags = flags
         tex_unit.shader_id = shader_id
