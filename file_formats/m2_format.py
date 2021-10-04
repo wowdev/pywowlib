@@ -1238,7 +1238,7 @@ class M2Header:
         self.materials = M2Array(M2Material)
         self.bone_lookup_table = M2Array(uint16)
         self.texture_lookup_table = M2Array(uint16)
-        self.tex_unit_lookup_table = M2Array(uint16)
+        self.tex_unit_lookup_table = M2Array(int16)
         self.transparency_lookup_table = M2Array(uint16)
 
         self.texture_transforms_lookup_table = M2Array(int16)
