@@ -420,7 +420,7 @@ class M2File:
 
         return geoset_index
 
-    def add_material_to_geoset(self, geoset_id, render_flags, blending, flags, shader_id, tex_id, tex_coord_id, priority_plane, mat_layer):  # TODO: Add extra params & cata +
+    def add_material_to_geoset(self, geoset_id, render_flags, blending, flags, shader_id, tex_id, tex_coord_id, priority_plane, mat_layer, tex_count):  # TODO: Add extra params & cata +
         skin = self.skins[0]
         tex_unit = M2SkinTextureUnit()
         tex_unit.skin_section_index = geoset_id
@@ -430,7 +430,7 @@ class M2File:
         tex_unit.flags = flags
         tex_unit.priority_plane = priority_plane
         tex_unit.shader_id = shader_id
-        tex_unit.texture_count = 1 # TODO: multitexturing
+        tex_unit.texture_count = tex_count
         tex_unit.texture_combo_index = tex_id
         tex_unit.texture_coord_combo_index = tex_coord_id
         tex_unit.material_layer = mat_layer
