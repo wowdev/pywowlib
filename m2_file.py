@@ -340,7 +340,6 @@ class M2File:
     def add_geoset(self, vertices, normals, uv, uv2, tris, b_indices, b_weights, origin, sort_pos, sort_radius, mesh_part_id):
 
         submesh = M2SkinSubmesh()
-        texture_unit = M2SkinTextureUnit()
         skin = self.skins[0]
 
         # get max bone influences per vertex
@@ -418,14 +417,15 @@ class M2File:
                 skin.triangle_indices.append(start_index + idx)
 
         geoset_index = skin.submeshes.add(submesh)
-        texture_unit.skin_section_index = geoset_index
-        self.root.tex_unit_lookup_table.append(skin.texture_units.add(texture_unit))
 
         return geoset_index
 
     def add_material_to_geoset(self, geoset_id, render_flags, blending, flags, shader_id, tex_id):  # TODO: Add extra params & cata +
         skin = self.skins[0]
-        tex_unit = skin.texture_units[geoset_id]
+        tex_unit = M2SkinTextureUnit()
+        tex_unit.skin_section_index = geoset_id
+        self.root.tex_unit_lookup_table.append(skin.texture_units.add(tex_unit))
+        tex_unit.geoset_index = geoset_id
         tex_unit.flags = flags
         tex_unit.shader_id = shader_id
         tex_unit.texture_count = 1 # TODO: multitexturing
