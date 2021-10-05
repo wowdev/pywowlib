@@ -437,10 +437,16 @@ class M2File:
         # tex_unit.color_index = color_id
 
         # check if we already have that render flag else create it
-        for i, material in enumerate(self.root.materials):
-            if material.flags == render_flags and material.blending_mode == blending:
-                tex_unit.material_index = i
-                break
+        if self.root.global_flags & M2GlobalFlags.UseTextureCombinerCombos: # some models seem to require 1 entry per text unit, seems related to this flag
+            for i, material in enumerate(self.root.materials):
+                if material.flags == render_flags and material.blending_mode == blending:
+                    tex_unit.material_index = i
+                    break
+            else:
+                m2_mat = M2Material()
+                m2_mat.flags = render_flags
+                m2_mat.blending_mode = blending
+                tex_unit.material_index = self.root.materials.add(m2_mat)
         else:
             m2_mat = M2Material()
             m2_mat.flags = render_flags
