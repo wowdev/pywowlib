@@ -453,6 +453,15 @@ class M2File:
             m2_mat.blending_mode = blending
             tex_unit.material_index = self.root.materials.add(m2_mat)
 
+        # check if texunitlookup already exists
+        for i, texunuitlookup in enumerate(self.root.tex_unit_lookup_table):
+            if texunuitlookup == tex_unit_coord:
+                tex_unit.texture_coord_combo_index = i
+                break
+        else:
+            self.root.tex_unit_lookup_table.append(tex_unit_coord)
+            tex_unit.texture_coord_combo_index = len(self.root.tex_unit_lookup_table) -1
+
     def add_texture(self, path, flags, tex_type):
 
         # check if this texture was already added
