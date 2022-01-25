@@ -1334,6 +1334,14 @@ class M2Header:
     def write(self, f):
         MemoryManager.mem_reserve(f, self._size)
 
+        # temp: m2 export fixes (make sure we have a visible model and don't crash)
+        while len(self.sequence_lookup) < 37:
+            self.sequence_lookup.add(0xffff)
+        while len(self.key_bone_lookup) < 27:
+            self.key_bone_lookup.add(-1)
+        self.key_bone_lookup.values[0] = 0
+        self.replacable_texture_lookup.values[0] = -1
+
         f.write(self.magic.encode('utf-8'))
         uint32.write(f, self.version)
         self.name.write(f)
