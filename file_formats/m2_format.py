@@ -506,7 +506,7 @@ class M2CompBone:
 
     @staticmethod
     def size():
-        return 86 if M2VersionsManager().m2_version >= M2Versions.WOTLK else 110
+        return 88 if M2VersionsManager().m2_version >= M2Versions.WOTLK else 110
 
 
 #############################################################
