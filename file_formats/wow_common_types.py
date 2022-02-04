@@ -165,6 +165,12 @@ class CAaBox:
 
         return self
 
+    def to_obj(self):
+        return {
+            "min": list(self.min),
+            "max": list(self.max)
+        }
+
 
 class fixed_point:
     """A fixed point real number, opposed to a floating point."""
@@ -302,6 +308,13 @@ class M2Array(metaclass=Template):
 
     def from_iterable(self, itrbl):
         self.values = [self.type(item) for item in itrbl]
+
+    def to_obj(self):
+        try:
+            return [value.to_obj() for value in self.values]
+        except:
+            # TODO hack
+            return [value for value in self.values]
 
     def set(self, itrbl):
         self.values = itrbl

@@ -299,6 +299,9 @@ class M2File:
         else:
             self.skins = self.root.skin_profiles
 
+    def to_obj(self):
+        return self.root.to_obj()
+
     def write(self, filepath):
         with open(filepath, 'wb') as f:
             if self.version < M2Versions.WOTLK:

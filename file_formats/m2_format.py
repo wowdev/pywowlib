@@ -25,6 +25,12 @@ class M2Bounds:
         self.extent.write(f)
         float32.write(f, self.radius)
 
+    def to_obj(self):
+        return {
+            "extent": self.extent.to_obj(),
+            "radius": self.radius
+        }
+
 
 class M2String:
     __slots__ = ('value',)
@@ -55,6 +61,9 @@ class M2String:
         f.seek(pos)
         
         return self
+
+    def to_obj(self):
+        return self.value
 
 
 class M2SplineKey(metaclass=Template):
@@ -90,6 +99,12 @@ class M2SplineKey(metaclass=Template):
             
         return self
     
+    def to_obj(self):
+        return {
+            "value": self.value.to_obj(),
+            "in_tan": self.in_tan.to_obj(),
+            "out_tan": self.out_tan.to_obj()
+        }
 
 class M2Range:
     
@@ -108,6 +123,13 @@ class M2Range:
         uint32.write(f, self.maximum)
 
         return self
+
+    def to_obj(self):
+        return {
+            "minimum": self.minimum,
+            "maximum": self.maximum
+        }
+
     
     
 class M2TrackBase:
@@ -152,6 +174,14 @@ class M2TrackBase:
         else:
             return self.timestamps.new()
 
+    def to_obj(self):
+        # TODO: pre-wotlk
+        return {
+            "interpolation_type": self.interpolation_type,
+            "global_sequence": self.global_sequence,
+            "timestamps": self.timestamps.to_obj()
+        }
+
     @staticmethod
     def size():
         return 12 if M2VersionsManager().m2_version >= M2Versions.WOTLK else 20
@@ -182,6 +212,9 @@ class M2Track(M2TrackBase, metaclass=Template):
 
         return self
 
+    def to_obj(self):
+        return self.values.to_obj()
+
     @staticmethod
     def size():
         return 20 if M2VersionsManager().m2_version >= M2Versions.WOTLK else 28
@@ -203,6 +236,12 @@ class M2PartTrack:
         self.values.write(f)
 
         return self
+
+    def to_obj(self):
+        return {
+            "times": self.times.to_obj(),
+            "values": self.values.to_obj()
+        }
 
     @staticmethod
     def size():
@@ -227,6 +266,12 @@ class FBlock:
 
         return self
 
+    def to_obj(self):
+        return {
+            "timestamps": self.timestamps.to_obj(),
+            "keys": self.keys.to_obj()
+        }
+
     @staticmethod
     def size():
         return 16
@@ -250,6 +295,11 @@ class Vector_2fp_6_9:
         
         return self
     
+    def to_obj(self):
+        return {
+            "x": self.x.value,
+            "y": self.y.value,
+        }
 
 class M2Box:
     
@@ -269,6 +319,11 @@ class M2Box:
 
         return self
 
+    def to_obj(self):
+        return {
+            "speed_min": list(self.model_rotation_speed_min),
+            "speed_max": list(self.model_rotation_speed_max),
+        }
 
 class M2CompQuaternion:
     
@@ -309,6 +364,13 @@ class M2CompQuaternion:
         pass
         # TODO: implement
 
+    def to_obj(self):
+        return {
+            "x": self.x,
+            "y": self.y,
+            "z": self.z,
+            "w": self.w,
+        }
 
 #############################################################
 ######              Animation sequences                ######
@@ -410,6 +472,23 @@ class M2Sequence:
 
         return self
 
+    def to_obj(self):
+        # TODO: non-wotlk
+        return {
+            "id": self.id,
+            "variation_index": self.variation_index,
+            "duration": self.duration,
+            "movespeed": self.movespeed,
+            "flags": self.flags,
+            "frequency": self.frequency,
+            "padding": self.padding,
+            "replay": self.replay.to_obj(),
+            "blend_time": self.blend_time,
+            "bounds": self.bounds.to_obj(),
+            "variation_next": self.variation_next,
+            "alias_next": self.alias_next
+        }
+
     @staticmethod
     def size():
         return 32 if M2VersionsManager().m2_version <= M2Versions.TBC else 28
@@ -504,6 +583,21 @@ class M2CompBone:
             return 0
         return sum(map(lambda x: x.get_depth(), self.children)) + len(self.children)
 
+    def to_obj(self):
+        return {
+            "key_bone_id": self.key_bone_id,
+            "flags": self.flags,
+            "parent_bone": self.parent_bone,
+            "submesh_id": self.submesh_id,
+            "u_dist_to_furth_desc": self.u_dist_to_furth_desc,
+            "u_zratio_of_chain": self.u_zratio_of_chain,
+            "bone_name_crc": self.bone_name_crc,
+            "translation": self.translation.to_obj(),
+            "rotation": self.rotation.to_obj(),
+            "scale": self.scale.to_obj(),
+            "pivot": list(self.pivot),
+        }
+
     @staticmethod
     def size():
         return 88 if M2VersionsManager().m2_version >= M2Versions.WOTLK else 110
@@ -547,6 +641,15 @@ class M2Vertex:
 
         return self
 
+    def to_obj(self):
+        return {
+            "pos": list(self.pos),
+            "bone_weights": list(self.bone_weights),
+            "bone_indices": list(self.bone_indices),
+            "normal": list(self.normal),
+            "tex_coords": list(self.tex_coords),
+            "tex_coords2": list(self.tex_coords2)
+        }
 
 ###### Render flags ######
 
@@ -567,6 +670,12 @@ class M2Material:
         uint16.write(f, self.blending_mode)
 
         return self
+
+    def to_obj(self):
+        return {
+            "flags": self.flags,
+            "blending_mode": self.blending_mode
+        }
 
 
 ###### Colors and transparency ######
@@ -592,6 +701,12 @@ class M2Color:
     @staticmethod
     def size():
         return 40 if M2VersionsManager().m2_version >= M2Versions.WOTLK else 56
+
+    def to_obj(self):
+        return {
+            "color": self.color.to_obj(),
+            "alpha": self.alpha.to_obj()
+        }
 
 
 class M2Texture:
@@ -622,6 +737,12 @@ class M2Texture:
     def size():
         return 16
 
+    def to_obj(self):
+        return {
+            "type": self.type,
+            "flags": self.flags,
+            "filename": self.filename.to_obj()
+        }
 
 #############################################################
 ######                    Effects                      ######
@@ -647,6 +768,13 @@ class M2TextureTransform:
         self.scaling.write(f)
 
         return self
+
+    def to_obj(self):
+        return {
+            "translation": self.translation.to_obj(),
+            "rotation": self.rotation.to_obj(),
+            "scaling": self.scaling.to_obj()
+        }
 
     @staticmethod
     def size():
@@ -726,6 +854,28 @@ class M2Ribbon:
             uint16.write(f, self.padding)
 
         return self
+
+    def to_obj(self):
+        return {
+            "ribbon_id": self.ribbon_id,
+            "bone_index": self.bone_index,
+            "position": list(self.position),
+            "texture_indices": self.texture_indices.to_obj(),
+            "material_indices": self.material_indices.to_obj(),
+            "color_track": self.color_track.to_obj(),
+            "alpha_track": self.alpha_track.to_obj(),
+            "height_above_track": self.height_above_track.to_obj(),
+            "height_below_track": self.height_below_track.to_obj(),
+            "edges_per_second": self.edges_per_second,
+            "edge_lifetime": self.edge_lifetime,
+            "gravity": self.gravity,
+            "texture_rows": self.texture_rows,
+            "texture_colrs": self.texture_cols,
+            "tex_slot_track": self.tex_slot_track.to_obj(),
+            "visibility_track": self.visibility_track.to_obj(),
+            "padding_plane": self.padding_plane,
+            "padding": self.padding
+        }
 
     @staticmethod
     def size():
@@ -1013,6 +1163,59 @@ class M2Particle:
 
         return self
 
+    def to_obj(self):
+        return {
+            "particle_id": self.particle_id,
+            "flags": self.flags,
+            "position": list(self.position),
+            "bone": self.bone,
+            "texture": self.texture,
+            "geometry_model_filename": self.geometry_model_filename.to_obj(),
+            "recursion_model_filename": self.recursion_model_filename.to_obj(),
+            "blending_type": self.blending_type,
+            "emitter_type": self.emitter_type,
+            "particle_color_index": self.particle_color_index,
+            "particle_type": self.particle_type,
+            "head_or_tail": self.head_or_tail,
+            "texture_tile_rotation": self.texture_tile_rotation,
+            "texture_dimensions_rows": self.texture_dimensions_rows,
+            "texture_dimensions_columns": self.texture_dimension_columns,
+            "emission_speed": self.emission_speed.to_obj(),
+            "speed_variation": self.speed_variation.to_obj(),
+            "vertical_range": self.vertical_range.to_obj(),
+            "horizontal_range": self.horizontal_range.to_obj(),
+            "gravity": self.gravity.to_obj(),
+            "lifespan": self.lifespan.to_obj(),
+            "life_span_vary": self.life_span_vary.to_obj(),
+            "emission_rate_vary": self.emission_rate_vary.to_obj(),
+            "emission_rate": self.emission_rate.to_obj(),
+            "emission_area_length": self.emission_area_length.to_obj(),
+            "emission_area_width": self.emission_area_width.to_obj(),
+            "z_source": self.z_source.to_obj(),
+            "color_track": self.color_track.to_obj(),
+            "alpha_track": self.alpha_track.to_obj(),
+            "scale_track": self.scale_track.to_obj(),
+            "scale_vary": list(self.scale_vary),
+            "head_cell_track": self.head_cell_track.to_obj(),
+            "tail_cell_track": self.tail_cell_track.to_obj(),
+            "tail_length": self.tail_length,
+            "twinkle_speed": self.twinkle_speed,
+            "twinkle_scale": self.twinkle_scale.to_obj(),
+            "burst_multiplier": self.burst_multiplier,
+            "drag": self.drag,
+            "basespin": self.basespin,
+            "base_spin_vary": self.base_spin_vary,
+            "spin": self.spin,
+            "tumble": self.tumble.to_obj(),
+            "wind_vector": list(self.wind_vector),
+            "wind_time": self.wind_time,
+            "follow_speed1": self.follow_speed1,
+            "follow_scale1": self.follow_scale1,
+            "follow_speed2": self.follow_speed2,
+            "follow_scale2": self.follow_scale2,
+            "spline_points": self.spline_points.to_obj(),
+            "enabled_in": self.enabled_in.to_obj(),
+        }
 
 #############################################################
 ######                  Miscellaneous                  ######
@@ -1061,6 +1264,20 @@ class M2Light:
         self.visibility.write(f)
 
         return self
+
+    def to_obj(self):
+        return {
+            "type": self.type,
+            "bone": self.bone,
+            "position": list(self.position),
+            "ambient_color": self.ambient_color.to_obj(),
+            "ambient_intensity": self.ambient_intensity.to_obj(),
+            "diffuse_color": self.diffuse_color.to_obj(),
+            "diffuse_intensity": self.diffuse_intensity.to_obj(),
+            "attenuation_start": self.attenuation_start.to_obj(),
+            "attenuation_end": self.attenuation_end.to_obj(),
+            "visibility": self.visibility.to_obj(),
+        }
 
     @staticmethod
     def size():
@@ -1120,6 +1337,19 @@ class M2Camera:
 
         return self
 
+    def to_obj(self):
+        return {
+            "type": self.type,
+            "fov": self.fov,
+            "far_clip": self.far_clip,
+            "near_clip": self.near_clip,
+            "positions": self.positions.to_obj(),
+            "position_base": list(self.position_base),
+            "target_position": self.target_position.to_obj(),
+            "target_position_base": list(self.target_position_base),
+            "roll": self.roll.to_obj()
+        }
+
     @staticmethod
     def size():
         tracks = 60 if M2VersionsManager().m2_version >= M2Versions.WOTLK else 84
@@ -1155,6 +1385,15 @@ class M2Attachment:
 
         return self
 
+    def to_obj(self):
+        return {
+            "id": self.id,
+            "bone": self.bone,
+            "unknown": self.unknown,
+            "position": list(self.position),
+            "animate_attached": self.animate_attached.to_obj()
+        }
+
     @staticmethod
     def size():
         return 40 if M2VersionsManager().m2_version >= M2Versions.WOTLK else 48
@@ -1188,6 +1427,15 @@ class M2Event:
         self.enabled.write(f)
 
         return self
+
+    def to_obj(self):
+        return {
+            "identifier": self.identifier,
+            "data": self.data,
+            "bone": self.bone,
+            "position": list(self.position),
+            "enabled": self.enabled.to_obj()
+        }
 
     @staticmethod
     def size():
@@ -1403,6 +1651,43 @@ class M2Header:
             self.texture_combiner_combos.write(f)
 
         return self
+
+    def to_obj(self):
+        return {
+            "name": self.name.to_obj(),
+            "global_flags": self.global_flags,
+            "global_sequences": self.global_sequences.to_obj(),
+            "sequence_lookup": self.sequence_lookup.to_obj(),
+            "bones": self.bones.to_obj(),
+            "key_bone_lookup": self.key_bone_lookup.to_obj(),
+            "vertices": self.vertices.to_obj(),
+            "num_skin_profiles": self.num_skin_profiles,
+            "colors": self.colors.to_obj(),
+            "textures": self.textures.to_obj(),
+            "texture_weights": self.texture_weights.to_obj(),
+            "texture_transofmrs": self.texture_transforms.to_obj(),
+            "replacable_texture_lookup": self.replacable_texture_lookup.to_obj(),
+            "materials": self.materials.to_obj(),
+            "bone_lookup_table": self.bone_lookup_table.to_obj(),
+            "texture_lookup_table": self.texture_lookup_table.to_obj(),
+            "tex_unit_lookup_table": self.tex_unit_lookup_table.to_obj(),
+            "transparency_lookup_table": self.transparency_lookup_table.to_obj(),
+            "texture_transforms_lookup_table": self.texture_transforms_lookup_table.to_obj(),
+            "bounding_box": self.bounding_box.to_obj(),
+            "collision_box": self.collision_box.to_obj(),
+            "collision_sphere_radius": self.collision_sphere_radius,
+            "collision_triangles": self.collision_triangles.to_obj(),
+            "collision_normals": self.collision_normals.to_obj(),
+            "attachments": self.attachments.to_obj(),
+            "attachment_lookup_table": self.attachment_lookup_table.to_obj(),
+            "events": self.events.to_obj(),
+            "lights": self.lights.to_obj(),
+            "cameras": self.cameras.to_obj(),
+            "camera_lookup_table": self.camera_lookup_table.to_obj(),
+            "ribbon_emitters": self.ribbon_emitters.to_obj(),
+            "particle_emitters": self.particle_emitters.to_obj(),
+            "texture_combiner_combos": self.texture_combiner_combos.to_obj(),
+        }
 
     def assign_bone_names(self):
         # assign bone names # TODO: rewrite this crap
