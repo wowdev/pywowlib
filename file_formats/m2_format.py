@@ -1649,6 +1649,7 @@ class M2Header:
             "name": self.name.to_obj(),
             "global_flags": self.global_flags,
             "global_sequences": self.global_sequences.to_obj(),
+            "sequences": self.sequences.to_obj(),
             "sequence_lookup": self.sequence_lookup.to_obj(),
             "bones": self.bones.to_obj(),
             "key_bone_lookup": self.key_bone_lookup.to_obj(),
