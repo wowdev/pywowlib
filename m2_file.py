@@ -484,13 +484,14 @@ class M2File:
 
         return tex_id
 
-    def add_bone(self, pivot, key_bone_id, flags, parent_bone):
+    def add_bone(self, pivot, key_bone_id, flags, parent_bone,submesh_id = 0, bone_name_crc = 0):
         m2_bone = M2CompBone()
         m2_bone.key_bone_id = key_bone_id
         m2_bone.flags = flags
         m2_bone.parent_bone = parent_bone
         m2_bone.pivot = tuple(pivot)
-
+        m2_bone.submesh_id = submesh_id
+        m2_bone.bone_name_crc = bone_name_crc
         bone_id = self.root.bones.add(m2_bone)
         self.root.key_bone_lookup.append(key_bone_id)
 
