@@ -1,3 +1,4 @@
+#define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #define STORM_MODULE
 #include "stormmodule.h"
