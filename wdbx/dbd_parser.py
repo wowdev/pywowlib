@@ -258,7 +258,7 @@ class definition(Grammar):
     def grammar_elem_init(self, sessiondata):
 
         def flatten(lis, rec_depth=0):
-            from collections import Iterable
+            from collections.abc import Iterable
             for item in lis:
                 if isinstance(item, Iterable) and not isinstance(item, str):
                     for x in flatten(item):
