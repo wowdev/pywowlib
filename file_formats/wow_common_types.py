@@ -1,6 +1,6 @@
 from ..io_utils.types import *
 from io import SEEK_CUR, BytesIO
-from collections import Iterable
+from collections.abc import Iterable
 
 __reload_order_index__ = 1
 
