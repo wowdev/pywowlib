@@ -4,3 +4,6 @@
 [submodule "archives/casc"]
 	path = archives/casc
 	url = https://github.com/wowdev/pyCASCLib
+[submodule "archives/mpq/native/StormLib"]
+	path = archives/mpq/native/StormLib
+	url = https://github.com/ladislav-zezula/StormLib

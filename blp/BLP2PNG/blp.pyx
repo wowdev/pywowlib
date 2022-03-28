@@ -1,7 +1,7 @@
 
 cdef extern from "native/BlpConvert.h" namespace "python_blp":
     cdef cppclass BlpConvert:
-        BlpConvert() except +
+        BlpConvert()
         void convert(unsigned char* inputFile, unsigned int fileSize, const char* inputFileName,
                      const char* outputPath)
 

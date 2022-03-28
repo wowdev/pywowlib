@@ -1,17 +1,20 @@
+#!/usr/bin/env python
 import platform
-from distutils.core import setup, Extension
+from setuptools import setup, Extension
 from Cython.Build import cythonize
 
-if platform.system() != 'Darwin':
-    extra_compile_args = ['-O3'] 
-    extra_link_args = []
-else:
-    extra_compile_args = ['-O3', '-mmacosx-version-min=10.9', '-stdlib=libc++', '-Wdeprecated']
-    extra_link_args = ['-stdlib=libc++', '-mmacosx-version-min=10.9']
+def main():
 
-setup(
-    name='BLP To PNG Converter',
-    ext_modules=cythonize([Extension(
+    print("\nBuilding BLP2PNG extension.")
+
+    if platform.system() != 'Darwin':
+        extra_compile_args = ['-O3']
+        extra_link_args = []
+    else:
+        extra_compile_args = ['-O3', '-mmacosx-version-min=10.9', '-stdlib=libc++', '-Wdeprecated']
+        extra_link_args = ['-stdlib=libc++', '-mmacosx-version-min=10.9']
+
+    extensions = [Extension(
         "BLP2PNG",
         sources=[
             "blp.pyx",
@@ -57,6 +60,18 @@ setup(
         language="c++",
         extra_compile_args=extra_compile_args,
         extra_link_args=extra_link_args
-    )]),
-    requires=['Cython']
-)
+    )]
+
+    for e in extensions:
+        e.cython_directives = {'language_level': "3"}
+
+    setup(
+        name='BLP To PNG Converter',
+        ext_modules=cythonize(extensions),
+        requires=['Cython']
+    )
+
+    print("\nSuccesfully built BLP2PNG extension.")
+
+if __name__ == '__main__':
+    main()
