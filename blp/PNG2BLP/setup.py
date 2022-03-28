@@ -1,79 +1,88 @@
+#!/usr/bin/env python
 import platform
-from distutils.core import setup, Extension
+from setuptools import setup, Extension
 from Cython.Build import cythonize
 
-if platform.system() != 'Darwin':
-    extra_compile_args = ['-O3'] 
-    extra_link_args = []
-else:
-    extra_compile_args = ['-O3', '-mmacosx-version-min=10.9', '-stdlib=libc++', '-Wdeprecated']
-    extra_link_args = ['-stdlib=libc++', '-mmacosx-version-min=10.9']
+def main():
+    print("\nBuilding PNG2BLP extension.")
 
-setup(
-    name='BLP To PNG Converter',
-    ext_modules=cythonize([Extension(
-        "PNG2BLP",
-        sources=[
-            "png2blp.pyx",
+    if platform.system() != 'Darwin':
+        extra_compile_args = ['-O3']
+        extra_link_args = []
+    else:
+        extra_compile_args = ['-O3', '-mmacosx-version-min=10.9', '-stdlib=libc++', '-Wdeprecated']
+        extra_link_args = ['-stdlib=libc++', '-mmacosx-version-min=10.9']
 
-            "native/BinaryWriter.cpp",
-            "native/GaussFiltering.cpp",
-            "native/MipMapGenerator.cpp",
-            "native/Png2Blp.cpp",
-            "native/PngReader.cpp",
-            "native/Quantizer.cpp",
+    setup(
+        name='BLP To PNG Converter',
+        ext_modules=cythonize([Extension(
+            "PNG2BLP",
+            sources=[
+                "png2blp.pyx",
 
-            # ZLIB
-            "../include/zlib/adler32.c",
-            "../include/zlib/compress.c",
-            "../include/zlib/crc32.c",
-            "../include/zlib/deflate.c",
-            "../include/zlib/infback.c",
-            "../include/zlib/inffast.c",
-            "../include/zlib/inflate.c",
-            "../include/zlib/inftrees.c",
-            "../include/zlib/trees.c",
-            "../include/zlib/uncompr.c",
-            "../include/zlib/zutil.c",
+                "native/BinaryWriter.cpp",
+                "native/GaussFiltering.cpp",
+                "native/MipMapGenerator.cpp",
+                "native/Png2Blp.cpp",
+                "native/PngReader.cpp",
+                "native/Quantizer.cpp",
 
-            # PNGPP
-            # header only
+                # ZLIB
+                "../include/zlib/adler32.c",
+                "../include/zlib/compress.c",
+                "../include/zlib/crc32.c",
+                "../include/zlib/deflate.c",
+                "../include/zlib/infback.c",
+                "../include/zlib/inffast.c",
+                "../include/zlib/inflate.c",
+                "../include/zlib/inftrees.c",
+                "../include/zlib/trees.c",
+                "../include/zlib/uncompr.c",
+                "../include/zlib/zutil.c",
 
-            # LIBPNG
-            "../include/libpng/png.c",
-            "../include/libpng/pngerror.c",
-            "../include/libpng/pngget.c",
-            "../include/libpng/pngmem.c",
-            "../include/libpng/pngpread.c",
-            "../include/libpng/pngread.c",
-            "../include/libpng/pngrio.c",
-            "../include/libpng/pngrtran.c",
-            "../include/libpng/pngrutil.c",
-            "../include/libpng/pngset.c",
-            "../include/libpng/pngtrans.c",
-            "../include/libpng/pngwio.c",
-            "../include/libpng/pngwrite.c",
-            "../include/libpng/pngwtran.c",
-            "../include/libpng/pngwutil.c",
+                # PNGPP
+                # header only
 
-            # LIBIMAGEQUANT
-            "../include/libimagequant/blur.c",
-            "../include/libimagequant/kmeans.c",
-            "../include/libimagequant/libimagequant.c",
-            "../include/libimagequant/mediancut.c",
-            "../include/libimagequant/mempool.c",
-            "../include/libimagequant/nearest.c",
-            "../include/libimagequant/pam.c",
+                # LIBPNG
+                "../include/libpng/png.c",
+                "../include/libpng/pngerror.c",
+                "../include/libpng/pngget.c",
+                "../include/libpng/pngmem.c",
+                "../include/libpng/pngpread.c",
+                "../include/libpng/pngread.c",
+                "../include/libpng/pngrio.c",
+                "../include/libpng/pngrtran.c",
+                "../include/libpng/pngrutil.c",
+                "../include/libpng/pngset.c",
+                "../include/libpng/pngtrans.c",
+                "../include/libpng/pngwio.c",
+                "../include/libpng/pngwrite.c",
+                "../include/libpng/pngwtran.c",
+                "../include/libpng/pngwutil.c",
 
-            # LIBTXC_DXTN
-            "../include/libtxc_dxtn/txc_compress_dxtn.c",
-            "../include/libtxc_dxtn/txc_fetch_dxtn.c"
-        ],
+                # LIBIMAGEQUANT
+                "../include/libimagequant/blur.c",
+                "../include/libimagequant/kmeans.c",
+                "../include/libimagequant/libimagequant.c",
+                "../include/libimagequant/mediancut.c",
+                "../include/libimagequant/mempool.c",
+                "../include/libimagequant/nearest.c",
+                "../include/libimagequant/pam.c",
 
-        include_dirs=["../include/zlib", "../include/libimagequant", "../include/libpng", "../include/libtxc_dxtn", "../include/pngpp"],
-        language="c++",
-        extra_compile_args=extra_compile_args,
-        extra_link_args=extra_link_args
-    )]),
-    requires=['Cython']
-)
+                # LIBTXC_DXTN
+                "../include/libtxc_dxtn/txc_compress_dxtn.c",
+                "../include/libtxc_dxtn/txc_fetch_dxtn.c"
+            ],
+
+            include_dirs=["../include/zlib", "../include/libimagequant", "../include/libpng", "../include/libtxc_dxtn", "../include/pngpp"],
+            language="c++",
+            extra_compile_args=extra_compile_args,
+            extra_link_args=extra_link_args
+        )]),
+        requires=['Cython']
+    )
+
+    print("\nSuccesfully built PNG2BLP extension.")
+
+if __name__ == '__main__':
+    main()
