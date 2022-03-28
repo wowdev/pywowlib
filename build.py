@@ -10,7 +10,7 @@ def build_project():
     try:
         import Cython
     except ImportError:
-        raise Exception("\nCython is required to build this project")
+        raise Exception("\nCython is required to build this project.")
 
     try:
         from pip import main as pipmain
@@ -18,7 +18,7 @@ def build_project():
         try:
             from pip._internal import main as pipmain
         except ImportError:
-            raise Exception("\npip is required to build this project")
+            raise Exception("\npip is required to build this project.")
 
     import os
 
@@ -35,7 +35,7 @@ def build_project():
 
     for module_relpath in extension_dirs:
         try:
-            os.chdir(os.path.join(addon_root_path, module_relpath))
+            os.chdir(os.path.join(root_path, module_relpath))
             status = subprocess.call([PYTHON_PATH, "setup.py", 'build_clib', 'build_ext', '--inplace'])
 
             if status:
