@@ -30,9 +30,10 @@ class WoWFileData:
 
     def has_file(self, identifier: Union[str, int]):
         """ Check if the file is available in WoW filesystem """
-        for storage, type in reversed(self.files):
-            if type:
+        for storage, storage_type in reversed(self.files):
+            if storage_type:
                 if WoWVersionManager().client_version < WoWVersions.WOD:
+                    identifier = identifier.replace('/', '\\')
                     file = identifier in storage
                 else:
 
@@ -51,7 +52,7 @@ class WoWFileData:
                 file = os.path.exists(abs_path) and os.path.isfile(abs_path)
 
             if file:
-                return storage, type
+                return storage, storage_type
 
         return None, None
 
@@ -79,7 +80,7 @@ class WoWFileData:
             if storage:
 
                 if is_archive:
-                    return storage.open(identifier).read(), ""
+                    return storage.open(identifier.replace('/', '\\')).read(), ""
 
                 else:
                     filepath = os.path.join(storage, identifier)
@@ -243,9 +244,11 @@ class WoWFileData:
         return ret_path
 
     @staticmethod
-    def list_game_data_paths(path):
+    def list_game_data_paths(path) -> List[Tuple[str, str]]:
         """List files and directories in a directory that correspond to WoW patch naming rules."""
-        dir_files = []
+        """Returns list of tuples (normalized_path, real_path)"""
+
+        dir_files: List[Tuple[str, str]] = []
         for f in os.listdir(path):
             cur_path = os.path.join(path, f)
 
@@ -253,11 +256,11 @@ class WoWFileData:
             and os.path.splitext(f)[1].lower() == '.mpq' \
             or not os.path.isfile(cur_path) \
             and re.match(r'patch-\w.mpq', f.lower()):
-                dir_files.append(cur_path.lower().strip())
+                dir_files.append((cur_path.lower().strip(), cur_path))
 
-        map(lambda x: x.lower(), dir_files)
+        map(lambda x: (x[0].lower(), x[1]), dir_files)
 
-        dir_files.sort(key=lambda s: os.path.splitext(s)[0])
+        dir_files.sort(key=lambda s: os.path.splitext(s[0])[0])
 
         locales = (
             'frFR', 'deDE', 'enGB',
@@ -274,7 +277,7 @@ class WoWFileData:
         else:
             raise NotADirectoryError('\nFailed to load game data. WoW client appears to be missing a locale folder.')
 
-        locale_dir_files = []
+        locale_dir_files: List[Tuple[str, str]] = []
         for f in os.listdir(locale_path):
             cur_path = os.path.join(locale_path, f)
 
@@ -282,10 +285,10 @@ class WoWFileData:
             and os.path.splitext(f)[1].lower() == '.mpq' \
             or not os.path.isfile(cur_path) \
             and re.match(r'patch-{}-\w.mpq'.format(token), f.lower()):
-                locale_dir_files.append(cur_path.lower().strip())
+                locale_dir_files.append((cur_path.lower().strip(), cur_path))
 
-        map(lambda x: x.lower(), locale_dir_files)
-        locale_dir_files.sort(key=lambda s: os.path.splitext(s)[0])
+        map(lambda x: (x[0].lower(), x[1]), locale_dir_files)
+        locale_dir_files.sort(key=lambda s: os.path.splitext(s[0])[0])
 
         return dir_files + locale_dir_files
 
@@ -323,7 +326,7 @@ class WoWFileData:
         return [(casc, True), (project_path.lower().strip(os.sep), False)] if project_path else [(casc, True)]
 
     @staticmethod
-    def init_mpq_storage(wow_path, project_path=None):
+    def init_mpq_storage(wow_path, project_path=None) -> List[Tuple[Union[MPQFile, str], bool]]:
         """Open game resources and store links to them in memory"""
 
         print("\nProcessing available game resources of client: " + wow_path)
@@ -336,18 +339,20 @@ class WoWFileData:
         data_packages = WoWFileData.list_game_data_paths(os.path.join(wow_path, "Data"))
 
         # project path takes top priority if it is not loaded already
-        p_path = project_path.lower().strip(os.sep)
-        if p_path not in data_packages:
-            data_packages.append(p_path)
 
-        resource_map = []
+        if project_path:
+            p_path = project_path.lower().strip(os.sep)
+            if p_path not in data_packages:
+                data_packages.append((p_path, p_path))
 
-        for package in data_packages:
-            if os.path.isfile(package):
-                resource_map.append((MPQFile(package, 0x00000100), True))
+        resource_map: List[Tuple[Union[MPQFile, str], bool]] = []
+
+        for package, package_path in data_packages:
+            if os.path.isfile(package_path):
+                resource_map.append((MPQFile(package_path, 0x00000100), True))
                 print("\nLoaded MPQ: " + os.path.basename(package))
             else:
-                resource_map.append((package, False))
+                resource_map.append((package_path, False))
                 print("\nLoaded folder patch: {}".format(os.path.basename(package)))
 
         print("\nDone initializing data packages.")

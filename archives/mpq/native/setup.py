@@ -25,8 +25,7 @@ def main():
     os.chdir(build_dir)
 
     cmake_defines = ['-DCMAKE_BUILD_TYPE=Release'
-    , '-DCASC_BUILD_SHARED_LIB=OFF'
-    , '-DCASC_BUILD_STATIC_LIB=ON']
+    , '-DBUILD_SHARED_LIBS=OFF']
 
     if sys.platform != 'win32':
         cmake_defines.extend(['-DCMAKE_CXX_FLAGS=-fPIC', '-DCMAKE_C_FLAGS=-fPIC'])
@@ -51,16 +50,19 @@ def main():
 
     os.chdir(CUR_DIR)
 
-    static_libraries = ['storm']
+    static_libraries = ['StormLib'] if sys.platform == 'win32' else ['storm']
     static_lib_dir = 'lib'
     libraries = []
     library_dirs = []
     extra_objects = []
+    define_macros = []
 
     if sys.platform == 'win32':
         libraries.extend(static_libraries)
+        libraries.append('user32')
         library_dirs.append(static_lib_dir)
         extra_objects = []
+        define_macros.append(('STORMLIB_NO_AUTO_LINK', None))
     else: # POSIX
         extra_objects = ['{}/lib{}.a'.format(static_lib_dir, l) for l in static_libraries]
         libraries.append("bz2")
@@ -72,7 +74,8 @@ def main():
     	libraries=libraries,
     	include_dirs=["include"],
     	library_dirs=library_dirs,
-        extra_objects=extra_objects
+        extra_objects=extra_objects,
+        define_macros=define_macros
     )
 
     setup(ext_modules=[module])
