@@ -403,7 +403,7 @@ namespace python_blp {
             return;
         }
 
-        std::cout << "Attempting to create directories for: " << path << std::endl;
+        //std::cout << "Attempting to create directories for: " << path << std::endl;
         std::string pathPart;
         std::stringstream pathStream;
         pathStream << path.substr(0, lastSlash);
