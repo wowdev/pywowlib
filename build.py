@@ -39,15 +39,15 @@ def build_project():
             status = subprocess.call([PYTHON_PATH, "setup.py", 'build_clib', 'build_ext', '--inplace'])
 
             if status:
-                print (f"\nProcess returned error code {status} while building module \"{module_relpath}\"")
+                print(f"\nProcess returned error code {status} while building module \"{module_relpath}\"")
                 sys.exit(1)
 
         except PermissionError:
-            raise PermissionError("\nThis build script may need to be called with admin (root) rights.")
+            print("\nThis build script may need to be called with admin (root) rights.")
             sys.exit(1)
 
         except RuntimeError:
-            print ("\nUnknown error occured.")
+            print("\nUnknown error occured.")
             sys.exit(1)
 
 
