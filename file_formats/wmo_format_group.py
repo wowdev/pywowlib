@@ -66,7 +66,6 @@ class MOGP(ContentChunk):
         return self
 
     def write(self, f):
-        self.size = 64
         super().write(f)
 
         uint32.write(f, self.group_name_ofs)
