@@ -2,6 +2,7 @@ __pycache__/
 archives/mpq/native/build/
 archives/mpq/native/lib/
 archives/mpq/native/include/
+build/
 blp/BLP2PNG/build/
 blp/BLP2PNG/blp.cpp
 blp/PNG2BLP/build/
