@@ -26,7 +26,6 @@ def print_info(*s: str):
     print("\033[93m {}\033[00m".format(' '.join(s)))
 
 
-
 def main(debug: bool):
     print_info('\nBuilding MPQ extension...')
     print(f'Target mode: {"Debug" if debug else "Release"}')
