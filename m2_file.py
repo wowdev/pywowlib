@@ -516,7 +516,9 @@ class M2File:
     def add_anim(self, a_id, var_id, frame_bounds, movespeed, flags, frequency, replay, bl_time, bounds, var_next=None, alias_next=None):
         seq = M2Sequence()
         seq_id = self.root.sequences.add(seq)
-        self.root.sequence_lookup.append(seq_id)
+        while len(self.root.sequence_lookup) <= seq_id:
+            self.root.sequence_lookup.append(-1)
+        self.root.sequence_lookup.set_index(seq_id,a_id)
 
         # It is presumed that framerate is always 24 fps.
         if self.version <= M2Versions.TBC:
