@@ -34,7 +34,6 @@ def build_type_mismatch(debug: bool) -> bool:
                 cur_mode = b'\x00' if debug else b'\x01'
                 old_mode = f.read(1)
                 if old_mode != cur_mode:
-                    print(old_mode)
                     has_mismatch = True
             else:
                 has_mismatch = True
