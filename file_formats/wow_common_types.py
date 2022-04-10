@@ -316,6 +316,9 @@ class M2Array(metaclass=Template):
             # TODO hack
             return [value for value in self.values]
 
+    def set_index(self, index, value):
+        self.values[index] = value
+
     def set(self, itrbl):
         self.values = itrbl
 
