@@ -1,6 +1,6 @@
 from struct import pack, unpack
 from functools import partial
-from collections import Iterable
+from collections.abc import Iterable
 
 __reload_order_index__ = 0
 

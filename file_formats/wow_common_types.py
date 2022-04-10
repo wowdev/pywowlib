@@ -1,6 +1,6 @@
 from ..io_utils.types import *
 from io import SEEK_CUR, BytesIO
-from collections import Iterable
+from collections.abc import Iterable
 
 __reload_order_index__ = 1
 
@@ -383,14 +383,21 @@ class M2RawChunk(M2ContentChunk):
 class ArrayChunkBase:  # for internal use only
     item = None
     data = "content"
+    raw_data = None
 
     def __init__(self):
         super().__init__()
         setattr(self, self.data, [])
 
+    def from_bytes(self, data: bytes):
+        self.raw_data = data
+
     def read(self, f):
         super().read(f)
+        self._read_content(f)
+        return self
 
+    def _read_content(self, f):
         size = 0
 
         if isinstance(self.item, Iterable):
@@ -402,10 +409,9 @@ class ArrayChunkBase:  # for internal use only
         else:
             setattr(self, self.data, [self.item().read(f) for _ in range(self.size // self.item.size())])
 
-        return self
-
     def write(self, f):
         content = getattr(self, self.data)
+        self.size = 0
 
         if isinstance(self.item, Iterable):
 
@@ -415,8 +421,15 @@ class ArrayChunkBase:  # for internal use only
                 self.size += var.size()
                 is_generic_type_map[i] = isinstance(var, GenericType)
 
-            self.size *= len(content)
+            if self.raw_data is None:
+                self.size *= len(content)
+            else:
+                self.size = len(self.raw_data)
             super().write(f)
+
+            if self.raw_data:
+                f.write(self.raw_data)
+                return self
 
             for struct in content:
                 for i, var in enumerate(struct):
@@ -428,9 +441,13 @@ class ArrayChunkBase:  # for internal use only
                         var.write(f)
 
         else:
-            self.size = len(content) * self.item.size()
+            self.size = (len(content) * self.item.size()) if self.raw_data is None else len(self.raw_data)
 
             super().write(f)
+
+            if self.raw_data:
+                f.write(self.raw_data)
+                return self
 
             for var in content:
 
@@ -442,6 +459,17 @@ class ArrayChunkBase:  # for internal use only
                     var.write(f)
 
         return self
+
+    def __getattribute__(self, item):
+
+        raw_data = super().__getattribute__('raw_data')
+        if item == super().__getattribute__('data') and raw_data is not None:
+            f = BytesIO(raw_data)
+            self.size = len(raw_data)
+            self._read_content(f)
+            self.raw_data = None
+
+        return super().__getattribute__(item)
 
 
 class ArrayChunk(ArrayChunkBase, ContentChunk):  # for inheriting only
