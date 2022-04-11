@@ -493,7 +493,10 @@ class M2File:
         m2_bone.submesh_id = submesh_id
         m2_bone.bone_name_crc = bone_name_crc
         bone_id = self.root.bones.add(m2_bone)
-        self.root.key_bone_lookup.append(key_bone_id)
+        if key_bone_id >= 0:
+            while len(self.root.key_bone_lookup) <= key_bone_id:
+                self.root.key_bone_lookup.append(-1)
+            self.root.key_bone_lookup.set_index(key_bone_id,bone_id)
 
         return bone_id
 
