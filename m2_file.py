@@ -528,7 +528,7 @@ class M2File:
         if self.version <= M2Versions.TBC:
             seq.start_timestamp, seq.end_timestamp = int(frame_bounds[0] // 0.0266666), int(frame_bounds[1] // 0.0266666)
         else:
-            seq.duration = int((frame_bounds[1] - frame_bounds[0]) // 0.0266666)
+            seq.duration = int(round((frame_bounds[1] - frame_bounds[0]) / 0.0266666))
 
         seq.id = a_id
         seq.variation_index = var_id
