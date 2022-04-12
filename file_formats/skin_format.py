@@ -68,6 +68,21 @@ class M2SkinSubmesh:
 
         return self
 
+    def to_obj(self):
+        return {
+            "skin_section_id": self.skin_section_id,
+            "level": self.level,
+            "vertex_start": self.vertex_start,
+            "vertex_count": self.vertex_count,
+            "index_start": self.index_start,
+            "index_count": self.index_count,
+            "bone_count": self.bone_count,
+            "bone_combo_index": self.bone_combo_index,
+            "bone_influences": self.bone_influences,
+            "center_bone_index": self.center_bone_index,
+            "center_position": self.center_position
+        }
+
 
 class M2SkinTextureUnit:
     def __init__(self):
@@ -119,6 +134,22 @@ class M2SkinTextureUnit:
 
         return self
 
+    def to_obj(self):
+        return {
+            "flags": self.flags,
+            "priority_plane": self.priority_plane,
+            "shader_id": self.shader_id,
+            "skin_section_index": self.skin_section_index,
+            "geoset_index": self.geoset_index,
+            "color_index": self.color_index,
+            "material_index": self.material_index,
+            "material_layer": self.material_layer,
+            "texture_count": self.texture_count,
+            "texture_combo_index": self.texture_combo_index,
+            "texture_coord_combo_index": self.texture_coord_combo_index,
+            "texture_weight_combo_index": self.texture_weight_combo_index,
+            "texture_transform_combo_index": self.texture_transform_combo_index
+        }
 
 class M2ShadowBatch:
 
@@ -154,6 +185,17 @@ class M2ShadowBatch:
         uint16.write(f, self.color_id)
         uint16.write(f, self.transparency_id)
         return self
+
+    def to_obj(self):
+        return {
+            "flags": self.flags,
+            "flags2": self.flags2,
+            "_unknown1": self._unknown1,
+            "submesh_id": self.submesh_id,
+            "texture_id": self.texture_id,
+            "color_id": self.color_id,
+            "transparency_id": self.transparency_id
+        }
 
 
 class M2SkinProfile:
@@ -207,6 +249,15 @@ class M2SkinProfile:
 
         return self
 
+    def to_obj(self):
+        return {
+            "vertex_indices": self.vertex_indices.to_obj(),
+            "triangle_indices": self.triangle_indices.to_obj(),
+            "bone_indices": self.bone_indices.to_obj(),
+            "submeshes": self.submeshes.to_obj(),
+            "texture_units": self.texture_units.to_obj(),
+            "bone_max_count": self.bone_count_max,
+        }
 
 
 

@@ -125,6 +125,9 @@ class Array(metaclass=Template):
 
         return self
 
+    def to_obj(self):
+        return self.values
+
 
 ###### Common binary types ######
 

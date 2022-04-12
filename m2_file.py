@@ -300,7 +300,10 @@ class M2File:
             self.skins = self.root.skin_profiles
 
     def to_obj(self):
-        return self.root.to_obj()
+        return {
+            "root": self.root.to_obj(),
+            "skins": [skin.to_obj() for skin in self.skins]
+        }
 
     def write(self, filepath):
         with open(filepath, 'wb') as f:
