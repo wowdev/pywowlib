@@ -26,11 +26,11 @@ def main(debug: bool):
     # compiler and linker settings
     if platform.system() == 'Darwin':
         if debug:
-            extra_compile_args = ['-g3', '-O0', '-stdlib=libc++']
-            extra_link_args = ['-stdlib=libc++']
+            extra_compile_args = ['-std=c++17', '-g3', '-O0']
+            extra_link_args = []
         else:
-            extra_compile_args = ['-O3', '-stdlib=libc++']
-            extra_link_args = ['-stdlib=libc++']
+            extra_compile_args = ['-std=c++17', '-O3']
+            extra_link_args = []
 
     elif platform.system() == 'Windows':
         if debug:
