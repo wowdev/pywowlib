@@ -366,9 +366,13 @@ class M2File:
         # localize bone indices
         unique_bone_ids = set(chain(*b_indices))
 
+        submesh.bone_combo_index = len(self.root.bone_lookup_table)
+        submesh.bone_count = len(unique_bone_ids)
+        submesh.bone_influences = max_influences
+
         bone_lookup = {}
         for bone_id in unique_bone_ids:
-            bone_lookup[bone_id] = self.root.bone_lookup_table.add(bone_id)
+            bone_lookup[bone_id] = self.root.bone_lookup_table.add(bone_id)-submesh.bone_combo_index
 
         # todo: hackfix to update bone_count_max, need to figure out what this actually does
         bone_count = len(bone_lookup)
@@ -391,29 +395,7 @@ class M2File:
             self.add_vertex(*args)
 
             indices = skin.bone_indices.new()
-            indices.values = b_indices[i]
-
-        # found min bone index
-        bone_min = None
-        for index_set in b_indices:
-            for index in index_set:
-                if bone_min is None:
-                    bone_min = index
-                elif index < bone_min:
-                    bone_min = index
-
-        # found  max bone index
-        bone_max = None
-        for index_set in b_indices:
-            for index in index_set:
-                if bone_max is None:
-                    bone_max = index
-                elif index > bone_max:
-                    bone_max = index
-
-        submesh.bone_combo_index = bone_min
-        submesh.bone_count = bone_max + 1
-        submesh.bone_influences = max_influences
+            indices.values = list(local_b_indices)
 
         submesh.vertex_start = start_index
         submesh.vertex_count = len(vertices)
