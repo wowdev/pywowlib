@@ -370,6 +370,15 @@ class M2File:
         for bone_id in unique_bone_ids:
             bone_lookup[bone_id] = self.root.bone_lookup_table.add(bone_id)
 
+        # todo: hackfix to update bone_count_max, need to figure out what this actually does
+        bone_count = len(bone_lookup)
+        if bone_count > skin.bone_count_max:
+            bone_count_max_values = [21,53,64,256]
+            for val in bone_count_max_values:
+                if val >= bone_count:
+                    skin.bone_count_max = val
+                    break
+
         # add vertices
         start_index = len(self.root.vertices)
         for i, vertex_pos in enumerate(vertices):
