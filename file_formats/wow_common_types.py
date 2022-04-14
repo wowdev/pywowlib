@@ -434,7 +434,7 @@ class ArrayChunkBase:  # for internal use only
                 content = getattr(self, self.data)
                 self.size = (len(content) * self.item.size())
             else:
-                len(self.raw_data)
+                self.size = len(self.raw_data)
 
             super().write(f)
 
