@@ -397,7 +397,6 @@ class ArrayChunkBase:  # for internal use only
             setattr(self, self.data, [self.item().read(f) for _ in range(self.size // self.item.size())])
 
     def write(self, f):
-        content = getattr(self, self.data)
         self.size = 0
 
         if isinstance(self.item, Iterable):
@@ -409,9 +408,11 @@ class ArrayChunkBase:  # for internal use only
                 is_generic_type_map[i] = isinstance(var, GenericType)
 
             if self.raw_data is None:
+                content = getattr(self, self.data)
                 self.size *= len(content)
             else:
                 self.size = len(self.raw_data)
+
             super().write(f)
 
             if self.raw_data:
@@ -428,7 +429,12 @@ class ArrayChunkBase:  # for internal use only
                         var.write(f)
 
         else:
-            self.size = (len(content) * self.item.size()) if self.raw_data is None else len(self.raw_data)
+            content = None
+            if self.raw_data is None:
+                content = getattr(self, self.data)
+                self.size = (len(content) * self.item.size())
+            else:
+                len(self.raw_data)
 
             super().write(f)
 
