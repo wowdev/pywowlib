@@ -1,6 +1,9 @@
+import struct
+
 from ..io_utils.types import *
 from io import SEEK_CUR, BytesIO
 from collections.abc import Iterable
+from typing import Optional, Protocol, Self
 
 __reload_order_index__ = 1
 
@@ -317,6 +320,11 @@ class M2Array(metaclass=Template):
         return uint32.size() * 2
 
 
+class IOProtocol(Protocol):
+    def read(self, f) -> Self: ...
+    def write(self, f) -> Self: ...
+
+
 class ContentChunk:  # for inheriting only
 
     def __init__(self):
@@ -331,6 +339,57 @@ class ContentChunk:  # for inheriting only
         f.write(self.magic[::-1].encode('ascii'))
         uint32.write(f, self.size)
         return self
+
+
+class ContentChunkBuffered:  # for inheriting only
+    raw_data = None
+
+    def __init__(self):
+        self.magic = self.__class__.__name__
+        self.size = 0
+        self.raw_data = None
+
+    def from_bytes(self, data: bytes):
+        self.raw_data = data
+
+    def read(self, f):
+        self.size = uint32.read(f)
+        return self
+
+    def write(self, f):
+        f.write(self.magic[::-1].encode('ascii'))
+        uint32.write(f, self.size)
+        return self
+
+    def _write_buffered(self, f):
+        raw_data = super().__getattribute__('raw_data')
+        magic = super().__getattribute__('magic')
+
+        f.write(magic[::-1].encode('ascii'))
+        size = len(raw_data)
+        self.size = size
+        uint32.write(f, size)
+        f.write(raw_data)
+
+        return self
+
+    def __getattribute__(self, item):
+        raw_data = super().__getattribute__('raw_data')
+
+        if raw_data is not None:
+            if item == 'write':
+                return super().__getattribute__('_write_buffered')
+            elif item == 'read':
+                self.raw_data = None
+            elif item == 'size':
+                return len(raw_data)
+            else:
+                size = struct.pack('I', len(raw_data))
+                super().__getattribute__('read')(BytesIO(size + raw_data))
+                self.raw_data = None
+                return super().__getattribute__(item)
+
+        return super().__getattribute__(item)
 
 
 class M2ContentChunk(ContentChunk):  # for inheriting only, M2 files do not have reversed headers
@@ -368,9 +427,10 @@ class M2RawChunk(M2ContentChunk):
 
 
 class ArrayChunkBase:  # for internal use only
-    item = None
-    data = "content"
-    raw_data = None
+    item: IOProtocol = None
+    data: str = "content"
+    raw_data: Optional[bytes] = None
+    lazy_read: bool = False
 
     def __init__(self):
         super().__init__()
@@ -379,9 +439,17 @@ class ArrayChunkBase:  # for internal use only
     def from_bytes(self, data: bytes):
         self.raw_data = data
 
-    def read(self, f):
+    def as_bytes(self) -> Optional[bytes]:
+        return self.raw_data
+
+    def read(self, f) -> Self:
         super().read(f)
-        self._read_content(f)
+
+        if self.lazy_read:
+            self._read_content_raw(f)
+        else:
+            self._read_content(f)
+
         return self
 
     def _read_content(self, f):
@@ -396,8 +464,10 @@ class ArrayChunkBase:  # for internal use only
         else:
             setattr(self, self.data, [self.item().read(f) for _ in range(self.size // self.item.size())])
 
-    def write(self, f):
-        content = getattr(self, self.data)
+    def _read_content_raw(self, f):
+        self.raw_data = f.read(self.size)
+
+    def write(self, f) -> Self:
         self.size = 0
 
         if isinstance(self.item, Iterable):
@@ -409,9 +479,11 @@ class ArrayChunkBase:  # for internal use only
                 is_generic_type_map[i] = isinstance(var, GenericType)
 
             if self.raw_data is None:
+                content = getattr(self, self.data)
                 self.size *= len(content)
             else:
                 self.size = len(self.raw_data)
+
             super().write(f)
 
             if self.raw_data:
@@ -428,7 +500,12 @@ class ArrayChunkBase:  # for internal use only
                         var.write(f)
 
         else:
-            self.size = (len(content) * self.item.size()) if self.raw_data is None else len(self.raw_data)
+            content = None
+            if self.raw_data is None:
+                content = getattr(self, self.data)
+                self.size = (len(content) * self.item.size())
+            else:
+                self.size = len(self.raw_data)
 
             super().write(f)
 
@@ -448,7 +525,6 @@ class ArrayChunkBase:  # for internal use only
         return self
 
     def __getattribute__(self, item):
-
         raw_data = super().__getattribute__('raw_data')
         if item == super().__getattribute__('data') and raw_data is not None:
             f = BytesIO(raw_data)
