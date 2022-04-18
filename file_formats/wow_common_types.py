@@ -3,6 +3,7 @@ import struct
 from ..io_utils.types import *
 from io import SEEK_CUR, BytesIO
 from collections.abc import Iterable
+from typing import Optional, Protocol, Self
 
 __reload_order_index__ = 1
 
@@ -319,6 +320,11 @@ class M2Array(metaclass=Template):
         return uint32.size() * 2
 
 
+class IOProtocol(Protocol):
+    def read(self, f) -> Self: ...
+    def write(self, f) -> Self: ...
+
+
 class ContentChunk:  # for inheriting only
 
     def __init__(self):
@@ -421,9 +427,10 @@ class M2RawChunk(M2ContentChunk):
 
 
 class ArrayChunkBase:  # for internal use only
-    item = None
-    data = "content"
-    raw_data = None
+    item: IOProtocol = None
+    data: str = "content"
+    raw_data: Optional[bytes] = None
+    lazy_read: bool = False
 
     def __init__(self):
         super().__init__()
@@ -432,9 +439,17 @@ class ArrayChunkBase:  # for internal use only
     def from_bytes(self, data: bytes):
         self.raw_data = data
 
-    def read(self, f):
+    def as_bytes(self) -> Optional[bytes]:
+        return self.raw_data
+
+    def read(self, f) -> Self:
         super().read(f)
-        self._read_content(f)
+
+        if self.lazy_read:
+            self._read_content_raw(f)
+        else:
+            self._read_content(f)
+
         return self
 
     def _read_content(self, f):
@@ -449,7 +464,10 @@ class ArrayChunkBase:  # for internal use only
         else:
             setattr(self, self.data, [self.item().read(f) for _ in range(self.size // self.item.size())])
 
-    def write(self, f):
+    def _read_content_raw(self, f):
+        self.raw_data = f.read(self.size)
+
+    def write(self, f) -> Self:
         self.size = 0
 
         if isinstance(self.item, Iterable):
