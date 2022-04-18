@@ -322,7 +322,7 @@ class LiquidVertex:
         return self
 
 
-class MLIQ(ContentChunk):
+class MLIQ(ContentChunkBuffered):
     """ Liquid """
 
     def __init__(self):

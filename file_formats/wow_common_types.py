@@ -1,3 +1,5 @@
+import struct
+
 from ..io_utils.types import *
 from io import SEEK_CUR, BytesIO
 from collections.abc import Iterable
@@ -333,6 +335,57 @@ class ContentChunk:  # for inheriting only
         return self
 
 
+class ContentChunkBuffered:  # for inheriting only
+    raw_data = None
+
+    def __init__(self):
+        self.magic = self.__class__.__name__
+        self.size = 0
+        self.raw_data = None
+
+    def from_bytes(self, data: bytes):
+        self.raw_data = data
+
+    def read(self, f):
+        self.size = uint32.read(f)
+        return self
+
+    def write(self, f):
+        f.write(self.magic[::-1].encode('ascii'))
+        uint32.write(f, self.size)
+        return self
+
+    def _write_buffered(self, f):
+        raw_data = super().__getattribute__('raw_data')
+        magic = super().__getattribute__('magic')
+
+        f.write(magic[::-1].encode('ascii'))
+        size = len(raw_data)
+        self.size = size
+        uint32.write(f, size)
+        f.write(raw_data)
+
+        return self
+
+    def __getattribute__(self, item):
+        raw_data = super().__getattribute__('raw_data')
+
+        if raw_data is not None:
+            if item == 'write':
+                return super().__getattribute__('_write_buffered')
+            elif item == 'read':
+                self.raw_data = None
+            elif item == 'size':
+                return len(raw_data)
+            else:
+                size = struct.pack('I', len(raw_data))
+                super().__getattribute__('read')(BytesIO(size + raw_data))
+                self.raw_data = None
+                return super().__getattribute__(item)
+
+        return super().__getattribute__(item)
+
+
 class M2ContentChunk(ContentChunk):  # for inheriting only, M2 files do not have reversed headers
 
     def write(self, f):
@@ -454,7 +507,6 @@ class ArrayChunkBase:  # for internal use only
         return self
 
     def __getattribute__(self, item):
-
         raw_data = super().__getattribute__('raw_data')
         if item == super().__getattribute__('data') and raw_data is not None:
             f = BytesIO(raw_data)
