@@ -1420,7 +1420,7 @@ class M2Event:
         return self
 
     def write(self, f):
-        string.write(f, self.identifier.encode('utf-8'), 4)
+        f.write(self.identifier.encode('utf-8'))
         uint32.write(f, self.data)
         uint32.write(f, self.bone)  
         vec3D.write(f, self.position)
