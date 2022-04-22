@@ -2,7 +2,7 @@ from io_utils.ctypes import *
 from io_utils.struct import *
 from io_utils.metaclass_hook import Structs
 
-from typing import TypeVar
+from typing import TypeVar, no_type_check
 
 
 # Struct module allows you to create data structs declaratively.
@@ -64,12 +64,10 @@ with Structs: # -> you can also pass alignment and endianness parameters here
     # This behavior in the future as well as performing or not performing bounds and typechecks on use
     # will be parameterizable.
 
-NestedTemplatedStruct
-# Some tests
+
+# Test coverage
 T = TypeVar('T')
 Ty = TypeVar('Ty')
-
-
 
 with Structs:
 
@@ -112,7 +110,6 @@ with Structs:
     assert (ArrayOfStructs._struct_token_string == '100f100f100f100f')
 
     # array templated type
-
     class ArrayTemplatedType:
         a: StructArray(T, 10)[10] # TODO: custom TypeVar to support T[x][x]... syntax
 
@@ -122,7 +119,6 @@ with Structs:
     assert (array_templated_type_spec._struct_token_string == '100i')
 
     # forwarding templated types through another nested structure
-
     class ArrayTypeArgumentForwardTest:
         a: ArrayTemplatedType % {'T': Ty}
 
@@ -138,8 +134,83 @@ with Structs:
 
     print(NestedSpec.__name__, NestedSpec._struct_token_string)
 
+    # fully templated arrays with both type and length using template arguments
+    class ComplexTemplatedArrayStruct:
+        a: StructArray(T, Tx)
+        b: StructArray(T, 10)
+        c: int32[Tx]
 
+    try:
+        ComplexTemplatedArrayStruct_spec = ComplexTemplatedArrayStruct % int32
+    except TypeError:
+        pass
+        # This needs to error, as we provided just 1 template argument out of 2 required
+    else:
+        assert False
 
+    ComplexTemplatedArrayStruct_spec = ComplexTemplatedArrayStruct % {'T' : int32, 'Tx': 2}
+    print(ComplexTemplatedArrayStruct_spec.__name__, ComplexTemplatedArrayStruct_spec._struct_token_string)
+    assert(ComplexTemplatedArrayStruct_spec._struct_token_string == '2i10i2i')
 
+    # trying to nest this into a partial specification
 
+    try:
+        class ComplexTemplatedArrayStructParent:
+            # first, we use an already specified struct
+            a: ComplexTemplatedArrayStruct_spec
 
+            # second, we use a partial invalid specification
+            b: ComplexTemplatedArrayStruct % {'T': int32}
+    except StructError:
+        # we are supposed to error here, as field b contains an unspecified type
+        pass
+    else:
+        assert False
+
+    # doing a second incorrect attempt, now specifying an array length with inappropriate type
+    try:
+        class ComplexTemplatedArrayStructParent:
+            # first, we use an already specified struct
+            a: ComplexTemplatedArrayStruct_spec
+
+            # second, we use a partial invalid specification
+            b: ComplexTemplatedArrayStruct % {'T': int32, 'Tx': float32}
+    except TypeError:
+        # erroring here, as array length can't be represented as float
+        pass
+    else:
+        assert(False)
+
+    # a correct attempt, finally
+    class SomeSimpleTemplatedStruct:
+        a: T
+
+    class ComplexTemplatedArrayStructParent:
+        # first, we use an already specified struct
+        a: ComplexTemplatedArrayStruct_spec
+
+        # second, we use a partial invalid specification
+        b: ComplexTemplatedArrayStruct % {'T': Ty, 'Tx': 2}
+
+    # now specifying and testing
+    ComplexTemplatedArrayStructParent_spec = ComplexTemplatedArrayStructParent % (SomeSimpleTemplatedStruct % int32)
+    print(ComplexTemplatedArrayStructParent_spec.__name__, ComplexTemplatedArrayStructParent_spec._struct_token_string)
+
+"""
+class LogicProposal:
+    a: int32
+    _: Conditional(
+          If(lambda ctx: ctx.globals.wow_version >= WoWVersions.WOTLK,
+          {
+              b: int32
+          }),
+          Elif(lambda ctx: ctx.self.a == 1,
+          {
+              b: float32
+          }),
+          Else
+          ({
+              b: double
+          })
+       )
+"""

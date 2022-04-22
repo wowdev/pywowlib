@@ -73,6 +73,11 @@ class StructArray:
 
         return ret
 
+    @staticmethod
+    def _struct_is_valid_template_type(arg_type: Any) -> bool:
+        return isinstance(arg_type, (TypeVar, StructIOProtocol)) \
+               or (hasattr(arg_type.__class__, '__name__') and arg_type.__class__.__name__ == 'GenericType')
+
     def _struct_substitute_template_params(self, params: Dict[str, Any]) -> 'StructArray':
         if self._struct_is_resolved:
             raise StructError("Attempted substituting template parameters for an already resolved array.")
@@ -87,9 +92,7 @@ class StructArray:
                 counter += 1
 
                 # check if substituted type is of allowed type
-                if not (isinstance(new_type, StructIOProtocol)
-                        or isinstance(new_type, TypeVar)
-                        or new_type.__class__.__name__ == 'GenericType'):
+                if not StructArray._struct_is_valid_template_type(new_type):
                     raise TypeError(f"Failed to substitute array type parameter"
                                     f" '{self._struct_array_type.__name__}'. "
                                     f"Specified type is not a Struct, plain type or TypeVar.")
@@ -125,8 +128,8 @@ class StructArray:
 
                 struct_array_qualifier = new_type
             else:
-                raise StructError(f"Failed to substitute array type parameter. Required parameter"
-                                  f"'{self._struct_array_type.__name__}' not specified.")
+                raise StructError(f"Failed to substitute array length parameter. Required parameter"
+                                  f" '{self._struct_array_qualifier.__name__}' not specified.")
 
 
         #if counter != len(params):

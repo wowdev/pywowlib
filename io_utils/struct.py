@@ -162,6 +162,10 @@ class StructMeta(type):
     def length(cls) -> int:
         return 1
 
+    @staticmethod
+    def _struct_is_valid_template_type(arg_type: Any) -> bool:
+        return isinstance(arg_type, (TypeVar, StructIOProtocol, GenericType))
+
     def _struct_substitute_template_params(cls, params: Dict[str, Any]) -> StructIOProtocol:
 
         if cls._struct_is_resolved:
@@ -194,6 +198,11 @@ class StructMeta(type):
                 # do not declare this struct specified yet if parent template parameters is passed
                 if isinstance(resolved_type, TypeVar):
                     has_unresolved_args = True
+
+                if not StructMeta._struct_is_valid_template_type(resolved_type):
+                    raise TypeError(f"Failed to substitute template argument '{annotation_type.__name__}'. "
+                                    f"Template argument may be represented only by another Struct, "
+                                    f"plain type or TypeVar")
 
                 new_annotations[attr_name] = resolved_type
 
