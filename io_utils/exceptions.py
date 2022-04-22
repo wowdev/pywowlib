@@ -1,0 +1,2 @@
+class StructError(Exception):
+    pass
