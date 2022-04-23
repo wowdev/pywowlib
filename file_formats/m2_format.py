@@ -287,8 +287,8 @@ class M2CompQuaternion:
         return self
 
     def write(self, f):
-        int16.write(f, self.x)
         int16.write(f, self.y)
+        int16.write(f, -self.x)
         int16.write(f, self.z)
         int16.write(f, self.w)
 
