@@ -287,8 +287,8 @@ class M2CompQuaternion:
         return self
 
     def write(self, f):
-        int16.write(f, self.x)
         int16.write(f, self.y)
+        int16.write(f, -self.x)
         int16.write(f, self.z)
         int16.write(f, self.w)
 
@@ -506,7 +506,7 @@ class M2CompBone:
 
     @staticmethod
     def size():
-        return 86 if M2VersionsManager().m2_version >= M2Versions.WOTLK else 110
+        return 88 if M2VersionsManager().m2_version >= M2Versions.WOTLK else 110
 
 
 #############################################################
@@ -1181,7 +1181,7 @@ class M2Event:
         return self
 
     def write(self, f):
-        string.write(f, self.identifier.encode('utf-8'), 4)
+        f.write(self.identifier.encode('utf-8'))
         uint32.write(f, self.data)
         uint32.write(f, self.bone)  
         vec3D.write(f, self.position)

@@ -3,10 +3,13 @@ import struct
 from ..io_utils.types import *
 from io import SEEK_CUR, BytesIO
 from collections.abc import Iterable
-from typing import Optional, Protocol, Self
+from typing import Optional, Protocol
 
 __reload_order_index__ = 1
 
+# TODO: temp declaration for compatibility
+class Self:
+    pass
 
 ###### M2 file versions ######
 
@@ -305,6 +308,9 @@ class M2Array(metaclass=Template):
 
     def from_iterable(self, itrbl):
         self.values = [self.type(item) for item in itrbl]
+
+    def set_index(self, index, value):
+        self.values[index] = value
 
     def set(self, itrbl):
         self.values = itrbl

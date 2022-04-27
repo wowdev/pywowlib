@@ -360,9 +360,22 @@ class M2File:
         # localize bone indices
         unique_bone_ids = set(chain(*b_indices))
 
+        submesh.bone_combo_index = len(self.root.bone_lookup_table)
+        submesh.bone_count = len(unique_bone_ids)
+        submesh.bone_influences = max_influences
+
         bone_lookup = {}
         for bone_id in unique_bone_ids:
-            bone_lookup[bone_id] = self.root.bone_lookup_table.add(bone_id)
+            bone_lookup[bone_id] = self.root.bone_lookup_table.add(bone_id)-submesh.bone_combo_index
+
+        # todo: hackfix to update bone_count_max, need to figure out what this actually does
+        bone_count = len(bone_lookup)
+        if bone_count > skin.bone_count_max:
+            bone_count_max_values = [21,53,64,256]
+            for val in bone_count_max_values:
+                if val >= bone_count:
+                    skin.bone_count_max = val
+                    break
 
         # add vertices
         start_index = len(self.root.vertices)
@@ -376,29 +389,7 @@ class M2File:
             self.add_vertex(*args)
 
             indices = skin.bone_indices.new()
-            indices.values = b_indices[i]
-
-        # found min bone index
-        bone_min = None
-        for index_set in b_indices:
-            for index in index_set:
-                if bone_min is None:
-                    bone_min = index
-                elif index < bone_min:
-                    bone_min = index
-
-        # found  max bone index
-        bone_max = None
-        for index_set in b_indices:
-            for index in index_set:
-                if bone_max is None:
-                    bone_max = index
-                elif index > bone_max:
-                    bone_max = index
-
-        submesh.bone_combo_index = bone_min
-        submesh.bone_count = bone_max + 1
-        submesh.bone_influences = max_influences
+            indices.values = list(local_b_indices)
 
         submesh.vertex_start = start_index
         submesh.vertex_count = len(vertices)
@@ -421,7 +412,7 @@ class M2File:
 
         return geoset_index
 
-    def add_material_to_geoset(self, geoset_id, render_flags, blending, flags, shader_id, tex_id, tex_unit_coord, priority_plane, mat_layer, tex_count):  # TODO: Add extra params & cata +
+    def add_material_to_geoset(self, geoset_id, render_flags, blending, flags, shader_id, tex_id, tex_unit_coord, priority_plane, mat_layer, tex_count, color_id, transparency_id):  # TODO: Add extra params & cata +
         skin = self.skins[0]
         tex_unit = M2SkinTextureUnit()
         tex_unit.skin_section_index = geoset_id
@@ -434,7 +425,8 @@ class M2File:
         tex_unit.texture_count = tex_count
         tex_unit.texture_combo_index = tex_id
         tex_unit.material_layer = mat_layer
-        # tex_unit.color_index = color_id
+        tex_unit.color_index = color_id
+        tex_unit.texture_weight_combo_index = transparency_id
 
         # check if we already have that render flag else create it
         if self.root.global_flags & M2GlobalFlags.UseTextureCombinerCombos: # some models seem to require 1 entry per text unit, seems related to this flag
@@ -481,15 +473,19 @@ class M2File:
 
         return tex_id
 
-    def add_bone(self, pivot, key_bone_id, flags, parent_bone):
+    def add_bone(self, pivot, key_bone_id, flags, parent_bone,submesh_id = 0, bone_name_crc = 0):
         m2_bone = M2CompBone()
         m2_bone.key_bone_id = key_bone_id
         m2_bone.flags = flags
         m2_bone.parent_bone = parent_bone
         m2_bone.pivot = tuple(pivot)
-
+        m2_bone.submesh_id = submesh_id
+        m2_bone.bone_name_crc = bone_name_crc
         bone_id = self.root.bones.add(m2_bone)
-        self.root.key_bone_lookup.append(key_bone_id)
+        if key_bone_id >= 0:
+            while len(self.root.key_bone_lookup) <= key_bone_id:
+                self.root.key_bone_lookup.append(-1)
+            self.root.key_bone_lookup.set_index(key_bone_id,bone_id)
 
         return bone_id
 
@@ -512,13 +508,16 @@ class M2File:
     def add_anim(self, a_id, var_id, frame_bounds, movespeed, flags, frequency, replay, bl_time, bounds, var_next=None, alias_next=None):
         seq = M2Sequence()
         seq_id = self.root.sequences.add(seq)
-        self.root.sequence_lookup.append(seq_id)
+        if var_id == 0:
+            while len(self.root.sequence_lookup) <= a_id:
+                self.root.sequence_lookup.append(0xffff)
+            self.root.sequence_lookup.set_index(a_id,seq_id)
 
         # It is presumed that framerate is always 24 fps.
         if self.version <= M2Versions.TBC:
             seq.start_timestamp, seq.end_timestamp = int(frame_bounds[0] // 0.0266666), int(frame_bounds[1] // 0.0266666)
         else:
-            seq.duration = int((frame_bounds[1] - frame_bounds[0]) // 0.0266666)
+            seq.duration = int(round((frame_bounds[1] - frame_bounds[0]) / 0.0266666))
 
         seq.id = a_id
         seq.variation_index = var_id
