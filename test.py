@@ -1,8 +1,7 @@
 from io_utils.ctypes import *
 from io_utils.struct import *
+from io_utils.var_type import *
 from io_utils.metaclass_hook import Structs
-
-from typing import TypeVar, no_type_check
 
 
 # Struct module allows you to create data structs declaratively.
@@ -14,8 +13,8 @@ with Structs: # -> you can also pass alignment and endianness parameters here
         field_name: int32 # -> declare a field
         some_araay: float32[10] # -> declare an array-field with static size
 
-    T = TypeVar('T') # TODO: custom subclass of TypeVar to support array syntax
-    Tx = TypeVar('Tx')
+    T = VarType('T') # TODO: custom subclass of VarType to support array syntax
+    Tx = VarType('Tx')
     class TemplatedStruct:
         variable_type_field: T
         variable_array_length: float32[Tx]
@@ -41,7 +40,7 @@ with Structs: # -> you can also pass alignment and endianness parameters here
     class OneArgumentTemplate:
         a: T
 
-    Ty = TypeVar('Ty')
+    Ty = VarType('Ty')
     class NestedTemplatedStruct:
         a: TemplatedStruct % {'T': Ty, 'Tx': 100}
         b: OneArgumentTemplate % Ty # if a template only has one argument, you can omit the argument name
@@ -66,8 +65,8 @@ with Structs: # -> you can also pass alignment and endianness parameters here
 
 
 # Test coverage
-T = TypeVar('T')
-Ty = TypeVar('Ty')
+T = VarType('T')
+Ty = VarType('Ty')
 
 with Structs:
 
@@ -86,7 +85,7 @@ with Structs:
         b: T
 
     # StructB defines one template parameter
-    # thus, its token string and size cannot be evaluated until template parameters are specifieds
+    # thus, its token string and size cannot be evaluated until template parameters are specified
     print("StructB:", StructB._struct_token_string)
     assert(StructB._struct_token_string is None)
 
@@ -111,7 +110,7 @@ with Structs:
 
     # array templated type
     class ArrayTemplatedType:
-        a: StructArray(T, 10)[10] # TODO: custom TypeVar to support T[x][x]... syntax
+        a: T[10][10] # TODO: custom VarType to support T[x][x]... syntax
 
     array_templated_type_spec = ArrayTemplatedType % int32
 
@@ -136,8 +135,8 @@ with Structs:
 
     # fully templated arrays with both type and length using template arguments
     class ComplexTemplatedArrayStruct:
-        a: StructArray(T, Tx)
-        b: StructArray(T, 10)
+        a: T[Tx]
+        b: T[10]
         c: int32[Tx]
 
     try:
@@ -148,7 +147,7 @@ with Structs:
     else:
         assert False
 
-    ComplexTemplatedArrayStruct_spec = ComplexTemplatedArrayStruct % {'T' : int32, 'Tx': 2}
+    ComplexTemplatedArrayStruct_spec = ComplexTemplatedArrayStruct % {'T': int32, 'Tx': 2}
     print(ComplexTemplatedArrayStruct_spec.__name__, ComplexTemplatedArrayStruct_spec._struct_token_string)
     assert(ComplexTemplatedArrayStruct_spec._struct_token_string == '2i10i2i')
 
@@ -176,7 +175,7 @@ with Structs:
             # second, we use a partial invalid specification
             b: ComplexTemplatedArrayStruct % {'T': int32, 'Tx': float32}
     except TypeError:
-        # erroring here, as array length can't be represented as float
+        # erroring here, as array length can't be represented by float
         pass
     else:
         assert(False)
@@ -195,6 +194,11 @@ with Structs:
     # now specifying and testing
     ComplexTemplatedArrayStructParent_spec = ComplexTemplatedArrayStructParent % (SomeSimpleTemplatedStruct % int32)
     print(ComplexTemplatedArrayStructParent_spec.__name__, ComplexTemplatedArrayStructParent_spec._struct_token_string)
+
+
+
+
+
 
 """
 class LogicProposal:

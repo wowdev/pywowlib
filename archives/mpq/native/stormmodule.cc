@@ -27,7 +27,7 @@ static PyObject * Storm_SFileOpenArchive(PyObject *self, PyObject *args) {
 	if (!python::parse_tuple(args, "SFileOpenArchive", &name, &priority, &flags)) {
 		return NULL;
 	}
-	bool result = SFileOpenArchive(name, priority, MPQ_OPEN_READ_ONLY, &mpq);
+	bool result = SFileOpenArchive(name, priority, STREAM_FLAG_READ_ONLY, &mpq);
 
 	if (!result) {
 		DWORD error = GetLastError();

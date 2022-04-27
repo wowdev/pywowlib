@@ -1,13 +1,12 @@
 from .ctypes import *
 from .array import StructArray
 from .struct_protocol import StructIOProtocol, StructFormatType
+from .var_type_protocol import VarTypeProtocol
 from .exceptions import StructError
+from .class_namespace_hook import NameSpaceHook
 
 from io import IOBase
-from typing import Set, TypeVar, Tuple, Type, Dict, Union, Optional
-from collections.abc import Iterable
-
-
+from typing import Set, Tuple, Type, Dict, Union, Optional
 
 
 def recurse_format_chunks(format_chunks: StructFormatType) -> str:
@@ -40,6 +39,9 @@ class StructMeta(type):
     _struct_template_definitions: Optional[Dict[Tuple[Tuple[str, Any]], StructIOProtocol]]
 
     def __new__(mcs, classname, bases, cls_dict, original: Optional[StructIOProtocol] = None):
+        # first turning the cls_dict into a normal Python dict, as we no longer need hooked functionality here
+        cls_dict = dict(cls_dict)
+
         annotations = cls_dict.get('__annotations__')
         if annotations is None:
             raise StructError(f"Struct <'{classname}'>: Empty structs are not supported. "
@@ -51,7 +53,7 @@ class StructMeta(type):
 
         for attr_name, annotation_type in annotations.items():
             # check if current Struct is a template (has at least one template parameter)
-            if isinstance(annotation_type, TypeVar):
+            if isinstance(annotation_type, VarTypeProtocol):
                 is_template = True
                 is_resolved = False
 
@@ -114,6 +116,10 @@ class StructMeta(type):
 
         return new_type
 
+    @classmethod
+    def __prepare__(mcs, name, bases):
+        return NameSpaceHook()
+
     @staticmethod
     def _struct_generate_format_specification(annotations: Dict[str, Any], cls_dict: Dict) -> Optional[StructFormatType]:
         # generate struct specification for non-template structs right away
@@ -134,7 +140,7 @@ class StructMeta(type):
         return format_chunks
 
     def _struct_get_template_arg_sig(cls) -> Set[str]:
-        sig = set([t.__name__ for _, t in cls.__annotations__.items() if isinstance(t, TypeVar)])
+        sig = set([t.__name__ for _, t in cls.__annotations__.items() if isinstance(t, VarTypeProtocol)])
 
         for _, t in cls.__annotations__.items():
             if isinstance(t, StructIOProtocol):
@@ -164,7 +170,7 @@ class StructMeta(type):
 
     @staticmethod
     def _struct_is_valid_template_type(arg_type: Any) -> bool:
-        return isinstance(arg_type, (TypeVar, StructIOProtocol, GenericType))
+        return isinstance(arg_type, (VarTypeProtocol, StructIOProtocol, GenericType))
 
     def _struct_substitute_template_params(cls, params: Dict[str, Any]) -> StructIOProtocol:
 
@@ -187,7 +193,7 @@ class StructMeta(type):
         # substitute struct's own template params first
         has_unresolved_args = False
         for attr_name, annotation_type in annotations.items():
-            if isinstance(annotation_type, TypeVar):
+            if isinstance(annotation_type, VarTypeProtocol):
                 resolved_type = params.get(annotation_type.__name__)
 
                 if resolved_type is None:
@@ -196,13 +202,13 @@ class StructMeta(type):
                                       f"{cls._struct_get_template_arg_sig_repr()}")
 
                 # do not declare this struct specified yet if parent template parameters is passed
-                if isinstance(resolved_type, TypeVar):
+                if isinstance(resolved_type, VarTypeProtocol):
                     has_unresolved_args = True
 
                 if not StructMeta._struct_is_valid_template_type(resolved_type):
                     raise TypeError(f"Failed to substitute template argument '{annotation_type.__name__}'. "
                                     f"Template argument may be represented only by another Struct, "
-                                    f"plain type or TypeVar")
+                                    f"plain type or VarTypeProtocol")
 
                 new_annotations[attr_name] = resolved_type
 
@@ -223,7 +229,7 @@ class StructMeta(type):
                 del new_dict['_struct_template_definitions']
 
         args = ', '.join(name + '=' + (str(t) if isinstance(t, int) else (t.__name__ if isinstance(t, StructIOProtocol)
-                                                  or isinstance(t, TypeVar) else t.name))
+                                                  or isinstance(t, VarTypeProtocol) else t.name))
                                        for name, t in params.items())
 
         new_type = StructMeta.__new__(StructMeta,
@@ -236,17 +242,12 @@ class StructMeta(type):
 
         return new_type
 
-    def _instance_repr(cls) -> Type[list]:
-        """ TODO: return instance representation as NamedTuple,
-         or as custom object if additional data or methods are present"""
-        return list
-
-    def __getitem__(cls, item: Union[str, int, TypeVar]) -> StructArray:
+    def __getitem__(cls, item: Union[str, int, VarTypeProtocol]) -> StructArray:
         """ Defines [] syntax for declaring arrays. """
 
         if not isinstance(item, int):
             raise TypeError(f"Struct <'{cls.__name__}'>: [] syntax is used to indicate arrays. Argument type "
-                            f"must be 'int' or 'str' for dynamic expressions, or 'TypeVar' for templates.")
+                            f"must be 'int' or 'str' for dynamic expressions, or 'VarTypeProtocol' for templates.")
 
         return StructArray(cls, item)
 
