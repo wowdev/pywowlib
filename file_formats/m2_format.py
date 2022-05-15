@@ -742,8 +742,8 @@ class M2Particle:
         self.position = (0.0, 0.0, 0.0)                         # The position. Relative to the following bone.
         self.bone = 0                                           # The bone its attached to.
         self.texture = 0                                        # And the textures that are used. For multi-textured particles actually three ids
-        self.geometry_model_filename = M2Array(int8)            # if given, this emitter spawns models
-        self.recursion_model_filename = M2Array(int8)           # if given, this emitter is an alias for the (maximum 4) emitters of the given model
+        self.geometry_model_filename = M2String()               # if given, this emitter spawns models
+        self.recursion_model_filename = M2String()              # if given, this emitter is an alias for the (maximum 4) emitters of the given model
 
         if self.m2_version >= M2Versions.TBC:
             self.blending_type = 0                              # A blending type for the particle. See Below
