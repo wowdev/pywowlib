@@ -188,16 +188,15 @@ class WoWFileData:
             filepath_hash = filepath_png+'.md5'
             filepaths[identifier] = filepath_png
 
+            new_hash = hashlib.md5(file).hexdigest()
             if os.path.exists(filepath_png):
-                new_hash = hashlib.md5(file).hexdigest()
                 if os.path.exists(filepath_hash):
                     with open(filepath_hash, 'r') as old_hash_file:
                         old_hash = old_hash_file.read()
                         if new_hash == old_hash:
                             continue
-                # don't write now: wait until we know blp has been converted
-                hash_writes.append((filepath_hash,new_hash))
-
+            # don't write now: wait until we know blp has been converted
+            hash_writes.append((filepath_hash,new_hash))
             pairs.append((file, filepath_png_base.replace('\\', '/').encode('utf-8')))
 
 
