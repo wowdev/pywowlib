@@ -2,6 +2,7 @@ import re
 import os
 import time
 import csv
+import hashlib
 
 from typing import Union, List, Dict, Tuple
 
@@ -167,6 +168,7 @@ class WoWFileData:
         extract them to current working directory as PNG images. """
 
         pairs = []
+        hash_writes = []
         filepaths = {}
 
         for identifier in identifiers:
@@ -183,13 +185,29 @@ class WoWFileData:
 
             filepath_png_base = os.path.splitext(filepath)[0] + '.png'
             filepath_png = os.path.join(dir_path, filepath_png_base)
-            if not os.path.exists(filepath_png):
-                pairs.append((file, filepath_png_base.replace('\\', '/').encode('utf-8')))
-
+            filepath_hash = filepath_png+'.md5'
             filepaths[identifier] = filepath_png
+
+            if os.path.exists(filepath_png):
+                new_hash = hashlib.md5(file).hexdigest()
+                if os.path.exists(filepath_hash):
+                    with open(filepath_hash, 'r') as old_hash_file:
+                        old_hash = old_hash_file.read()
+                        if new_hash == old_hash:
+                            continue
+                # don't write now: wait until we know blp has been converted
+                hash_writes.append((filepath_hash,new_hash))
+
+            pairs.append((file, filepath_png_base.replace('\\', '/').encode('utf-8')))
+
 
         if pairs:
             BLP2PNG().convert(pairs, dir_path.encode('utf-8'))
+
+        # note: assumes previous operation throws if it was not successful
+        for (path,hash_value) in hash_writes:
+            with open(path,'w') as file:
+                file.write(hash_value)
 
         return filepaths
 
