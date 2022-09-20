@@ -11,3 +11,4 @@ blp/PNG2BLP/png2blp.cpp
 *.so
 *.a
 *.dylib
+*.pdb

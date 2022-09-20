@@ -9,8 +9,6 @@ from pathlib import Path
 
 sys.path.append(str(Path(__file__).parent.parent.parent.parent.absolute()))
 
-from cmake import check_for_cmake, CMAKE_EXE
-
 CUR_DIR = os.path.abspath(os.path.dirname(__file__))
 
 
@@ -30,7 +28,6 @@ def main(debug: bool):
     print_info('\nBuilding MPQ extension...')
     print(f'Target mode: {"Debug" if debug else "Release"}')
     # build CASCLib
-    check_for_cmake()
 
     build_dir = os.path.join(CUR_DIR, 'StormLib', 'build')
 
@@ -43,19 +40,20 @@ def main(debug: bool):
     if sys.platform != 'win32':
         cmake_defines.extend(['-DCMAKE_CXX_FLAGS=-fPIC', '-DCMAKE_C_FLAGS=-fPIC'])
 
-    status = subprocess.call([CMAKE_EXE, '..', *cmake_defines])
+    status = subprocess.call(['cmake', '..', *cmake_defines])
 
     if status:
         print_error(f'\nError building StormLib. See CMake error above.')
         sys.exit(1)
 
-    status = subprocess.check_call([CMAKE_EXE, '--build', '.', '--config', 'Debug' if debug else 'Release'])
+    status = subprocess.check_call(['cmake', '--build', '.', f'--config {"Debug" if debug else "Release"}'])
 
     if status:
         print_error(f'\nError building StormLib. See build error above.')
         sys.exit(1)
 
-    status = subprocess.call([CMAKE_EXE, '--install', '.', '--prefix', CUR_DIR])
+    status = subprocess.call(['cmake', '--install', '.', f'--prefix {CUR_DIR}'
+                              , f'--config {"Debug" if debug else "Release"}'])
 
     if status:
         print_error(f'\nError building StormLib. Error setting install configuration.')
