@@ -27,7 +27,7 @@ def print_info(*s: str):
 def main(debug: bool):
     print_info('\nBuilding MPQ extension...')
     print(f'Target mode: {"Debug" if debug else "Release"}')
-    # build CASCLib
+    # build StormLib
 
     build_dir = os.path.join(CUR_DIR, 'StormLib', 'build')
 
@@ -38,7 +38,7 @@ def main(debug: bool):
         , '-DBUILD_SHARED_LIBS=OFF']
 
     if sys.platform != 'win32':
-        cmake_defines.extend(['-DCMAKE_CXX_FLAGS=-fPIC', '-DCMAKE_C_FLAGS=-fPIC'])
+        cmake_defines.extend(['-DCMAKE_CXX_FLAGS=-fPIC', '-DCMAKE_C_FLAGS=-fPIC', '-DZLIB_USE_STATIC_LIBS=ON'])
 
     status = subprocess.call(['cmake', '..', *cmake_defines])
 
@@ -76,7 +76,7 @@ def main(debug: bool):
         define_macros.append(('STORMLIB_NO_AUTO_LINK', None))
     else:  # POSIX
         extra_objects = ['{}/lib{}.a'.format(static_lib_dir, l) for l in static_libraries]
-        libraries.append("bz2")
+        libraries.extend(["bz2", "z"])
 
     # compiler and linker settings
     if platform.system() == 'Darwin':
