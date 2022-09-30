@@ -11,7 +11,6 @@ class MOGPFlags:
     HasVertexColor = 0x4
     Outdoor = 0x8
     DoNotUseLocalLighting = 0x40
-    UseExteriorSky = 0x100
     HasLight = 0x200
     HasDoodads = 0x800
     HasWater = 0x1000

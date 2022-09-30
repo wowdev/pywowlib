@@ -123,7 +123,7 @@ class M2SkinMeshPartID(Enum):
     Skin = range(0, 1)
     Hair = range(1, 35)
     Facial1 = range(101, 109)
-    Facial2 = range(201, 207)
+    Facial2 = range(201, 208)
     Facial3 = range(301, 312)
     Glove = range(401, 405)
     Boots = range(501, 506)

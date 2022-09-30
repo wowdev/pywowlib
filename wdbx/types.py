@@ -9,9 +9,14 @@ class DBCString:
         pos = f.tell()
         f.seek(ofs + str_block_ofs)
 
+        
         strng = b''
         while True:
+            if ofs == 0:    # if offset is 0 (empty string field)
+                break
             char = f.read(1)
+            # print(char)
+            # print(f.tell())
             if char != b'\0':
                 strng += char
             else:

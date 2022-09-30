@@ -260,14 +260,19 @@ class M2File:
                     real_anim = self.root.sequences[real_anim.alias_next]
 
                 if not sequence.flags & 0x130:
+                    chunked_anim_files = self.version >= M2Versions.LEGION and self.root.global_flags & M2GlobalFlags.ChunkedAnimFiles
 
                     anim_file = AnimFile(split=bool(self.skels)
                                          , old=not bool(self.skels)
-                                               and not self.root.global_flags & M2GlobalFlags.ChunkedAnimFiles)
+                                                and not chunked_anim_files)
+                                                # downported models that don't clean up flags can crash and be detected as new version
+                                               # and not self.root.global_flags & M2GlobalFlags.ChunkedAnimFiles) 
 
                     anim_path = anim_paths[real_anim.id, sequence.variation_index]
+
                     try:
                         with open(anim_path, 'rb') as f:
+                            print(anim_path)
                             anim_file.read(f)
                     except FileNotFoundError:
                         print("Warning: .anim file \"{}\" not found."
@@ -522,7 +527,8 @@ class M2File:
         seq.id = a_id
         seq.variation_index = var_id
         seq.variation_next = var_next if var_next else -1
-        seq.alias_next = alias_next if alias_next else seq_id
+        # seq.alias_next = alias_next if alias_next else seq_id
+        seq.alias_next = alias_next if flags & 64 else seq_id
         seq.flags = flags
         seq.frequency = frequency
         seq.movespeed = movespeed

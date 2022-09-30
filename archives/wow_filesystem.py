@@ -20,8 +20,8 @@ class WoWFileData:
             if WoWVersionManager().client_version < WoWVersions.WOD else self.init_casc_storage(self.wow_path,
                                                                                                 project_path)
 
-        #self.db_files_client = DBFilesClient(self)
-        #self.db_files_client.init_tables()
+        self.db_files_client = DBFilesClient(self)
+        self.db_files_client.init_tables()
 
         with open(os.path.join(os.path.dirname(__file__), 'listfile.csv'), newline='') as f:
             self.listfile = {int(row[0]): row[1] for row in csv.reader(f, delimiter=';')}
@@ -387,13 +387,15 @@ class DBFilesClient:
         if name in self.tables:
             return self.tables[name]
 
-        wdb = DBCFile(name)
-        wdb.read_from_gamedata(self.game_data)
-        self.tables[name] = wdb
+        wdb = self.add(name)
+        # wdb = DBCFile(name)
+        # wdb.read_from_gamedata(self.game_data)
+        # self.tables[name] = wdb
 
         return wdb
 
     def add(self, name):
+        print("adding dbc table " + str(name))
         wdb = DBCFile(name)
         wdb.read_from_gamedata(self.game_data)
         self.tables[name] = wdb
@@ -412,6 +414,7 @@ class DBFilesClient:
 
     def init_tables(self):
         self.add('AnimationData')
+        print(self.tables)
 
 
 
