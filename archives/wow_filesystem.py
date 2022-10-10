@@ -199,7 +199,6 @@ class WoWFileData:
             hash_writes.append((filepath_hash,new_hash))
             pairs.append((file, filepath_png_base.replace('\\', '/').encode('utf-8')))
 
-
         if pairs:
             BLP2PNG().convert(pairs, dir_path.encode('utf-8'))
 
@@ -316,7 +315,7 @@ class WoWFileData:
             if os.path.exists(os.path.join(wow_path, "Wow.exe")):
                 return True
 
-            if os.path.exists(os.path.join(os.path.join(wow_path, "_retail_"), "wow.exe")):
+            if os.path.exists(os.path.join(os.path.join(wow_path, "_retail_"), "WoW.exe")):
                 return True
 
             if os.path.exists(os.path.join(os.path.join(wow_path, "_retail_"), "World of Warcraft.app")):

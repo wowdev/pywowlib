@@ -4,6 +4,7 @@
 #include <string>
 #include <stdint.h>
 #include <cstdlib>
+#include <vector>
 #include "ByteStream.h"
 #include "BlpStructure.h"
 #include <image.hpp>
@@ -31,32 +32,38 @@ namespace python_blp {
         UNKNOWN
     };
 
-    class BlpConvert {
+    struct Image
+    {
+        std::vector<std::uint32_t> buffer;
+        std::size_t width;
+        std::size_t height;
+    };
+
+    class BlpConvert
+    {
         typedef void (BlpConvert::*tConvertFunction)(ByteStream&, std::vector<uint32_t>&, const std::size_t&) const;
 
     public:
-        void convert(unsigned char *inputFile, std::size_t fileSize, const char *inputFileName,
-                     const char *outputPath) const;
+        Image get_raw_pixels(unsigned char* inputFile, std::size_t fileSize) const;
 
     private:
-        void handleFile(unsigned char *buffer, std::size_t size, const char *fileName, const std::string &basePath) const;
 
-        void loadFirstLayer(const BlpHeader &header, ByteStream &data, png::image<png::rgba_pixel> &image) const;
+        void loadFirstLayer(const BlpHeader &header, ByteStream &data, Image &image) const;
 
         Format getFormat(const BlpHeader &header) const;
 
-        void parseUncompressed(ByteStream &data, png::image<png::rgba_pixel> &image) const;
+        void parseUncompressed(ByteStream &data, Image &image) const;
 
         void parseUncompressedPalette(const uint8_t &alphaDepth, ByteStream &data, std::size_t size,
-                                      png::image<png::rgba_pixel> &image) const;
+                                      Image &image) const;
 
-        void parseCompressed(const Format &format, ByteStream &data, png::image<png::rgba_pixel> &image) const;
+        void parseCompressed(const Format &format, ByteStream &data, Image &image) const;
 
         void decompressPaletteFastPath(const uint32_t* palette, const std::vector<uint8_t> &indices,
-                                       png::image<png::rgba_pixel> &image) const;
+                                       Image &image) const;
 
         void decompressPaletteARGB8(const uint8_t &alphaDepth, uint32_t *const palette, const std::vector<uint8_t> &indices,
-                               png::image<png::rgba_pixel> &image) const;
+                                    Image &image) const;
 
         void dxt1GetBlock(ByteStream& stream, std::vector<uint32_t>& blockData, const size_t& blockOffset) const;
         void dxt2GetBlock(ByteStream& stream, std::vector<uint32_t>& blockData, const size_t& blockOffset) const;
@@ -66,8 +73,6 @@ namespace python_blp {
 
         tConvertFunction getDxtConvertFunction(const Format& format) const;
 
-        void createDirectories(const std::string& path) const;
-        std::string changeExtension(const std::string& path) const;
     };
 }
 

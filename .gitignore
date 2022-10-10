@@ -12,3 +12,5 @@ blp/PNG2BLP/png2blp.cpp
 *.a
 *.dylib
 *.pdb
+blp/.idea/
+blp/BLP2PNG/native/.idea/

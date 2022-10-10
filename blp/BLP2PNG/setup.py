@@ -2,6 +2,7 @@
 import sys
 import platform
 import argparse
+import numpy
 from setuptools import setup, Extension
 from Cython.Build import cythonize
 
@@ -89,7 +90,7 @@ def main(debug: bool):
             "../include/zlib/zutil.c"
         ],
 
-        include_dirs=["../include/pngpp", "../include/libpng", "../include/zlib"],
+        include_dirs=["../include/pngpp", "../include/libpng", "../include/zlib", numpy.get_include()],
         language="c++",
         extra_compile_args=extra_compile_args,
         extra_link_args=extra_link_args
@@ -100,7 +101,7 @@ def main(debug: bool):
 
     setup(
         name='BLP To PNG Converter',
-        ext_modules=cythonize(extensions),
+        ext_modules=cythonize(extensions, annotate=True),
         requires=['Cython']
     )
 
@@ -115,6 +116,5 @@ if __name__ == '__main__':
 
     if args.wbs_debug:
         sys.argv.remove('--wbs_debug')
-
 
     main(args.wbs_debug)
