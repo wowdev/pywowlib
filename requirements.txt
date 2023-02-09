@@ -3,3 +3,4 @@ bitarray==0.8.3
 modgrammar==0.10
 multimethod
 bidict
+numpy

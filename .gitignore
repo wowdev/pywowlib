@@ -7,6 +7,7 @@ blp/BLP2PNG/build/
 blp/BLP2PNG/blp.cpp
 blp/PNG2BLP/build/
 blp/PNG2BLP/png2blp.cpp
+blp/PNG2BLP/blp.html
 *.pyd
 *.so
 *.a

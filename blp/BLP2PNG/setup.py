@@ -101,7 +101,7 @@ def main(debug: bool):
 
     setup(
         name='BLP To PNG Converter',
-        ext_modules=cythonize(extensions, annotate=True),
+        ext_modules=cythonize(extensions),
         requires=['Cython']
     )
 
