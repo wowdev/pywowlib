@@ -244,14 +244,16 @@ namespace python_blp {
         for(uint32_t y = 0u; y < h; ++y) {
             for(uint32_t x = 0u; x < w; ++x) {
                 uint32_t bx = x / 4u;
-                uint32_t by = y / 4u;
+                // uint32_t iby = y % 4u;
+                uint32_t by = (h-1-y) / 4u; // flip Y axis for blender
 
                 uint32_t ibx = x % 4u;
-                uint32_t iby = y % 4u;
+                // uint32_t iby = y % 4u;
+                uint32_t iby = (h-1-y) % 4u; // flip Y axis for blender
 
                 uint32_t blockIndex = by * ((w + 3u) / 4u) + bx;
                 uint32_t innerIndex = iby * 4u + ibx;
-                rowBuffer[x] = blockData[blockIndex * 16u + innerIndex];
+                rowBuffer[x] = blockData[blockIndex * 16u + innerIndex]; // rowBuffer[w-1-x] // swaps horizontally
             }
 
             memcpy(image.buffer.data() + (y * w), rowBuffer.data(), rowBuffer.size() * sizeof(uint32_t));
