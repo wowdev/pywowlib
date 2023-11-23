@@ -12,14 +12,26 @@ __reload_order_index__ = -1
 class M2GlobalFlags(IntEnum):
     TILT_X = 0x1
     TILT_Y = 0x2
+    UNK_0x4 = 0x4
     UseTextureCombinerCombos = 0x8
+    UNK_0x10 = 0x10
     LoadPhysData = 0x20
-    UNK = 0x80
+    UNK_0x40 = 0x40
+    UNK_0x80 = 0x80
     CameraRelated = 0x100
     NewParticleRecord = 0x200
+    UNK_0x400 = 0x400
     TextureTransformsUseBoneSequences = 0x800
-    ChunkedAnimFiles = 0x200000
-
+    UNK_0x1000 = 0x1000
+    ChunkedAnimFiles = 0x2000
+    UNK_0x4000 = 0x4000
+    UNK_0x8000 = 0x8000
+    UNK_0x10000 = 0x10000
+    UNK_0x20000 = 0x20000
+    UNK_0x40000 = 0x40000
+    UNK_0x80000 = 0x80000
+    UNK_0x100000 = 0x100000
+    UNK_0x200000 = 0x200000
 
 class M2ParticleFlags(IntEnum):
     EffectedByLight = 0x1                                       # Particles are affected by lighting;
@@ -123,7 +135,7 @@ class M2SkinMeshPartID(Enum):
     Skin = range(0, 1)
     Hair = range(1, 35)
     Facial1 = range(101, 109)
-    Facial2 = range(201, 207)
+    Facial2 = range(201, 208)
     Facial3 = range(301, 312)
     Glove = range(401, 405)
     Boots = range(501, 506)

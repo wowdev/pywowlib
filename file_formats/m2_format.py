@@ -38,7 +38,12 @@ class M2String:
 
         pos = f.tell()
         f.seek(ofs_characters)
-        self.value = f.read(n_characters).decode('utf-8').rstrip('\0')
+        #self.value = f.read(n_characters).decode('utf-8').rstrip('\0')
+        try:
+            self.value = f.read(n_characters).decode('utf-8').rstrip('\0')
+        except UnicodeDecodeError as e:
+            print("UnicodeDecodeError occurred, probably fuckported m2, using no name:", e)
+            self.value = ""
         f.seek(pos)
 
         return self
@@ -1012,6 +1017,10 @@ class M2Particle:
             self.multi_texture_param1.write(f)
 
         return self
+    
+    @staticmethod
+    def size():
+        return 476 if M2VersionsManager().m2_version >= M2Versions.WOTLK else 492    
 
 
 #############################################################
