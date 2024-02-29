@@ -20,8 +20,8 @@ class WoWFileData:
             if WoWVersionManager().client_version < WoWVersions.WOD else self.init_casc_storage(self.wow_path,
                                                                                                 project_path)
 
-        #self.db_files_client = DBFilesClient(self)
-        #self.db_files_client.init_tables()
+        self.db_files_client = DBFilesClient(self)
+        self.db_files_client.init_tables()
 
         with open(os.path.join(os.path.dirname(__file__), 'listfile.csv'), newline='') as f:
             self.listfile = {int(row[0]): row[1] for row in csv.reader(f, delimiter=';')}

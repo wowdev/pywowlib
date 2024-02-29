@@ -12,14 +12,26 @@ __reload_order_index__ = -1
 class M2GlobalFlags(IntEnum):
     TILT_X = 0x1
     TILT_Y = 0x2
+    UNK_0x4 = 0x4
     UseTextureCombinerCombos = 0x8
+    UNK_0x10 = 0x10
     LoadPhysData = 0x20
-    UNK = 0x80
+    UNK_0x40 = 0x40
+    UNK_0x80 = 0x80
     CameraRelated = 0x100
     NewParticleRecord = 0x200
+    UNK_0x400 = 0x400
     TextureTransformsUseBoneSequences = 0x800
-    ChunkedAnimFiles = 0x200000
-
+    UNK_0x1000 = 0x1000
+    ChunkedAnimFiles = 0x2000
+    UNK_0x4000 = 0x4000
+    UNK_0x8000 = 0x8000
+    UNK_0x10000 = 0x10000
+    UNK_0x20000 = 0x20000
+    UNK_0x40000 = 0x40000
+    UNK_0x80000 = 0x80000
+    UNK_0x100000 = 0x100000
+    UNK_0x200000 = 0x200000
 
 class M2ParticleFlags(IntEnum):
     EffectedByLight = 0x1                                       # Particles are affected by lighting;
@@ -123,7 +135,7 @@ class M2SkinMeshPartID(Enum):
     Skin = range(0, 1)
     Hair = range(1, 35)
     Facial1 = range(101, 109)
-    Facial2 = range(201, 207)
+    Facial2 = range(201, 208)
     Facial3 = range(301, 312)
     Glove = range(401, 405)
     Boots = range(501, 506)
@@ -164,24 +176,24 @@ class M2KeyBones(Enum):
 
     # official IDs (as of wotlk)
 
-    ArmL = 0
-    ArmR = 1
-    ShoulderL = 2
-    ShoulderR = 3
+    Arm_L = 0
+    Arm_R = 1
+    Shoulder_L = 2
+    Shoulder_R = 3
     SpineLow = 4
     Waist = 5
     Head = 6
     Jaw = 7
-    IndexFingerR = 8
-    MiddleFingerR = 9
-    PinkyFingerR = 10
-    RingFingerR = 11
-    ThumbR = 12
-    IndexFingerL = 13
-    MiddleFingerL = 14
-    PinkyFingerL = 15
-    RingFingerL = 16
-    ThumbL = 17
+    IndexFinger_R = 8
+    MiddleFinger_R = 9
+    PinkyFinger_R = 10
+    RingFinger_R = 11
+    Thumb_R = 12
+    IndexFinger_L = 13
+    MiddleFinger_L = 14
+    PinkyFinger_L = 15
+    RingFinger_L = 16
+    Thumb_L = 17
     BTH = 18
     CSR = 19
     CSL = 20
@@ -202,10 +214,10 @@ class M2KeyBones(Enum):
 
     # Alastor's guessed IDs
 
-    # AnkleR_Twist = 25
-    # AnkleL_Twist = 20
-    # AnkleL = 32
-    AnkleR = 35 # FaceAttenuation?
+    Ankle_Twist_R = 25
+    Ankle_Twist_L = 20
+    Ankle_L = 32
+    Ankle_R = 35 # FaceAttenuation?
     Cape1 = 36
     Cape2 = 37
     Cape3 = 38
@@ -216,8 +228,8 @@ class M2KeyBones(Enum):
     TabardBack1 = 43
     TabardBack2 = 44
     TabardBack3 = 45
-    ToeL = 46
-    ToeR = 47
+    Toe_L = 46
+    Toe_R = 47
     SpineTop = 48
     Neck1 = 49
     Neck2 = 50
@@ -225,31 +237,146 @@ class M2KeyBones(Enum):
     Buckle = 52
     Chest = 53
     Main = 54
-    LegR = 55
-    LegL = 56
-    KneeR = 57
-    KneeL = 58
-    FootL = 59
-    FootR = 60
-    ElbowR = 61
-    ElbowL = 62
-    Unk_ElbowL_Child = 63
-    HandR = 64
-    HandL = 65
-    WeaponR = 66
-    WeaponL = 67
-    Unk_WristL_Child2 = 68
-    Unk_WristR_Child2 = 69
-    ThighR = 70
-    ThighL = 71
-    ShoulderR_Twist = 72
-    ShoulderL_Twist = 73
-    ElbowR_Twist = 74
-    ElbowL_Twist = 75
-    ForearmR = 76
-    ForearmL = 77
-    WristR_Twist = 78
-    WristL_Twist = 79
+    Leg_R = 55
+    Leg_L = 56
+    Knee_R = 57
+    Knee_L = 58
+    Foot_L = 59
+    Foot_R = 60
+    Elbow_R = 61
+    Elbow_L = 62
+    Elbow_Child_L = 63
+    Hand_R = 64
+    Hand_L = 65
+    Weapon_R = 66
+    Weapon_L = 67
+    Wrist_Child2_L = 68
+    Wrist_Child2_R = 69
+    Leg_1_Twist3_R = 70
+    Leg_1_Twist3_L = 71
+    Arm_1_Twist2_R = 72
+    Arm_1_Twist2_L = 73
+    Arm_1_Twist3_R = 74
+    Arm_1_Twist3_L = 75
+    Arm_2_Twist2_R = 76
+    Arm_2_Twist2_L = 77
+    Arm_2_Twist3_R = 78
+    Arm_2_Twist3_L = 79
+    Forearm_R = 80 
+    Forearm_L = 81
+    ArmTwist1_R = 82 
+    ArmTwist1_L = 83 
+    ArmTwist2_R = 84 
+    ArmTwist2_L = 85 
+    FingerClawA1_R = 86 
+    FingerClawB1_R = 87 
+    FingerClawA1_L = 88 
+    FingerClawB1_L = 89 
+    BackCloak = 190 
+    face_hair_00_M_JNT = 191 
+    face_beard_00_M_JNT = 192 
+    face_cheek_02_SkinPoint_L = 193 
+    face_cheek_02_SkinPoint_R = 194 
+    face_eyeCornerIn_00_SkinPoint_L = 195
+    face_eyeCornerIn_00_SkinPoint_R = 196
+    face_eyeCornerOut_00_SkinPoint_L = 197
+    face_eyeCornerOut_00_SkinPoint_R = 198
+    face_eyebrow_00_SkinPoint_L = 199 
+    face_eyebrow_00_SkinPoint_M = 200 
+    face_eyebrow_00_SkinPoint_R = 201 
+    face_eyebrow_01_SkinPoint_L = 202 
+    face_eyebrow_01_SkinPoint_R = 203 
+    face_eyebrow_02_SkinPoint_L = 204 
+    face_eyebrow_02_SkinPoint_R = 205 
+    face_eyebrow_03_SkinPoint_L = 206 
+    face_eyebrow_03_SkinPoint_R = 207 
+    face_eyelidBot_00_SkinPoint_L = 208 
+    face_eyelidBot_00_SkinPoint_R = 209 
+    face_eyelidBot_01_SkinPoint_L = 210 
+    face_eyelidBot_01_SkinPoint_R = 211 
+    face_eyelidBot_02_SkinPoint_L = 212 
+    face_eyelidBot_02_SkinPoint_R = 213 
+    face_eyelidTop_00_SkinPoint_L = 214 
+    face_eyelidTop_00_SkinPoint_R = 215 
+    face_eyelidTop_01_SkinPoint_L = 216 
+    face_eyelidTop_01_SkinPoint_R = 217 
+    face_eyelidTop_02_SkinPoint_L = 218 
+    face_eyelidTop_02_SkinPoint_R = 219 
+    face_noseBridge_00_SkinPoint_L = 220 
+    face_noseBridge_00_SkinPoint_R = 221 
+    face_overEye_00_SkinPoint_L = 222 
+    face_overEye_00_SkinPoint_R = 223 
+    face_overOuterEye_00_SkinPoint_L = 224 
+    face_overOuterEye_00_SkinPoint_R = 225 
+    face_underEye_00_SkinPoint_L = 226 
+    face_underEye_00_SkinPoint_R = 227 
+    face_cheekPuff_00_SkinPoint_L = 228 
+    face_cheekPuff_00_SkinPoint_R = 229 
+    face_cheek_00_SkinPoint_L = 230 
+    face_cheek_00_SkinPoint_R = 231 
+    face_cheek_01_SkinPoint_L = 232 
+    face_cheek_01_SkinPoint_R = 233 
+    face_chin_00_SkinPoint_L = 234 
+    face_chin_00_SkinPoint_M = 235 
+    face_chin_00_SkinPoint_R = 236 
+    face_ear_00_SkinPoint_L = 237 
+    face_ear_00_SkinPoint_R = 238 
+    face_jaw_01_SkinPoint_M = 239 
+    face_jowl_00_SkinPoint_L = 240 
+    face_jowl_00_SkinPoint_R = 241 
+    face_jowl_01_SkinPoint_L = 242 
+    face_jowl_01_SkinPoint_R = 243 
+    face_lipBotBase_00_SkinPoint_M = 244 
+    face_lipTopBase_00_SkinPoint_M = 245 
+    face_mouthCorner_00_SkinPoint_L = 246 
+    face_mouthCorner_00_SkinPoint_R = 247 
+    face_mouthCurlBot_00_SkinPoint_M = 248 
+    face_mouthCurlTop_00_SkinPoint_M = 249 
+    face_mouth_00_SkinPoint_M = 250 
+    face_nasLab_00_SkinPoint_L = 251 
+    face_nasLab_00_SkinPoint_R = 252 
+    face_nasLab_01_SkinPoint_L = 253 
+    face_nasLab_01_SkinPoint_R = 254 
+    face_noseBase_00_SkinPoint_M = 255 
+    face_sneerDriver_00_SkinPoint_L = 256 
+    face_sneerDriver_00_SkinPoint_R = 257 
+    face_sneerLower_00_SkinPoint_L = 258 
+    face_sneerLower_00_SkinPoint_R = 259 
+    face_sneer_00_SkinPoint_L = 260 
+    face_sneer_00_SkinPoint_R = 261 
+    face_teethBot_00_SkinPoint_M = 262 
+    face_teethTop_00_SkinPoint_M = 263 
+    face_tongue_00_SkinPoint_M = 264 
+    root_main_00_SkinPoint_M = 265 
+    spine_mainBendy_00_SkinPoint_M = 266 
+    clavicle_main_00_SkinPoint_L = 267 
+    arm_shoulderBendy_00_SkinPoint_L = 268 
+    hand_main_00_JNT_L = 269 
+    hand_index_00_SkinPoint_L = 270 
+    hand_main_00_SkinPoint_L = 271 
+    hand_ring_00_SkinPoint_L = 272 
+    hand_pinky_00_SkinPoint_L = 273 
+    hand_thumb_00_SkinPoint_L = 274 
+    clavicle_main_00_SkinPoint_R = 275 
+    arm_shoulderBendy_00_SkinPoint_R = 276 
+    hand_main_00_JNT_R = 277 
+    hand_main_00_SkinPoint_R = 278 
+    hand_middle_00_SkinPoint_R = 279 
+    hand_ring_00_SkinPoint_R = 280 
+    hand_pinky_00_SkinPoint_R = 281 
+    hand_thumb_00_SkinPoint_R = 282 
+    head_main_00_SkinPoint_M = 283 
+    face_jaw_00_SkinPoint_M = 284 
+    Eye1_L = 285 
+    Eye1_R = 286 
+    EyeLid1_L = 287 
+    EyeLid1_R = 288 
+    EyeLid2_L = 289 
+    EyeLid2_R = 290 
+    WingArm1Twist1_L = 292 
+    WingArm1Twist1_R = 293
+    waterfall_top_sound = 296
+    waterfall_bottom_sound = 297
 
     '''
     guesses based on humanmale_hd
@@ -263,16 +390,296 @@ class M2KeyBones(Enum):
     '''
 
     @classmethod
-    def get_bone_name(cls, keybone_id, idx):
-        if keybone_id == -1:
-            return "Bone_{}".format(idx)
+    def get_bone_name(cls, keybone_id, bone_crc, idx):
+        if keybone_id == -1:  
+            crc_name = M2BoneCRCNames.get_bone_name_from_crc(bone_crc)
+            if crc_name is None:
+                return "Bone_{}".format(idx)
+            else:
+                return crc_name
 
         for field in cls:
             if field.value == keybone_id:
-                return field.name
+                bone_name = field.name
+                if bone_name.endswith('_L'):
+                    return "{}.{}".format(bone_name[:-2], "L")
+                if bone_name.endswith('_R'):
+                    return "{}.{}".format(bone_name[:-2], "R")                
+                else:
+                    return field.name
 
         print("\nUnknown keybone ID: {}".format(keybone_id))
         return "UNK_Keybone_{}".format(keybone_id)
+
+class M2BoneCRCNames(Enum):
+    Toe_R = 3142542542
+    Toe_L = 1094736301
+    Chest_R = 87406847
+    Chest_L = 4282025372
+    Neck = 2149808493
+    Leg_L = 3947676041
+    Leg_R = 289668330
+    B_Loin_01 = 1187100303
+    F_Loin_01 = 455993219
+    Wrist_L = 133952906
+    Calf_L = 1475065404
+    Calf_R = 2917436255
+    #Can cause problems if model has this two CRC's, these are guessed I think, we should check and assign new names.
+    Knee_L = (453281255, 4116633036)
+    Knee_R = (3775641732, 257026223)
+    B_Loin_02 = 3754485557
+    F_Loin_02 = 2183444025
+    F_Loin_03 = 4112746159
+    CAH = 3987563274
+    CPP = 2904086604
+    CSS = 524081717
+    HIT = 1025530540
+    CST = 2170048406
+    ESD = 2556568384
+    FD1 = 3217595452
+    FR0 = 3562477949
+    FL0 = 1451682
+    BWP = 3818595516
+    BWR = 227886480
+    SHL = 656719658
+    SHR = 3710616137
+    TRD = 2627590982
+    DTH = 3747058587
+    FSD = 2586090777
+    SCD = 3389779667
+    Ear_01_L = 3985447072
+    Eyebrow_R = 2713847615
+    Eyebrow_L = 1540176476
+    Ear_01_R = 1565210636
+    SpineUp = 310207871
+    Ear_02_L = 1954826522
+    Ear_02_R = 3292686774
+    Tail01 = (200542651, 3234909848)
+    Tail02 = 2466076673
+    Object26 = 699064172
+    MiddleFinger_Tip_R = 841976507
+    IndexFinger_Tip_R = 2353668594
+    Thumb_Tip_R = 2319604107
+    Thumb_Tip_L = 1884120296
+    IndexFinger_Tip_L = 1984240785
+    MiddleFinger_Tip_L = 3357587416
+    RingFinger_Tip_R = 3157792292
+    PinkyFinger_Tip_R = 3380046314
+    PinkyFinger_Tip_L = 863523977
+    RingFinger_Tip_L = 1178020679
+    Plane01 = 2124421159
+    Plane02 = 3886631325
+    EF_Eyelid01 = 4278575356
+    EF_Eyelid_Death = 2435095781
+    EyeBow_L = 2602753973
+    EyeBow_R = 1630397142
+    BWA = 2301297742
+    BWS = 2056418566
+    Belly = 1236608114
+    Plane05 = 2043534398
+    Hip_L = (1756834604, 1073108840)
+    Hip_R = (2461537871, 3321457163)
+    Spine1_joint = 4256852168
+    Spine2_joint = 1991852656
+    Eye01 = 1280356454
+    Spine3_joint = 3503180228
+    Tail1_joint = 1113222609
+    LMLeg_joint45 = 4274609575
+    RMLeg_joint48 = 3466169200
+    LFLeg_joint46 = 374515731
+    RFLeg_joint49 = 3356237800
+    Tail2_joint = 1941075788
+    LMLeg_joint41 = 4188314046
+    RMLeg_joint41 = 3074765780
+    LFLeg_joint41 = 2285256112
+    RFLeg_joint41 = 3336017882
+    Tail3_joint = 3586489592
+    RLLeg_joint40 = 1541885741
+    RLLeg_joint47 = 3313752718
+    LMLeg_joint42 = 1622001668
+    RMLeg_joint42 = 776757870
+    LFLeg_joint42 = 289369098
+    RFLeg_joint42 = 1608435296
+    Tail4_joint = 274874998
+    RLLeg_joint41 = 752910267
+    RLLeg_joint42 = (1010067695, 3051957761)
+    LMLeg_joint43 = 397080722
+    RMLeg_joint43 = 1498108664
+    RFLeg_joint43 = 685373174
+    RLLeg_joint043 = 1261656185
+    RLLeg_joint43 = 3270385303
+    RLLeg_joint044 = 3579301338
+    HeadScale_joint22 = 2601158378
+    LFLeg_joint43 = 1714969756
+    FinLeft_joint50 = 1320797406
+    FinRight_joint51 = 2639070569
+    NoseLeft_joint18 = 3160519086
+    Spine1Sale_joint = 1694731022
+    Spine2Scale_joint = 4287748709
+    Spine3Scale_joint = 1681167882
+    TailScale_joint = 244018153
+    Tail3Scale_joint = 3056783546
+    Taile4Scale_joint = 2568972396
+    Hips = 3738240529
+    LegBack_01_L = 2118608204
+    LegBack_01_R = 1761602358
+    SpineUpper = 1688372140
+    LegBack_02_L = 3880662262
+    LegBack_02_R = 4059478668
+    Hump = 2911396259
+    LegFront_01_L = 3774419696
+    LegFront_01_R = 4131495050
+    FootBack_L = 3176988174
+    FootBack_R = 1196671853
+    LegFront_02_L = 2045789002
+    LegFront_02_R = 1867042096
+    ToeBack_L = 2211631441
+    ToeBack_R = 2044587058
+    FootFront_L = 2906586403
+    FootFront_R = 1462878272
+    ToeFront_L = 1456750441
+    ToeFront_R = 2900034058
+    Arm1_Twist3_L = (2828305040, 2133193007)
+    Arm1_Twist3_R = (1385938931, 2234174540)
+    Elbow_L = (1005774799)
+    Elbow_R = (3254639276)
+    Ankle_L = 286571785
+    Ankle_R = 3944448106
+    Plane04 = 248179880
+    SpineLower = 73869075
+    Hand_R = (3713458406, 3951430818)
+    Thumb_L = (2424878462, 3151027085)
+    Thumb_R = (1787267101, 1105192686)
+    Lower_01 = 156616400
+    Upper_01 = 3862048847
+    Lower_02 = 2421987178
+    Leg_01_Front_L = 2336852693
+    Leg_01_Front_R = 1995865176
+    Upper_02 = 2134598133
+    Lower_03 = 3881543676
+    Leg_01_Middle_L = 2652958531
+    Leg_01_Middle_R = 597339540
+    Leg_02_Front_L = 96898358
+    Leg_02_Front_R = 1333477533
+    Upper_03 = 138170723
+    Lower_04 = 2034184799
+    Leg_01_Back_L = 659936916
+    Leg_01_Back_R = 3713723383
+    Leg_02_Middle_L = 849488884
+    Leg_02_Middle_R = 3366786711
+    Leg_03_Front_L = 3379334568
+    Leg_03_Front_R = 1476416734
+    Upper_04 = 2522399936
+    Lower_05 = 238551753
+    Leg_02_Back_L = 2849689975
+    Leg_02_Back_R = 1406528532
+    Leg_03_Middle_L = 3714072778
+    Leg_03_Middle_R = 661618089
+    Upper_05 = 3781162070
+    Lower_06 = 2536592243
+    Leg_03_Back_L = 1701892585
+    Leg_03_Back_R = 2675960970
+    Upper_06 = 2018944492
+    Jaw_Top_L = 2734454220
+    Jaw_Bottom_L = 2836712998
+    Jaw_Top_R = 1492338863
+    Jaw_Bottom_R = 1394340677
+    Pinky_01_L = 320446612
+    Index_01_L = 324882040
+    Pinky_01_R = 94449390
+    Index_01_R = 98942978
+    Pinky_02_L = 2316366126
+    Index_02_L = 2320768962
+    Pinky_02_R = 2628288340
+    Index_02_R = 2632749496
+    Pinky_03_L = 4246192568
+    Index_03_L = 4250087252
+    Pinky_03_R = 3954134978
+    Index_03_R = 3958087982
+    Foot_L = (117032577, 90603765)
+    Foot_R = (4244044770, 4285119894)
+    Finger_L = 1839222075
+    Finger_R = 2544857176
+    Plane03  = 2427353355
+    Arm_L = (2701186468, 4204807211)
+    Arm_R = (1527769287, 11499848)
+    Eye_R = 2006816958
+    Eye_L = 2375198173
+    Hand_L = (660200837, 294203841)
+    Blid_01_L = 2502312157
+    Flid_01_R = 131383389
+    Blid_L = 3827894237
+    Blid_R = 505821886
+    Flid_L = 2142782923
+    Flid_R = 2243393704
+    GEO_Eyelid_L = 1116453182
+    GEO_Eyelid_R = 3095692381
+    Cheek_L = 717968576
+    Cheek_R = 3502533027
+    Geo_EyeLid_Death = 902861035
+    fin = 2905535025 
+
+    # online sheet by Marlamin https://docs.google.com/spreadsheets/d/1Ejc6oWYZeNy8I01V3LFtSg6GaGOLdEkTZkTXeo0_Plo/edit#gid=0
+    Root = 3066451557
+    Main = 521822810
+    SpineLow = 40275131
+    Chest = 981834931
+    Shoulder_R = 3057625618
+    Shoulder_L = 1278252913
+    C1_Spine2 = 2031597313
+    C1_Pelvis1 = 727987715
+    Leg_Twist1_L = 4144451481
+    Leg_Twist1_R = 3118917107    
+    Leg_Twist2_L = 3337573636
+    Leg_Twist2_R = 2282684270
+    Leg_Twist3_R = 1474856159
+    Leg_Twist3_L = 420032181   
+    Name = 2738135331
+    Head = 130111906
+    Breath = 3299126614
+    Arm_Twist2_R = 3180860948
+    Arm_Twist2_L = 4084841598    
+    IndexFinger_R = 995305172
+    IndexFinger_L = 3244039095  
+    MiddleFinger_R = 80758321
+    MiddleFinger_L = 4276058962    
+    PinkyFinger_R = 2425597951
+    PinkyFinger_L = 1788646044
+    RingFinger_L = 2357464676
+    RingFinger_R = 1988834055 
+    Jaw = 818638717
+    Neck2 = 3191706695
+    Waist = 3690404639
+    Arm_1Twist2_L = 3264325347
+    Arm_1Twist2_R = 2356153481    
+    Arm_2Twist3_L = 2222886120
+    Arm_1Twist3_R = 4218895391
+    Arm_1Twist3_L = 3046545013
+
+
+    @classmethod
+    def get_bone_name_from_crc(cls, crc):
+        for field in cls:
+            if isinstance(field.value, tuple):
+                if crc in field.value:
+                    bone_name = field.name       
+                    if bone_name.endswith('_L'):
+                        return "{}.{}".format(bone_name[:-2], "L")
+                    if bone_name.endswith('_R'):
+                        return "{}.{}".format(bone_name[:-2], "R")                
+                    else:
+                        return field.name
+            else:
+                if field.value == crc:
+                    bone_name = field.name             
+                    if bone_name.endswith('_L'):
+                        return "{}.{}".format(bone_name[:-2], "L")
+                    if bone_name.endswith('_R'):
+                        return "{}.{}".format(bone_name[:-2], "R")                
+                    else:
+                        return field.name
+
+        return None
 
 
 class M2AttachmentTypes(Enum):
@@ -332,8 +739,14 @@ class M2AttachmentTypes(Enum):
     BeltBuckle = 53
     SheathCrossbow = 54
     HeadTop = 55
+    VirtualSpellDirected = 56
     Backpack = 57
     Unknown = 58
+    Unknown2 = 59
+    Unknown3 = 60
+    Unknown4 = 61
+    Unknown5 = 62
+    Unknown6 = 63
 
     @classmethod
     def get_attachment_name(cls, attachment_id, idx):
@@ -506,19 +919,30 @@ class M2EventTokens(Enum):
 
 @singleton
 class M2SequenceNames:
-
     def __init__(self):
+        self.animation_names = []
+        self.load_animation_data()
 
-        self.cur_iter = -1
-
-        with open(os.path.join(os.path.dirname(__file__), 'animation_data.csv'), newline='') as f:
-            self.anim_name_map = bidict({int(row[0]): row[1] for row in csv.reader(f, delimiter=';')})
+    def load_animation_data(self):
+        animation_data_path = os.path.join(os.path.dirname(__file__), 'animation_data.csv')
+        with open(animation_data_path, newline='') as f:
+            csv_reader = csv.reader(f, delimiter=';')
+            self.animation_names = [row[1] for row in csv_reader]
 
     def get_sequence_name(self, seq_id: int):
-        return self.anim_name_map.get(seq_id)
+        if 0 <= seq_id < len(self.animation_names):
+            return self.animation_names[seq_id]
+        else:
+            return None
 
     def get_sequence_id(self, seq_name: str):
-        return self.anim_name_map.inverse(seq_name)
+        try:
+            return self.animation_names.index(seq_name)
+        except ValueError:
+            return None
 
     def items(self):
-        return self.anim_name_map.items()
+        return enumerate(self.animation_names)
+
+    def get_anim_ids(self, context):
+        return [(str(seq_id), name, '') for seq_id, name in self.items()]

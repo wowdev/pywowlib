@@ -30,6 +30,9 @@ class M2File:
         self.version = M2Versions.from_expansion_number(version)
         self.root = MD21() if self.version >= M2Versions.LEGION else MD20()
         self.filepath = filepath
+
+        track_cache = M2TrackCache()
+        track_cache.purge()
         
         self.dependencies = M2Dependencies()
         self.skins = [M2SkinProfile()]
@@ -193,6 +196,19 @@ class M2File:
         # find anims
         anim_paths_map = {}
 
+        normalized_path = os.path.normpath(self.raw_path)
+        path_parts = [part.lower() for part in normalized_path.split(os.sep)]
+        if "character" in path_parts:
+            base_path_index = path_parts.index("character")
+        elif "creature" in path_parts:
+            base_path_index = path_parts.index("creature")    
+        elif "world" in path_parts:
+            base_path_index = path_parts.index("world")    
+        else:
+            base_path_index = 0
+
+        relevant_path = "\\".join(path_parts[base_path_index:])
+
         if not self.afid:
             for i, sequence in enumerate(self.root.sequences):
                 # handle alias animations
@@ -205,7 +221,7 @@ class M2File:
 
                 if not sequence.flags & 0x130:
                     anim_paths_map[real_anim.id, sequence.variation_index] \
-                        = "{}{}-{}.anim".format(self.raw_path if not self.skels else self.skels[0].root_basepath
+                        = "{}{}-{}.anim".format(relevant_path if not self.skels else self.skels[0].root_basepath
                                                 , str(real_anim.id).zfill(4)
                                                 , str(sequence.variation_index).zfill(2))
 
@@ -217,8 +233,8 @@ class M2File:
 
                 anim_paths_map[record.anim_id, record.sub_anim_id] = record.file_id
 
-        self.dependencies.anims = anim_paths_map
 
+        self.dependencies.anims = anim_paths_map        
         return self.dependencies
 
     @staticmethod
@@ -260,19 +276,27 @@ class M2File:
                     real_anim = self.root.sequences[real_anim.alias_next]
 
                 if not sequence.flags & 0x130:
+                    chunked_anim_files = self.version >= M2Versions.LEGION and self.root.global_flags & M2GlobalFlags.ChunkedAnimFiles
 
                     anim_file = AnimFile(split=bool(self.skels)
                                          , old=not bool(self.skels)
-                                               and not self.root.global_flags & M2GlobalFlags.ChunkedAnimFiles)
-
+                                                and not chunked_anim_files)
+                                                # downported models that don't clean up flags can crash and be detected as new version
+                                               # and not self.root.global_flags & M2GlobalFlags.ChunkedAnimFiles)                   
                     anim_path = anim_paths[real_anim.id, sequence.variation_index]
+
                     try:
-                        with open(anim_path, 'rb') as f:
+                        if not os.path.exists(anim_path):
+                            raise FileNotFoundError(
+                                f"\nThe required .anim file \"{anim_path}\" was not found.\n"
+                                "Please, add the missing .anim file and try again."
+                            )
+
+                        with open(anim_path, 'rb') as f:                           
                             anim_file.read(f)
-                    except FileNotFoundError:
-                        print("Warning: .anim file \"{}\" not found."
-                              " Low-priority sequence will not import.".format(anim_path))
-                        continue
+
+                    except FileNotFoundError as e:
+                        raise e
 
                     if anim_file.old or not anim_file.split:
 
@@ -412,24 +436,24 @@ class M2File:
 
         return geoset_index
 
-    def add_material_to_geoset(self, geoset_id, render_flags, blending, flags, shader_id, tex_id, tex_unit_coord, priority_plane, mat_layer, tex_count, color_id, transparency_id):  # TODO: Add extra params & cata +
+    def add_material_to_geoset(self, geoset_id, render_flags, blending, flags, shader_id, texture_lookup_id, tex_1_mapping, tex_2_mapping, priority_plane, mat_layer, tex_count, color_id, transparency_id, transform_id):  # TODO: Add extra params & cata +
         skin = self.skins[0]
         tex_unit = M2SkinTextureUnit()
         tex_unit.skin_section_index = geoset_id
-        # self.root.tex_unit_lookup_table.append(skin.texture_units.add(tex_unit))
         skin.texture_units.add(tex_unit)
         tex_unit.geoset_index = geoset_id
         tex_unit.flags = flags
         tex_unit.priority_plane = priority_plane
         tex_unit.shader_id = shader_id
         tex_unit.texture_count = tex_count
-        tex_unit.texture_combo_index = tex_id
+        tex_unit.texture_combo_index = texture_lookup_id
         tex_unit.material_layer = mat_layer
         tex_unit.color_index = color_id
         tex_unit.texture_weight_combo_index = transparency_id
+        tex_unit.texture_transform_combo_index = transform_id
 
         # check if we already have that render flag else create it
-        if self.root.global_flags & M2GlobalFlags.UseTextureCombinerCombos: # some models seem to require 1 entry per text unit, seems related to this flag
+        if M2GlobalFlags.UseTextureCombinerCombos: # some models seem to require 1 entry per text unit, seems related to this flag
             for i, material in enumerate(self.root.materials):
                 if material.flags == render_flags and material.blending_mode == blending:
                     tex_unit.material_index = i
@@ -440,19 +464,27 @@ class M2File:
                 m2_mat.blending_mode = blending
                 tex_unit.material_index = self.root.materials.add(m2_mat)
         else:
-            m2_mat = M2Material()
-            m2_mat.flags = render_flags
-            m2_mat.blending_mode = blending
-            tex_unit.material_index = self.root.materials.add(m2_mat)
+            for i, material in enumerate(self.root.materials):
+                if material.flags == render_flags and material.blending_mode == blending:
+                    tex_unit.material_index = i
+                    break
+                else:
+                    m2_mat = M2Material()
+                    m2_mat.flags = render_flags
+                    m2_mat.blending_mode = blending
+                    tex_unit.material_index = self.root.materials.add(m2_mat)
 
         # check if texunitlookup already exists
-        for i, texunuitlookup in enumerate(self.root.tex_unit_lookup_table):
-            if texunuitlookup == tex_unit_coord:
-                tex_unit.texture_coord_combo_index = i
+        tex_mapping_pair = (tex_1_mapping, tex_2_mapping)
+        for i, existing_mapping_pair in enumerate(zip(self.root.tex_unit_lookup_table[::2], self.root.tex_unit_lookup_table[1::2])):
+            if existing_mapping_pair == tex_mapping_pair:
+                tex_unit.texture_coord_combo_index = i * 2
                 break
         else:
-            self.root.tex_unit_lookup_table.append(tex_unit_coord)
-            tex_unit.texture_coord_combo_index = len(self.root.tex_unit_lookup_table) -1
+            # If the tex_mapping_pair is not in the lookup table, append it as a pair of two values
+            self.root.tex_unit_lookup_table.append(tex_1_mapping)
+            self.root.tex_unit_lookup_table.append(tex_2_mapping)
+            tex_unit.texture_coord_combo_index = len(self.root.tex_unit_lookup_table) - 2
 
     def add_texture(self, path, flags, tex_type):
 
@@ -467,11 +499,24 @@ class M2File:
         texture.type = tex_type
 
         tex_id = self.root.textures.add(texture)
-        self.root.texture_lookup_table.append(tex_id)
-        self.root.texture_transforms_lookup_table.append(-1)
         self.root.replacable_texture_lookup.append(0)   # TODO: get back here
 
         return tex_id
+    
+    def add_tex_lookup(self, texture1_lookup_id, texture2_lookup_id):
+
+        tex_lookup_pair = (texture1_lookup_id, texture2_lookup_id)
+        for i, existing_lookup_pair in enumerate(zip(self.root.texture_lookup_table[::2], self.root.texture_lookup_table[1::2])):
+            if existing_lookup_pair == tex_lookup_pair:
+                tex_lookup_id = i * 2
+                break
+        else:
+            # If the tex_lookup_pair is not in the lookup table, append it as a pair of two values
+            self.root.texture_lookup_table.append(texture1_lookup_id)
+            self.root.texture_lookup_table.append(texture2_lookup_id)
+            tex_lookup_id = len(self.root.texture_lookup_table) - 2
+       
+        return tex_lookup_id           
 
     def add_bone(self, pivot, key_bone_id, flags, parent_bone,submesh_id = 0, bone_name_crc = 0):
         m2_bone = M2CompBone()
@@ -522,7 +567,7 @@ class M2File:
         seq.id = a_id
         seq.variation_index = var_id
         seq.variation_next = var_next if var_next else -1
-        seq.alias_next = alias_next if alias_next else seq_id
+        seq.alias_next = alias_next if flags & 64 else seq_id
         seq.flags = flags
         seq.frequency = frequency
         seq.movespeed = movespeed

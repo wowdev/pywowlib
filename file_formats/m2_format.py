@@ -38,7 +38,11 @@ class M2String:
 
         pos = f.tell()
         f.seek(ofs_characters)
-        self.value = f.read(n_characters).decode('utf-8').rstrip('\0')
+        try:
+            self.value = f.read(n_characters).decode('utf-8').rstrip('\0')
+        except UnicodeDecodeError as e:
+            print("UnicodeDecodeError occurred, probably fuckported m2, using no name:", e)
+            self.value = ""
         f.seek(pos)
 
         return self
@@ -131,7 +135,7 @@ class M2TrackBase:
 
         if self.m2_version < M2Versions.WOTLK:
             self.interpolation_ranges.read(f)
-        self.timestamps.read(f, is_anim_data=True)
+        self.timestamps.read(f, is_anim_data=False)
 
         return self
 
@@ -170,7 +174,7 @@ class M2Track(M2TrackBase, metaclass=Template):
     def read(self, f):
 
         super(M2Track, self).read(f)
-        self.values.read(f, is_anim_data=True)
+        self.values.read(f, is_anim_data=False)
 
         M2TrackCache().add_track(self, self.creator)
 
@@ -459,9 +463,9 @@ class M2CompBone:
         self.scale.read(f)
         self.pivot = vec3D.read(f)
 
-        if self.key_bone_id >= 35:
+        #if self.key_bone_id >= 35:
 
-            print(self.key_bone_id, ":", hex(self.bone_name_crc), ",")
+            #print(self.key_bone_id, ":", hex(self.bone_name_crc), ",")
 
         return self
 
@@ -486,7 +490,7 @@ class M2CompBone:
 
     def load_bone_name(self, bone_type_dict):
 
-        self.name = M2KeyBones.get_bone_name(self.key_bone_id, self.index)
+        self.name = M2KeyBones.get_bone_name(self.key_bone_id, self.bone_name_crc, self.index)
 
         b_type = bone_type_dict.get(self.index)
 
@@ -1012,6 +1016,10 @@ class M2Particle:
             self.multi_texture_param1.write(f)
 
         return self
+    
+    @staticmethod
+    def size():
+        return 476 if M2VersionsManager().m2_version >= M2Versions.WOTLK else 492    
 
 
 #############################################################
