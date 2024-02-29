@@ -49,6 +49,7 @@ class DBCFile:
     def read(self, f):
         self.header.read(f)
         str_block_ofs = 20 + self.header.record_count * self.header.record_size
+        # print(self.name)
 
         for _ in range(self.header.record_count):
             args = []
@@ -100,7 +101,8 @@ class DBCFile:
         self.header.write(f)
 
     def read_from_gamedata(self, game_data):
-        f = BytesIO(game_data.read_file('DBFilesClient\\{}.dbc'.format(self.name)))
+        # f = BytesIO(game_data.read_file('DBFilesClient\\{}.dbc'.format(self.name)))
+        f = BytesIO(game_data.read_file('DBFilesClient\\{}.dbc'.format(self.name))[0])
         self.read(f)
 
     def get_record(self, uid):
