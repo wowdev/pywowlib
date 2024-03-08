@@ -61,7 +61,7 @@ def main(debug: bool):
 
     os.chdir(CUR_DIR)
 
-    static_libraries = ['StormLib'] if sys.platform == 'win32' else ['storm']
+    static_libraries = ['storm']
     static_lib_dir = 'lib'
     libraries = []
     library_dirs = []
