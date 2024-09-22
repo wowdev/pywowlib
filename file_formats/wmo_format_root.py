@@ -83,27 +83,36 @@ class MOTX(ContentChunk):
 
     def read(self, f):
         super().read(f)
-        self.string_table = f.read(self.size)
+        self.string_table = bytearray(f.read(self.size))
 
         return self
 
     def write(self, f):
-        self.size = len(self.string_table)
-        super().write(f)
+        padding_needed = (16 - len(self.string_table) % 16) % 16
+        if padding_needed == 0:
+            padding_needed = 16
 
+        self.string_table.extend(b'\x00' * padding_needed)
+        self.size = len(self.string_table)
+
+        super().write(f)
         f.write(self.string_table)
 
         return self
 
     def add_string(self, s : str):
-        padding = len(self.string_table) % 4
-        if padding > 0:
-            for iPad in range(4 - padding):
-                self.string_table.append(0)
+        padding = (4 - len(self.string_table) % 4) % 4
 
-        ofs = len(self.string_table)
+        if padding == 0 and (len(self.string_table) > 0):
+            padding = 4        
+        elif padding > 0 and padding < 4:
+            padding = padding + 4
+
+        ofs = len(self.string_table) + padding
+        self.string_table.extend(b'\x00' * padding)   
         self.string_table.extend(s.encode('ascii'))
-        self.string_table.append(0)
+        self.size = len(self.string_table)
+        
         return ofs
 
     def get_string(self, ofs : int):
@@ -127,7 +136,6 @@ class MOTX(ContentChunk):
                 cur_str = ""
 
         return strings
-
 
 class WMOMaterial:
 
@@ -202,13 +210,20 @@ class MOGN(ContentChunk):
 
     def read(self, f):
         super().read(f)
-        self.string_table = f.read(self.size)
+        self.string_table = bytearray(f.read(self.size))
 
         return self
 
     def write(self, f):
 
+        padding_needed = (4 - len(self.string_table) % 4) % 4
+        if padding_needed > 0 and padding_needed < 4:
+            padding_needed = padding_needed + 4
+
+        self.string_table.extend(b'\x00' * padding_needed)
+
         self.size = len(self.string_table)
+
         super().write(f)
 
         f.write(self.string_table)
@@ -217,7 +232,7 @@ class MOGN(ContentChunk):
 
     def add_string(self, s):
         ofs = len(self.string_table)
-        self.string_table.extend(s.encode('ascii'))
+        self.string_table.extend(s.encode('windows-1252'))
         self.string_table.extend(b'\x00')
         return ofs
 
@@ -228,7 +243,7 @@ class MOGN(ContentChunk):
         i = ofs
         while self.string_table[i] != 0:
             i += 1
-        return self.string_table[start:i].decode('ascii')
+        return self.string_table[start:i].decode('windows-1252')
 
 
 class GroupInfo:
@@ -285,12 +300,21 @@ class MOSB(ContentChunk):
         if not self.skybox:
             self.skybox = '\x00\x00\x00'
 
-        self.size = len(self.skybox) + 1
-        super().write(f)
+        #Padding
+        padding_needed = (4 - len(self.skybox) % 4) % 4
 
-        f.write(self.skybox.encode('ascii') + b'\x00')
+        if padding_needed == 0:
+            padding_needed = 4
+
+        self.size = len(self.skybox) + padding_needed
+
+        super().write(f)
+        
+        f.write(self.skybox.encode('ascii'))
+        f.write(b'\x00' * padding_needed)
 
         return self
+
 
 
 class MOPV(ArrayChunk):
@@ -519,12 +543,19 @@ class MODN(ContentChunk):
 
     def read(self, f):
         super().read(f)
-        self.string_table = f.read(self.size)
+        self.string_table = bytearray(f.read(self.size))
 
         return self
 
     def write(self, f):
-        self.size = len(self.string_table)
+        current_position = f.tell()
+
+        padding_needed = (4 - (current_position % 4)) % 4
+
+        f.write(b'\x00' * padding_needed)
+
+        self.size = len(self.string_table) + padding_needed
+        self.string_table = bytearray(padding_needed) + self.string_table
 
         super().write(f)
         f.write(self.string_table)

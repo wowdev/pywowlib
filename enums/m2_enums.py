@@ -34,32 +34,32 @@ class M2GlobalFlags(IntEnum):
     UNK_0x200000 = 0x200000
 
 class M2ParticleFlags(IntEnum):
-    EffectedByLight = 0x1                                       # Particles are affected by lighting;
+    LitByLight = 0x1                                       # Particles are affected by lighting;
     Unknown1 = 0x2
-    Unknown2 = 0x4
-    UseWorldMatrix = 0x8                                        # Particles travel "up" in world space, rather than model.
-    DoNotTrail = 0x10                                           # Do not Trail
-    Unlightning = 0x20                                          # Unlightning
-    Unknown3 = 0x40
-    UseModelMatrix = 0x80                                       # Particles in Model Space
+    Billboarded = 0x4
+    TravelUp = 0x8                                        # Particles travel "up" in world space, rather than model.
+    NoTrail = 0x10                                           # Do not Trail
+    UnLit = 0x20                                          # Unlightning
+    BurstMulti = 0x40
+    ModelSpace = 0x80                                       # Particles in Model Space
     Unknown4 = 0x100
     SpawnPosRandom = 0x200                                      # spawn position randomized in some way?
-    PinParticle = 0x400                                         # Pinned Particles, their quad enlarges from their creation position to where they expand.
+    Pinnned = 0x400                                         # Pinned Particles, their quad enlarges from their creation position to where they expand.
     Unknown5 = 0x800
-    XYQuad = 0x1000                                             # XYQuad Particles. They align to XY axis facing Z axis direction.
-    ClampToGround = 0x2000                                      # clamp to ground
+    XYQuad_Align = 0x1000                                             # XYQuad Particles. They align to XY axis facing Z axis direction.
+    GroundClamp = 0x2000                                      # clamp to ground
     Unknown6 = 0x4000
     Unknown7 = 0x8000
-    ChooseRandomTexture = 0x10000                               # ChooseRandomTexture
-    OutwardParticle = 0x20000                                   # "Outward" particles, most emitters have this and their particles move away from the origin, when they don't the particles start at origin+(speed*life) and move towards the origin.
-    Unknown = 0x40000                                           # unknown. In a large proportion of particles this seems to be simply the opposite of the above flag, but in some (e.g. voidgod.m2 or wingedlionmount.m2) both flags are true.
-    ScaleVaryXY = 0x80000                                       # If set, ScaleVary affects x and y independently; if not set, ScaleVary.x affects x and y uniformly, and ScaleVary.y is not used.
-    RandFlipBookStart = 0x200000                                # Random FlipBookStart
+    Rng_Texture = 0x10000                               # ChooseRandomTexture
+    Outwards = 0x20000                                   # "Outward" particles, most emitters have this and their particles move away from the origin, when they don't the particles start at origin+(speed*life) and move towards the origin.
+    Inwards = 0x40000                                           # unknown. In a large proportion of particles this seems to be simply the opposite of the above flag, but in some (e.g. voidgod.m2 or wingedlionmount.m2) both flags are true.
+    DisableScaleVary = 0x80000                                       # If set, ScaleVary affects x and y independently; if not set, ScaleVary.x affects x and y uniformly, and ScaleVary.y is not used.
+    RngFlip = 0x200000                                # Random FlipBookStart
     IgnoreDistance = 0x400000                                   # Ignores Distance (or 0x4000000?!, CMapObjDef::SetDoodadEmittersIgnoresDistance has this one)
-    CompressGravity = 0x800000                                  # gravity values are compressed vectors instead of z-axis values (see Compressed Particle Gravity below)
-    BoneGenerator = 0x1000000                                   # bone generator = bone, not joint
-    DoNotThrottleEmission = 0x4000000                           # do not throttle emission rate based on distance
-    UseMultiTexturing = 0x10000000                              # Particle uses multi-texturing (could be one of the other WoD-specific flags), see multi-textured section.
+    GravityComp = 0x800000                                  # gravity values are compressed vectors instead of z-axis values (see Compressed Particle Gravity below)
+    BoneGen = 0x1000000                                   # bone generator = bone, not joint
+    NoThrottle = 0x4000000                           # do not throttle emission rate based on distance
+    MultiTexturing = 0x10000000                              # Particle uses multi-texturing (could be one of the other WoD-specific flags), see multi-textured section.
 
 
 class M2TextureTypes(IntEnum):
@@ -134,33 +134,57 @@ class M2CompBoneFlags(IntEnum):
 class M2SkinMeshPartID(Enum):
     Skin = range(0, 1)
     Hair = range(1, 35)
-    Facial1 = range(101, 109)
-    Facial2 = range(201, 208)
-    Facial3 = range(301, 312)
-    Glove = range(401, 405)
-    Boots = range(501, 506)
-    Unknown = range(601, 615)
-    Ears = range(701, 703)
+    Facial1 = range(101, 125)
+    Facial2 = range(201, 220)
+    Facial3 = range(301, 320)
+    Glove = range(401, 406)
+    Boots = range(501, 511)
+    Shirt = range(601, 615)
+    Ears = range(701, 712)
     Wristbands = range(801, 805)
-    Kneepads = range(901, 905)
+    Kneepads = range(901, 906)
     Chest = range(1001, 1005)
-    Pants = range(1101, 1105)
-    Tabard = range(1201, 1204)
-    Legs = range(1301, 1303)
-    Unknown2 = range(1401, 1415)
-    Cloak = range(1501, 1511)
-    Unknown3 = range(1601, 1615)
-    Eyeglows = range(1701, 1704)
-    Belt = range(1801, 1804)
+    Pants = range(1101, 1106)
+    Tabard = range(1201, 1205)
+    Legs = range(1301, 1304)
+    ShirtDoublet = range(1401, 1415)
+    Cape = range(1501, 1525)
+    FacialJewelry = range(1601, 1615)
+    EyeEffects = range(1701, 1706)
+    Belt = range(1801, 1805)
     Trail = range(1901, 1915)  # Tail?
-    Feet = range(2001, 2003)
-    # Legion/BFA +
+    Feet = range(2001, 2009)
+    # Legion/BFA/SL +
     Head = range(2101, 2102)
     Torso = range(2201, 2203)
     Hands = range(2301, 2302)
+    Horns = range (2401, 2425)
     Shoulders = range(2601, 2603)
     Helmet = range(2702, 2703)
-    Unknown4 = range(2801, 2802)
+    ArmUpper = range(2801, 2850)
+    ArmsReplace = range(2901, 2950)
+    LegsReplace = range(3001, 3050)
+    FeetReplace = range(3101, 3150)
+    HeadSwap = range(3201, 3250)
+    Eyes = range(3301, 3350)
+    Eyebrows = range(3401, 3450)
+    Piercings = range(3501, 3550)
+    Necklaces = range(3601, 3650)
+    Headdress = range(3700, 3750)
+    Tail = range(3801, 3850)
+    MiscAccessory = range(3901, 3950)
+    MiscFeature = range(4001, 4050)
+    Noses = range(4101, 4150)
+    HairDecoration = range(4201, 4250)
+    HornDecoration = range(4301, 4350)
+    BodySize = range(4401, 4450)
+    Unknown1 = range(4501, 4550)
+    Unknown2 = range(4601, 4650)
+    Unknown3 = range(4701, 4750)
+    Unknown4 = range(4801, 4850)
+    Unknown5 = range(4901, 4950)
+    Unknown6 = range(5001, 5050)
+    EyeGlows = range(5101, 5150)
 
     @classmethod
     def get_mesh_part_name(cls, mesh_part_id):
@@ -424,9 +448,8 @@ class M2BoneCRCNames(Enum):
     Wrist_L = 133952906
     Calf_L = 1475065404
     Calf_R = 2917436255
-    #Can cause problems if model has this two CRC's, these are guessed I think, we should check and assign new names.
-    Knee_L = (453281255, 4116633036)
-    Knee_R = (3775641732, 257026223)
+    Knee_L = 45328125  #4116633036, 2215716567
+    Knee_R = 3775641732 #257026223, 2115902388
     B_Loin_02 = 3754485557
     F_Loin_02 = 2183444025
     F_Loin_03 = 4112746159
@@ -454,7 +477,7 @@ class M2BoneCRCNames(Enum):
     SpineUp = 310207871
     Ear_02_L = 1954826522
     Ear_02_R = 3292686774
-    Tail01 = (200542651, 3234909848)
+    Tail01 = 200542651 #3234909848
     Tail02 = 2466076673
     Object26 = 699064172
     MiddleFinger_Tip_R = 841976507
@@ -477,8 +500,8 @@ class M2BoneCRCNames(Enum):
     BWS = 2056418566
     Belly = 1236608114
     Plane05 = 2043534398
-    Hip_L = (1756834604, 1073108840)
-    Hip_R = (2461537871, 3321457163)
+    Hip_L = 1756834604 #1073108840
+    Hip_R = 2461537871 #3321457163
     Spine1_joint = 4256852168
     Spine2_joint = 1991852656
     Eye01 = 1280356454
@@ -502,7 +525,8 @@ class M2BoneCRCNames(Enum):
     RFLeg_joint42 = 1608435296
     Tail4_joint = 274874998
     RLLeg_joint41 = 752910267
-    RLLeg_joint42 = (1010067695, 3051957761)
+    RLLeg_joint42 = 1010067695
+    RLLeg_joint42_L = 3051957761
     LMLeg_joint43 = 397080722
     RMLeg_joint43 = 1498108664
     RFLeg_joint43 = 685373174
@@ -539,17 +563,17 @@ class M2BoneCRCNames(Enum):
     FootFront_R = 1462878272
     ToeFront_L = 1456750441
     ToeFront_R = 2900034058
-    Arm1_Twist3_L = (2828305040, 2133193007)
-    Arm1_Twist3_R = (1385938931, 2234174540)
-    Elbow_L = (1005774799)
-    Elbow_R = (3254639276)
+    Arm1_Twist3_L = 2828305040 #2133193007
+    Arm1_Twist3_R = 1385938931 #2234174540
+    Elbow_L = 1005774799
+    Elbow_R = 3254639276
     Ankle_L = 286571785
     Ankle_R = 3944448106
     Plane04 = 248179880
     SpineLower = 73869075
-    Hand_R = (3713458406, 3951430818)
-    Thumb_L = (2424878462, 3151027085)
-    Thumb_R = (1787267101, 1105192686)
+    Hand_R = 3713458406 #3951430818
+    Thumb_L = 2424878462 #3151027085
+    Thumb_R = 1787267101 #1105192686
     Lower_01 = 156616400
     Upper_01 = 3862048847
     Lower_02 = 2421987178
@@ -596,16 +620,16 @@ class M2BoneCRCNames(Enum):
     Index_03_L = 4250087252
     Pinky_03_R = 3954134978
     Index_03_R = 3958087982
-    Foot_L = (117032577, 90603765)
-    Foot_R = (4244044770, 4285119894)
+    Foot_L = 117032577 #90603765
+    Foot_R = 4244044770 #4285119894
     Finger_L = 1839222075
     Finger_R = 2544857176
     Plane03  = 2427353355
-    Arm_L = (2701186468, 4204807211)
-    Arm_R = (1527769287, 11499848)
+    Arm_L = 2701186468 #4204807211
+    Arm_R = 1527769287 #11499848
     Eye_R = 2006816958
     Eye_L = 2375198173
-    Hand_L = (660200837, 294203841)
+    Hand_L = 660200837 #294203841
     Blid_01_L = 2502312157
     Flid_01_R = 131383389
     Blid_L = 3827894237
@@ -747,6 +771,18 @@ class M2AttachmentTypes(Enum):
     Unknown4 = 61
     Unknown5 = 62
     Unknown6 = 63
+    Unknown7 = 64
+    Unknown8 = 65
+    Unknown9 = 66
+    Unknown10 = 67
+    Unknown11 = 68
+    Unknown12 = 69
+    Unknown13 = 70
+    Unknown14 = 71
+    Unknown15 = 72
+    Unknown16 = 73
+    Unknown17 = 74
+    Unknown18 = 75
 
     @classmethod
     def get_attachment_name(cls, attachment_id, idx):

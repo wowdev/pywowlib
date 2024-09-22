@@ -126,6 +126,8 @@ class WoWFileData:
         if no_exc:
             print(error_msg)
         else:
+            #import sys
+            #sys.tracebacklimit = 0
             raise KeyError(error_msg)
 
     def extract_file(  self
@@ -135,11 +137,14 @@ class WoWFileData:
                      , no_exc: bool = False) -> str:
         """ Extract the latest version of the file from loaded archives to provided working directory. """
 
-        file, filepath = self.read_file(identifier, dir_path, file_format, no_exc)
+        try:
+            file, filepath = self.read_file(identifier, dir_path, file_format, no_exc)
+        except:
+            return None
 
-        if filepath:
-            return filepath
-
+        #if filepath:
+           #return filepath
+        
         filepath = os.path.join(dir_path, identifier) \
             if isinstance(identifier, str) else os.path.join(dir_path, self.guess_filepath(identifier, file_format))
 
@@ -152,7 +157,7 @@ class WoWFileData:
         f.close()
 
         return filepath
-
+    
     def extract_files(  self
                       , dir_path: str
                       , identifiers: List[Union[str, int]]

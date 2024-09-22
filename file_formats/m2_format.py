@@ -169,12 +169,14 @@ class M2Track(M2TrackBase, metaclass=Template):
         self.m2_version = M2VersionsManager().m2_version
 
         super(M2Track, self).__init__()
-        self.values = M2Array(type_) if self.m2_version < M2Versions.WOTLK else M2Array(M2Array << type_)
+        if self.creator is not M2Event:
+            self.values = M2Array(type_) if self.m2_version < M2Versions.WOTLK else M2Array(M2Array << type_)
 
     def read(self, f):
 
         super(M2Track, self).read(f)
-        self.values.read(f, is_anim_data=False)
+        if self.creator is not M2Event:
+            self.values.read(f, is_anim_data=False)
 
         M2TrackCache().add_track(self, self.creator)
 
@@ -182,14 +184,14 @@ class M2Track(M2TrackBase, metaclass=Template):
 
     def write(self, f):
         super(M2Track, self).write(f)
-        self.values.write(f)
+        if self.creator is not M2Event:
+            self.values.write(f)
 
         return self
 
     @staticmethod
     def size():
         return 20 if M2VersionsManager().m2_version >= M2Versions.WOTLK else 28
-
 
 class M2PartTrack:
     def __init__(self, type_):
@@ -492,16 +494,17 @@ class M2CompBone:
 
         self.name = M2KeyBones.get_bone_name(self.key_bone_id, self.bone_name_crc, self.index)
 
-        b_type = bone_type_dict.get(self.index)
+        if 'Bone_' in self.name:
+            b_type = bone_type_dict.get(self.index)
 
-        if b_type and self.key_bone_id < 0:
-            prefix, i, item = b_type
+            if b_type and self.key_bone_id < 0:
+                prefix, i, item = b_type
 
-            if prefix in ('AT', 'ET'):
-                self.name = "{}_{}_{}".format(prefix, item, i)
+                if prefix in ('AT', 'ET'):
+                    self.name = "{}_{}_{}".format(prefix, item, i)
 
-            elif prefix in ('LT', 'RB', 'PT'):
-                self.name = "{}_{}".format(prefix, i)
+                elif prefix in ('LT', 'RB', 'PT'):
+                    self.name = "{}_{}".format(prefix, i)
 
     def get_depth(self):
         if not self.children:
@@ -559,6 +562,7 @@ class M2Material:
     def __init__(self):
         self.flags = 0
         self.blending_mode = 0  # apparently a bitfield
+        self.texture_used = 0 # Used for exporting
 
     def read(self, f):
         self.flags = uint16.read(f)
@@ -1177,7 +1181,7 @@ class M2Event:
         self.data = 0
         self.bone = 0
         self.position = (0.0, 0.0, 0.0)
-        self.enabled = M2TrackBase()
+        self.enabled = M2Track(uint32, M2Event)
 
     def read(self, f):
         self.identifier = string.read(f, 4).decode('utf-8')

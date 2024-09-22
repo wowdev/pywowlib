@@ -205,20 +205,30 @@ fixed16 = uint16
 
 
 class MemoryManager:
+
+    @staticmethod
+    def align_position(pos):
+        return ((pos + 15) // 16) * 16
+        
     @staticmethod
     def mem_reserve(f, n_bytes):
         if n_bytes:
             pos = f.tell()
-            f.seek(pos + n_bytes)
-            f.write(b'\0')
-            f.seek(pos)
+            aligned_pos = MemoryManager.align_position(pos)
+            f.seek(aligned_pos)
+            f.write(b'\0' * n_bytes)
+            f.seek(aligned_pos)
 
     @staticmethod
     def ofs_request(f):
         pos = f.tell()
         ofs = f.seek(0, 2)
+        aligned_ofs = MemoryManager.align_position(ofs)
+        if aligned_ofs != ofs:
+            f.seek(aligned_ofs)
+            f.write(b'\0')
         f.seek(pos)
-        return ofs
+        return aligned_ofs
 
 
 class M2Array(metaclass=Template):

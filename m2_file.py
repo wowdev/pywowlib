@@ -239,16 +239,17 @@ class M2File:
 
     @staticmethod
     def process_anim_file(raw_data : BytesIO, tracks: List[M2Track], real_seq_index: int):
-
+        
         for track in tracks:
-
             if track.global_sequence < 0 and track.timestamps.n_elements > real_seq_index:
 
                 timestamps = track.timestamps[real_seq_index]
                 timestamps.read(raw_data, ignore_header=True)
 
-                frame_values = track.values[real_seq_index]
-                frame_values.read(raw_data, ignore_header=True)
+                if track.creator is not M2Event:
+
+                    frame_values = track.values[real_seq_index]
+                    frame_values.read(raw_data, ignore_header=True)
 
     def read_additional_files(self, skin_paths, anim_paths):
 
@@ -282,7 +283,8 @@ class M2File:
                                          , old=not bool(self.skels)
                                                 and not chunked_anim_files)
                                                 # downported models that don't clean up flags can crash and be detected as new version
-                                               # and not self.root.global_flags & M2GlobalFlags.ChunkedAnimFiles)                   
+                                               # and not self.root.global_flags & M2GlobalFlags.ChunkedAnimFiles) 
+                    
                     anim_path = anim_paths[real_anim.id, sequence.variation_index]
 
                     try:
@@ -292,10 +294,14 @@ class M2File:
                                 "Please, add the missing .anim file and try again."
                             )
 
-                        with open(anim_path, 'rb') as f:                           
+                        with open(anim_path, 'rb') as f:
+                            # print(anim_path)
+                            
                             anim_file.read(f)
 
                     except FileNotFoundError as e:
+                        #import sys
+                        #sys.tracebacklimit = 0
                         raise e
 
                     if anim_file.old or not anim_file.split:
@@ -317,8 +323,8 @@ class M2File:
                                 M2File.process_anim_file(anim_file.afsb.raw_data, tracks, a_idx)
                             elif creator == M2Attachment:
                                 M2File.process_anim_file(anim_file.afsa.raw_data, tracks, a_idx)
-                            else:
-                                M2File.process_anim_file(anim_file.afm2.raw_data, tracks, a_idx)  # what is in AFM2 then?
+                            else: #What's left in AFM2, seems like only Event data?
+                                M2File.process_anim_file(anim_file.afm2.raw_data, tracks, a_idx)
 
         else:
             self.skins = self.root.skin_profiles
@@ -335,6 +341,15 @@ class M2File:
 
             self.root.write(f)
 
+            actual_size = os.path.getsize(filepath)
+
+            f.seek(actual_size)
+
+            padding_needed = (16 - (actual_size % 16)) % 16
+
+            if padding_needed > 0:
+                f.write(b'\x00' * padding_needed)
+                
             # TODO: anim, skel and phys
 
     def add_skin(self):
@@ -440,6 +455,8 @@ class M2File:
         skin = self.skins[0]
         tex_unit = M2SkinTextureUnit()
         tex_unit.skin_section_index = geoset_id
+        #self.root.tex_unit_lookup_table.append(skin.texture_units.add(tex_unit))
+        #self.root.tex_unit_lookup_table.append(1)
         skin.texture_units.add(tex_unit)
         tex_unit.geoset_index = geoset_id
         tex_unit.flags = flags
@@ -452,27 +469,17 @@ class M2File:
         tex_unit.texture_weight_combo_index = transparency_id
         tex_unit.texture_transform_combo_index = transform_id
 
-        # check if we already have that render flag else create it
-        if M2GlobalFlags.UseTextureCombinerCombos: # some models seem to require 1 entry per text unit, seems related to this flag
-            for i, material in enumerate(self.root.materials):
-                if material.flags == render_flags and material.blending_mode == blending:
-                    tex_unit.material_index = i
-                    break
-            else:
-                m2_mat = M2Material()
-                m2_mat.flags = render_flags
-                m2_mat.blending_mode = blending
-                tex_unit.material_index = self.root.materials.add(m2_mat)
+        # Materials need to be duplicated if they're being used by a different texture, else, we'll reuse materials to not repeat data, Blizz does too
+        for i, material in enumerate(self.root.materials):
+            if material.flags == render_flags and material.blending_mode == blending and material.texture_used == texture_lookup_id:
+                tex_unit.material_index = i
+                break
         else:
-            for i, material in enumerate(self.root.materials):
-                if material.flags == render_flags and material.blending_mode == blending:
-                    tex_unit.material_index = i
-                    break
-                else:
-                    m2_mat = M2Material()
-                    m2_mat.flags = render_flags
-                    m2_mat.blending_mode = blending
-                    tex_unit.material_index = self.root.materials.add(m2_mat)
+            m2_mat = M2Material()
+            m2_mat.flags = render_flags
+            m2_mat.blending_mode = blending
+            m2_mat.texture_used = texture_lookup_id
+            tex_unit.material_index = self.root.materials.add(m2_mat)
 
         # check if texunitlookup already exists
         tex_mapping_pair = (tex_1_mapping, tex_2_mapping)
@@ -567,6 +574,7 @@ class M2File:
         seq.id = a_id
         seq.variation_index = var_id
         seq.variation_next = var_next if var_next else -1
+        # seq.alias_next = alias_next if alias_next else seq_id
         seq.alias_next = alias_next if flags & 64 else seq_id
         seq.flags = flags
         seq.frequency = frequency
