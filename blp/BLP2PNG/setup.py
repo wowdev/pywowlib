@@ -2,7 +2,6 @@
 import sys
 import platform
 import argparse
-import numpy
 from setuptools import setup, Extension
 from Cython.Build import cythonize
 
@@ -90,7 +89,7 @@ def main(debug: bool):
             "../include/zlib/zutil.c"
         ],
 
-        include_dirs=["../include/pngpp", "../include/libpng", "../include/zlib", numpy.get_include()],
+        include_dirs=["../include/pngpp", "../include/libpng", "../include/zlib"],
         language="c++",
         extra_compile_args=extra_compile_args,
         extra_link_args=extra_link_args
@@ -116,5 +115,6 @@ if __name__ == '__main__':
 
     if args.wbs_debug:
         sys.argv.remove('--wbs_debug')
+
 
     main(args.wbs_debug)

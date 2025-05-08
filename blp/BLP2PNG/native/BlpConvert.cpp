@@ -13,6 +13,11 @@
 
 namespace python_blp {
     namespace _detail {
+#ifdef _WIN32
+        static const char separator = '/';
+#else
+        static const char separator = '/';
+#endif
 
         static const uint32_t alphaLookup1[] = {0x00, 0xFF};
         static const uint32_t alphaLookup4[] = {0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xAA, 0xBB,
@@ -33,25 +38,40 @@ namespace python_blp {
         }
     }
 
+    void BlpConvert::convert(unsigned char *inputFile, std::size_t fileSize, const char *inputFileName,
+                             const char *outputPath) const {
+        std::string basePath = outputPath;
+        handleFile(inputFile, fileSize, inputFileName, basePath);
+    }
 
-    Image BlpConvert::get_raw_pixels(unsigned char* inputFile, std::size_t fileSize) const
-    {
-        ByteStream stream(inputFile, fileSize);
+    void BlpConvert::handleFile(unsigned char *buffer, std::size_t size, const char *fileName,
+                                const std::string &basePath) const {
+        using _detail::separator;
+
+        bool hasEndSlash = basePath.rfind(separator) == basePath.length() - 1;
+        std::stringstream pathStream;
+        pathStream << basePath;
+        if(!hasEndSlash) {
+            pathStream << separator;
+        }
+        pathStream << std::string(fileName);
+        std::string filePath = changeExtension(pathStream.str());
+        {
+            std::ofstream os(filePath.c_str(), std::ios::binary);
+            if(!os) {
+                createDirectories(filePath);
+            }
+        }
+
+        ByteStream stream(buffer, size);
         BlpHeader header = stream.read<BlpHeader>();
-        std::vector<uint32_t> outImage(header.width, header.height);
-
-        Image img{};
-        img.buffer.resize(header.width * header.height);
-        img.height = header.height;
-        img.width = header.width;
-
-        loadFirstLayer(header, stream, img);
-        
-        return img;
+        png::image<png::rgba_pixel> outImage(header.width, header.height);
+        loadFirstLayer(header, stream, outImage);
+        outImage.write(filePath);
     }
 
     void
-    BlpConvert::loadFirstLayer(const BlpHeader &header, ByteStream &data, Image &image) const {
+    BlpConvert::loadFirstLayer(const BlpHeader &header, ByteStream &data, png::image<png::rgba_pixel> &image) const {
         Format format = getFormat(header);
         if (format == UNKNOWN) {
             throw BlpConvertException("Unable to determine format");
@@ -104,18 +124,21 @@ namespace python_blp {
         }
     }
 
-    void BlpConvert::parseUncompressed(ByteStream &data, Image &image) const {
-        uint32_t rowPitch = image.width;
-        uint32_t numRows = image.height;
+    void BlpConvert::parseUncompressed(ByteStream &data, png::image<png::rgba_pixel> &image) const {
+        uint32_t rowPitch = image.get_width();
+        uint32_t numRows = image.get_height();
         uint32_t size = rowPitch * numRows;
 
         std::vector<uint32_t> pixels(size);
         data.read(pixels.data(), pixels.size() * sizeof(uint32_t));
 
-        memcpy(image.buffer.data(), pixels.data(), pixels.size() * sizeof(uint32_t));
+        for (uint32_t i = 0u; i < numRows; ++i) {
+            png::image<png::rgba_pixel>::row_type &row = image[i];
+            memcpy(row.data(), pixels.data() + i * rowPitch, rowPitch);
+        }
     }
 
-    void BlpConvert::parseUncompressedPalette(const uint8_t& alphaDepth, ByteStream &data, std::size_t size, Image &image) const {
+    void BlpConvert::parseUncompressedPalette(const uint8_t& alphaDepth, ByteStream &data, std::size_t size, png::image<png::rgba_pixel> &image) const {
         uint32_t palette[256] = { 0 };
         uint64_t curPosition = (uint64_t) data.getPosition();
         data.setPosition(sizeof(BlpHeader));
@@ -133,10 +156,11 @@ namespace python_blp {
     }
 
     void BlpConvert::decompressPaletteFastPath(const uint32_t *const palette, const std::vector<uint8_t> &indices,
-                                               Image &image) const {
-        uint32_t w = image.width;
-        uint32_t h = image.height;
+                                               png::image<png::rgba_pixel> &image) const {
+        uint32_t w = image.get_width();
+        uint32_t h = image.get_height();
 
+        png::image<png::rgba_pixel>::pixbuf& buf = image.get_pixbuf();
         std::vector<uint32_t> rowBuffer(w);
 
         uint32_t numEntries = w * h;
@@ -152,17 +176,19 @@ namespace python_blp {
                 ++counter;
             }
 
-            memcpy(image.buffer.data() + (y * w), rowBuffer.data(), rowBuffer.size() * sizeof(uint32_t));
+            png::image<png::rgba_pixel>::row_type& row = buf.get_row(y);
+            memcpy(row.data(), rowBuffer.data(), rowBuffer.size() * sizeof(uint32_t));
         }
     }
 
     void BlpConvert::decompressPaletteARGB8(const uint8_t &alphaDepth, uint32_t *const palette,
                                             const std::vector<uint8_t> &indices,
-                                            Image &image) const {
-        uint32_t w = image.width;
-        uint32_t h = image.height;
+                                            png::image<png::rgba_pixel> &image) const {
+        uint32_t w = image.get_width();
+        uint32_t h = image.get_height();
         uint32_t numEntries = w * h;
 
+        png::image<png::rgba_pixel>::pixbuf& buf = image.get_pixbuf();
         std::vector<uint32_t> colorBuffer(numEntries);
         for(uint32_t i = 0u; i < numEntries; ++i) {
             uint8_t index = indices[i];
@@ -225,13 +251,15 @@ namespace python_blp {
         }
 
         for(uint32_t i = 0u; i < h; ++i) {
-            memcpy(image.buffer.data() + (i * w), colorBuffer.data() + i * w, w * sizeof(uint32_t));
+            png::image<png::rgba_pixel>::row_type& row = buf.get_row(i);
+            memcpy(row.data(), colorBuffer.data() + i * w, w * sizeof(uint32_t));
         }
     }
 
-    void BlpConvert::parseCompressed(const Format &format, ByteStream &data, Image &image) const {
-        uint32_t w = image.width;
-        uint32_t h = image.height;
+    void BlpConvert::parseCompressed(const Format &format, ByteStream &data, png::image<png::rgba_pixel> &image) const {
+        uint32_t w = image.get_width();
+        uint32_t h = image.get_height();
+        png::image<png::rgba_pixel>::pixbuf& buf = image.get_pixbuf();
 
         uint32_t numBlocks = ((w + 3u) / 4u) * ((h + 3u) / 4u);
         std::vector<uint32_t> blockData(numBlocks * 16u);
@@ -244,19 +272,18 @@ namespace python_blp {
         for(uint32_t y = 0u; y < h; ++y) {
             for(uint32_t x = 0u; x < w; ++x) {
                 uint32_t bx = x / 4u;
-                // uint32_t iby = y % 4u;
-                uint32_t by = (h-1-y) / 4u; // flip Y axis for blender
+                uint32_t by = y / 4u;
 
                 uint32_t ibx = x % 4u;
-                // uint32_t iby = y % 4u;
-                uint32_t iby = (h-1-y) % 4u; // flip Y axis for blender
+                uint32_t iby = y % 4u;
 
                 uint32_t blockIndex = by * ((w + 3u) / 4u) + bx;
                 uint32_t innerIndex = iby * 4u + ibx;
-                rowBuffer[x] = blockData[blockIndex * 16u + innerIndex]; // rowBuffer[w-1-x] // swaps horizontally
+                rowBuffer[x] = blockData[blockIndex * 16u + innerIndex];
             }
 
-            memcpy(image.buffer.data() + (y * w), rowBuffer.data(), rowBuffer.size() * sizeof(uint32_t));
+            png::image<png::rgba_pixel>::row_type& row = buf.get_row(y);
+            memcpy(row.data(), rowBuffer.data(), rowBuffer.size() * sizeof(uint32_t));
         }
     }
 
@@ -370,5 +397,44 @@ namespace python_blp {
         }
     }
 
+    void BlpConvert::createDirectories(const std::string &path) const {
+        std::string::size_type lastSlash = path.rfind(_detail::separator);
+        if(lastSlash == std::string::npos) {
+            return;
+        }
 
+        //std::cout << "Attempting to create directories for: " << path << std::endl;
+        std::string pathPart;
+        std::stringstream pathStream;
+        pathStream << path.substr(0, lastSlash);
+        std::stringstream curPath;
+
+        while(std::getline(pathStream, pathPart, _detail::separator)) {
+            if(pathPart.empty()) {
+                curPath << _detail::separator;
+                continue;
+            }
+
+            curPath << pathPart;
+#ifdef _WIN32
+            int ret = _mkdir(curPath.str().c_str());
+#else
+            int ret = mkdir(curPath.str().c_str(), S_IRWXU | S_IRWXG | S_IROTH);
+#endif
+            if(ret != 0 && errno != EEXIST) {
+                std::cout << "Failed to create directories at: " << curPath.str() << " with error: " << errno << std::endl;
+                throw BlpConvertException("Unable to create directory");
+            }
+            curPath << _detail::separator;
+        }
+    }
+
+    std::string BlpConvert::changeExtension(const std::string &path) const {
+        std::string::size_type extStart = path.rfind('.');
+        if(extStart == std::string::npos) {
+            return path + ".png";
+        } else {
+            return path.substr(0, extStart) + ".png";
+        }
+    }
 }
