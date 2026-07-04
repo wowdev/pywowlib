@@ -35,6 +35,7 @@ def main(debug: bool):
     os.chdir(build_dir)
 
     cmake_defines = ['-DCMAKE_BUILD_TYPE=Debug' if debug else '-DCMAKE_BUILD_TYPE=Release'
+        , '-DCMAKE_POLICY_VERSION_MINIMUM=3.5'
         , '-DBUILD_SHARED_LIBS=OFF']
 
     if sys.platform != 'win32':

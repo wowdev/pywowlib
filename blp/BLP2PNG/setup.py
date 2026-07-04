@@ -46,6 +46,15 @@ def main(debug: bool):
         else:
             extra_compile_args = ['-std=c++17', '-O3']
             extra_link_args = []
+        # The bundled zlib/libpng C sources predate C23; gcc 16 defaults to C23
+        # and turns K&R definitions and implicit declarations (lseek/read/...)
+        # into hard errors. Relax those back to warnings and pull in unistd.
+        extra_compile_args += [
+            '-Wno-implicit-function-declaration',
+            '-Wno-implicit-int',
+            '-fcommon',
+            '-DZ_HAVE_UNISTD_H',
+        ]
 
     extensions = [Extension(
         "BLP2PNG",

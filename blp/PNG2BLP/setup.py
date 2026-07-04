@@ -45,6 +45,13 @@ def main(debug: bool):
         else:
             extra_compile_args = ['-std=c++17', '-O3']
             extra_link_args = []
+        # Bundled zlib C sources predate C23; relax gcc 16's defaults (see BLP2PNG).
+        extra_compile_args += [
+            '-Wno-implicit-function-declaration',
+            '-Wno-implicit-int',
+            '-fcommon',
+            '-DZ_HAVE_UNISTD_H',
+        ]
 
     setup(
         name='BLP To PNG Converter',
